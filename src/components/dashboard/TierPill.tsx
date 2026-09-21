@@ -27,11 +27,11 @@ const TierPill = ({ tier, isPro, isPremium, proUntil, className }: TierPillProps
 
   // Visual variants
   const wrapClass = isPro || isPremium
-    ? "border-[#FEAD5F]/50 bg-gradient-to-br from-[#FEAD5F]/15 via-[#CC1C01]/5 to-transparent hover:border-[#FEAD5F] hover:shadow-[0_0_20px_-8px_rgba(254,173,95,0.5)]"
+    ? "border-accent/50 bg-gradient-to-br from-[#FEAD5F]/15 via-[#CC1C01]/5 to-transparent hover:border-accent hover:shadow-[0_0_20px_-8px_rgba(254,173,95,0.5)]"
     : "border-border bg-card/70 hover:border-primary/50 hover:shadow-glow-soft";
 
   const iconClass = isPro || isPremium
-    ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white ring-[#FEAD5F]/40"
+    ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white ring-accent/40"
     : "from-muted/40 to-muted/10 text-muted-foreground bg-gradient-to-br ring-border";
 
   const label = isPro || isPremium ? "Pro" : "Miễn phí";

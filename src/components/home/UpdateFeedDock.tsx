@@ -6,11 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useUpdateFeed, relativeLabel, isToday, type FeedItem } from "@/hooks/useUpdateFeed";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const RED = "#CC1C01";
-const ORANGE = "#FEAD5F";
-const CREAM = "#FFF8F5";
-
-
 const FILTERS: { key: string; label: string }[] = [
   { key: "all", label: "Tất cả" },
   { key: "key", label: "Key dự đoán" },
@@ -37,15 +32,15 @@ const Row = ({
   <button
     type="button"
     onClick={() => onGo(item.href)}
-    className="w-full text-left flex items-center gap-2.5 rounded-xl border border-[#F2E2D4] px-2.5 py-2 transition-colors hover:border-[#E9C9B6]"
-    style={{ background: highlight ? "#FFEDE6" : "#FFFFFF" }}
+    className="w-full text-left flex items-center gap-2.5 rounded-xl border border-border px-2.5 py-2 transition-colors hover:border-accent/40"
+    style={{ background: highlight ? "hsl(var(--accent) / 0.15)" : "hsl(var(--popover))" }}
   >
     <div className="shrink-0 w-[52px] text-center">
-      <div className="text-sm font-extrabold leading-none" style={{ color: RED }}>
+      <div className="text-sm font-extrabold leading-none text-primary">
         {dayLabel(item.date)}
       </div>
       {highlight && (
-        <div className="text-[9px] mt-1 font-bold tracking-wide" style={{ color: RED }}>
+        <div className="text-[9px] mt-1 font-bold tracking-wide text-primary">
           HÔM NAY
         </div>
       )}
@@ -56,21 +51,21 @@ const Row = ({
         className="inline-block text-[9px] font-bold tracking-wide px-1.5 py-0.5 rounded-full"
         style={
           item.kind === "key"
-            ? { background: RED, color: "#FFFFFF" }
-            : { background: ORANGE, color: "#4D0D0D" }
+            ? { background: "hsl(var(--primary))", color: "#FFFFFF" }
+            : { background: "hsl(var(--accent))", color: "hsl(var(--brand-brown))" }
         }
       >
         {item.badge}
       </span>
-      <div className="mt-0.5 text-[13px] font-semibold truncate" style={{ color: "#3C1C12" }}>
+      <div className="mt-0.5 text-[13px] font-semibold truncate text-popover-foreground">
         {item.title}
       </div>
-      <div className="text-[11px] truncate" style={{ color: "#8A6656" }}>
+      <div className="text-[11px] truncate text-muted-foreground">
         {item.subtitle}
       </div>
     </div>
 
-    <ChevronRight className={`shrink-0 w-4 h-4 ${compact ? "" : ""}`} style={{ color: RED }} />
+    <ChevronRight className={`shrink-0 w-4 h-4 text-primary ${compact ? "" : ""}`} />
   </button>
 );
 
@@ -117,15 +112,15 @@ const UpdateFeedDock = () => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-full bg-white border border-[#F2E2D4] px-3.5 py-2 text-xs font-semibold shadow-lg hover:bg-[#FFEDE6] transition-colors"
-        style={{ color: "#3C1C12" }}
+        className="flex items-center gap-2 rounded-full bg-card border border-border px-3.5 py-2 text-xs font-semibold shadow-lg hover:bg-accent/10 transition-colors"
+        style={{ color: "hsl(var(--foreground))" }}
       >
         <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
         </span>
         {isMobile ? "Đề mới" : "Đề mới cập nhật"}
-        {recentCount > 0 && <span style={{ color: RED }}>· {recentCount}</span>}
+        {recentCount > 0 && <span className="text-primary">· {recentCount}</span>}
       </button>
     </div>
   );
@@ -137,11 +132,11 @@ const UpdateFeedDock = () => {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-[#F2E2D4]">
-            <DialogTitle className="text-lg font-heading font-extrabold" style={{ color: "#3C1C12" }}>
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+            <DialogTitle className="text-lg font-heading font-extrabold text-popover-foreground">
               Lịch sử cập nhật đề
             </DialogTitle>
-            <div className="flex items-center gap-2 text-xs" style={{ color: "#8A6656" }}>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="relative flex h-2 w-2">
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
@@ -149,7 +144,7 @@ const UpdateFeedDock = () => {
             </div>
           </DialogHeader>
 
-          <div className="px-5 py-3 flex flex-wrap gap-2 border-b border-[#F2E2D4]">
+          <div className="px-5 py-3 flex flex-wrap gap-2 border-b border-border">
             {FILTERS.map((f) => {
               const active = filter === f.key;
               return (
@@ -160,8 +155,8 @@ const UpdateFeedDock = () => {
                   className="text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors"
                   style={
                     active
-                      ? { background: RED, borderColor: RED, color: "#FFFFFF" }
-                      : { background: "#FFFFFF", borderColor: "#F2E2D4", color: "#6B4A3B" }
+                      ? { background: "hsl(var(--primary))", borderColor: "hsl(var(--primary))", color: "#FFFFFF" }
+                      : { background: "hsl(var(--popover))", borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }
                   }
                 >
                   {f.label}
@@ -170,15 +165,18 @@ const UpdateFeedDock = () => {
             })}
           </div>
 
-          <div className="max-h-[55vh] overflow-y-auto px-5 py-4 space-y-4" style={{ background: CREAM }}>
+          <div
+            className="max-h-[55vh] overflow-y-auto px-5 py-4 space-y-4"
+            style={{ background: "hsl(var(--muted) / 0.5)" }}
+          >
             {grouped.length === 0 && (
-              <p className="text-sm text-center py-8" style={{ color: "#8A6656" }}>
+              <p className="text-sm text-center py-8 text-muted-foreground">
                 Chưa có cập nhật nào.
               </p>
             )}
             {grouped.map(([month, rows]) => (
               <div key={month}>
-                <div className="text-[11px] font-bold tracking-wider mb-2" style={{ color: "#9A7B6C" }}>
+                <div className="text-[11px] font-bold tracking-wider mb-2 text-muted-foreground">
                   {month}
                 </div>
                 <div className="space-y-2.5">
@@ -190,7 +188,7 @@ const UpdateFeedDock = () => {
             ))}
           </div>
 
-          <div className="px-5 py-3 text-center text-xs border-t border-[#F2E2D4]" style={{ color: "#8A6656" }}>
+          <div className="px-5 py-3 text-center text-xs border-t border-border text-muted-foreground">
             Kho đề và key dự đoán được cập nhật mỗi ngày
           </div>
         </DialogContent>

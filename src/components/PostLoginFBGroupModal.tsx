@@ -186,7 +186,7 @@ const PostLoginFBGroupModal = () => {
                   href={FB_GROUP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#CC1C01] shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-primary shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
                   aria-label="Cộng đồng Facebook"
                 >
                   <FacebookIcon className="h-4 w-4 fill-current" />

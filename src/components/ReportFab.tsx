@@ -132,25 +132,24 @@ export default function ReportFab() {
           onClick={() => !submitting && setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl"
+            className="w-full max-w-md rounded-xl bg-popover text-popover-foreground border border-border p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
-            style={{ color: "#111" }}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold" style={{ color: NAVY }}>
+              <h3 className="text-base font-bold">
                 Báo lỗi chức năng
               </h3>
               <button
                 type="button"
                 onClick={() => !submitting && setOpen(false)}
-                className="text-slate-500 hover:text-slate-800"
+                className="text-muted-foreground hover:text-foreground"
                 aria-label="Đóng"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="text-xs font-semibold mb-1.5 text-slate-600">Chi tiết</div>
+            <div className="text-xs font-semibold mb-1.5 text-muted-foreground">Chi tiết</div>
             <div className="flex flex-wrap gap-2 mb-3">
               {FUNCTIONAL_REASONS.map((r) => {
                 const active = reason === r.value;
@@ -161,9 +160,9 @@ export default function ReportFab() {
                     onClick={() => setReason(r.value)}
                     className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                     style={{
-                      backgroundColor: active ? NAVY : "white",
-                      color: active ? "white" : NAVY,
-                      borderColor: NAVY,
+                      backgroundColor: active ? "hsl(var(--primary))" : "hsl(var(--popover))",
+                      color: active ? "#FFFFFF" : "hsl(var(--popover-foreground))",
+                      borderColor: active ? "hsl(var(--primary))" : "hsl(var(--border))",
                     }}
                   >
                     {r.label}
@@ -177,13 +176,12 @@ export default function ReportFab() {
               onChange={(e) => setNote(e.target.value)}
               placeholder="Mô tả thêm (không bắt buộc)"
               rows={3}
-              className="w-full rounded-md border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-              style={{ color: "#111" }}
+              className="w-full rounded-md border border-border bg-transparent p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
             />
 
 
-            <div className="mt-4 border-t border-slate-200 pt-3">
-              <div className="text-xs font-semibold mb-2 text-slate-600">Liên hệ admin</div>
+            <div className="mt-4 border-t border-border pt-3">
+              <div className="text-xs font-semibold mb-2 text-muted-foreground">Liên hệ admin</div>
               <ContactAdminLinks />
             </div>
 
@@ -192,7 +190,7 @@ export default function ReportFab() {
                 type="button"
                 onClick={() => !submitting && setOpen(false)}
                 disabled={submitting}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted"
               >
                 Hủy
               </button>
@@ -200,8 +198,7 @@ export default function ReportFab() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="rounded-md px-4 py-1.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
-                style={{ backgroundColor: NAVY }}
+                className="rounded-md px-4 py-1.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 bg-primary hover:bg-brand-brown"
               >
                 {submitting ? "Đang gửi..." : "Gửi báo lỗi"}
               </button>
