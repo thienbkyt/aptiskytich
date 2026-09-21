@@ -172,7 +172,7 @@ const ListeningPart4Monologue = ({
             type="button"
             onClick={onPrevious}
             disabled={currentIndex === 0}
-            className="px-4 py-2 rounded-lg border border-border text-sm font-semibold text-foreground hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg border border-border text-sm font-semibold text-foreground hover:border-primary/40 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             ← Bài nghe trước
           </button>
@@ -183,7 +183,7 @@ const ListeningPart4Monologue = ({
             type="button"
             onClick={onNext}
             disabled={currentIndex >= questions.length - 1}
-            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Bài nghe sau →
           </button>

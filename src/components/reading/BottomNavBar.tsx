@@ -471,27 +471,27 @@ const BottomNavBar = ({
       </AnimatePresence>
 
       {/* Bottom bar */}
-      <div className="exam-light-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t-[3px] bg-background/95 backdrop-blur-sm border-exam-accent">
+      <div className="exam-light-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t bg-exam-surface border-exam-border">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowQuestionList(true)}
               aria-label="Mở danh sách câu hỏi"
-              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-exam-surface border border-exam-border text-exam-text hover:bg-exam-border/40 transition-colors"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowInfo(true)}
               aria-label="Xem thông tin bài thi"
-              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-exam-surface border border-exam-border text-exam-text hover:bg-exam-border/40 transition-colors"
             >
               <Info className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowAccessibility(true)}
               aria-label="Mở tuỳ chỉnh hỗ trợ truy cập"
-              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg bg-exam-surface border border-exam-border text-exam-text hover:bg-exam-border/40 transition-colors"
             >
               <PersonStanding className="w-4 h-4" />
             </button>
@@ -501,12 +501,12 @@ const BottomNavBar = ({
             <button
               onClick={handleExitClick}
               aria-label="Thoát bài thi"
-              className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+              className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg bg-exam-surface border border-exam-border text-exam-text hover:bg-exam-border/40 transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
-              <Button variant="outline" onClick={() => runNavLocked(onPrevious)} className="exam-nav-prev-next exam-nav-previous-button gap-2">
+              <Button variant="outline" onClick={() => runNavLocked(onPrevious)} className="exam-nav-prev-next exam-nav-previous-button gap-2 bg-exam-surface border-exam-text text-exam-text hover:bg-exam-border/40 hover:text-exam-text">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </Button>
             )}
@@ -514,12 +514,12 @@ const BottomNavBar = ({
               <Button
                 onClick={() => runNavLocked(onSubmit)}
                 disabled={isSubmitting}
-                className="exam-nav-submit exam-nav-next-button gap-2 px-6"
+                className="exam-nav-submit exam-nav-next-button gap-2 px-6 bg-exam-accent text-exam-accent-foreground hover:bg-exam-accent/90 disabled:opacity-60"
               >
                 {isSubmitting ? "Đang nộp…" : submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button onClick={() => runNavLocked(onNext)} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
+              <Button onClick={() => runNavLocked(onNext)} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6 bg-exam-accent text-exam-accent-foreground hover:bg-exam-accent/90">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}
@@ -533,7 +533,7 @@ const BottomNavBar = ({
           className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowProceedDialog(false); }}
         >
-          <div className="bg-exam-surface rounded-xl shadow-xl max-w-md w-full mx-4 p-8">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-xl max-w-md w-full mx-4 p-8">
             <h2 className="text-xl font-bold text-exam-text mb-3">Proceed to the next section?</h2>
             <p className="text-sm text-exam-text-muted mb-6 leading-relaxed">
               The current section is timed and will be locked if you proceed. Please ensure you have reviewed each of your responses.
@@ -564,7 +564,7 @@ const BottomNavBar = ({
           className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowReviewModal(false); }}
         >
-          <div className="bg-exam-surface rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col">
             <div className="p-6 pb-4">
               <h2 className="text-lg font-bold text-exam-text">Question Review</h2>
               <p className="text-sm text-exam-text-muted mt-1">Please review the following questions</p>

@@ -559,7 +559,7 @@ const GrammarExamEngine = ({
                 const showExampleRow =
                   gType === "synonym" || (isCollocation && !collocationGroupIsSentence);
                 return (
-                <div className="bg-exam-surface rounded-xl p-6 mb-6 shadow-sm">
+                <div className="bg-exam-surface rounded-xl border border-exam-border p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-exam-accent-soft/10 text-exam-accent">
                       {badge}
@@ -703,7 +703,7 @@ const GrammarExamEngine = ({
                 </div>
                 );
               })() : (
-                <div className="bg-exam-surface rounded-xl p-6 mb-6 shadow-sm">
+                <div className="bg-exam-surface rounded-xl border border-exam-border p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     {isFillBlank && (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600">

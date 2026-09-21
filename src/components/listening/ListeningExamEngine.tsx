@@ -594,17 +594,17 @@ const ListeningExamEngine = ({
             <h1 className="text-xl">Aptis General Listening Instructions</h1>
             {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />}
           </div>
-          <p className="font-bold mb-2">Listening</p>
+          <p className="font-bold text-exam-text mb-2">Listening</p>
           {fullFlow && (
-            <p className="text-sm mb-1">You will listen to seventeen recordings.</p>
+            <p className="text-sm text-exam-text-muted mb-1">You will listen to seventeen recordings.</p>
           )}
-          <p className="text-sm mb-1">Click on the PLAY button to listen to each recording.</p>
-          <p className="text-sm mb-1">You can listen to each recording TWO TIMES ONLY.</p>
-          <p className="text-sm mb-1">
+          <p className="text-sm text-exam-text-muted mb-1">Click on the PLAY button to listen to each recording.</p>
+          <p className="text-sm text-exam-text-muted mb-1">You can listen to each recording TWO TIMES ONLY.</p>
+          <p className="text-sm text-exam-text-muted mb-1">
             You have {Math.ceil(timeLimit / 60)} minutes to complete {fullFlow ? "the test" : "this part"}.
           </p>
           <p className="text-sm mb-1">&nbsp;</p>
-          <p className="text-sm">When you click on the 'Next' button, the test will begin.</p>
+          <p className="text-sm text-exam-text-muted">When you click on the 'Next' button, the test will begin.</p>
         </div>
         <BottomNavBar
           isFirst={false}

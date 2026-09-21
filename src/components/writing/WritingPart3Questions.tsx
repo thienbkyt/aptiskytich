@@ -61,7 +61,7 @@ const WritingPart3Questions = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
-            className="bg-card border border-border rounded-xl p-5"
+            className="bg-exam-surface border border-exam-border rounded-xl p-5"
           >
             <p className="text-sm font-medium text-foreground mb-3">
               {i + 1}. {q.text}
@@ -75,7 +75,7 @@ const WritingPart3Questions = ({
               value={answers[i] || ""}
             />
             {showSample && (
-              <div className="mt-3 bg-exam-surface rounded-xl shadow-sm p-4 border-l-4 border-exam-accent">
+              <div className="mt-3 bg-exam-surface rounded-xl border border-exam-border border-l-4 border-l-exam-accent shadow-sm p-4">
                 <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-1">
                   💡 Đáp án mẫu
                 </p>

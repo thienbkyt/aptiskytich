@@ -126,7 +126,7 @@ export default function ExamReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="exam-fab-report fixed z-[90] flex items-center gap-1.5 rounded-full bg-exam-surface px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-exam-border/40"
+        className="exam-fab-report fixed z-[90] flex items-center gap-1.5 rounded-full bg-exam-accent-soft/15 px-3 py-1.5 text-xs font-semibold shadow-lg border-2 transition-colors hover:bg-exam-accent-soft/25"
         style={{
           bottom: 80,
           left: 16,
@@ -145,7 +145,7 @@ export default function ExamReportButton({
           onClick={() => !submitting && setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-exam-surface p-5 shadow-2xl"
+            className="w-full max-w-md rounded-xl border border-exam-border bg-exam-surface p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             style={{ color: "hsl(var(--exam-text))" }}
           >
@@ -217,8 +217,7 @@ export default function ExamReportButton({
               onChange={(e) => setNote(e.target.value)}
               placeholder="Mô tả thêm (không bắt buộc)"
               rows={3}
-              className="w-full rounded-md border border-exam-border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-              style={{ color: "hsl(var(--exam-text))" }}
+              className="w-full rounded-md border border-exam-border bg-exam-surface p-2 text-sm text-exam-text caret-exam-accent placeholder:text-exam-text-muted focus:outline-none focus:ring-2 focus:ring-exam-accent focus:ring-offset-0"
             />
 
             <div className="mt-4 flex items-center justify-end gap-2">

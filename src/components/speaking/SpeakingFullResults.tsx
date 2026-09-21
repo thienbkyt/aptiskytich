@@ -148,7 +148,7 @@ const SpeakingFullResults = ({ parts: initialParts, totalScore: initialTotalScor
                 <button
                   onClick={() => { setReviewPartIdx((i) => Math.max(0, i - 1)); setReviewItemIdx(0); }}
                   disabled={!canPrevPart}
-                  className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+                  className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-60 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
                 >
                   ← Part trước
                 </button>
@@ -158,7 +158,7 @@ const SpeakingFullResults = ({ parts: initialParts, totalScore: initialTotalScor
                 <button
                   onClick={() => { setReviewPartIdx((i) => Math.min(parts.length - 1, i + 1)); setReviewItemIdx(0); }}
                   disabled={!canNextPart}
-                  className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+                  className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-60 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
                 >
                   Part sau →
                 </button>

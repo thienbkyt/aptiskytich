@@ -39,7 +39,7 @@ const SpeakingFooter = ({ onNext, nextDisabled = true, onExit, showNext = true }
             <Button
               onClick={onNext}
               disabled={nextDisabled}
-              className="bg-exam-accent hover:bg-exam-accent/90 text-exam-accent-foreground px-6 gap-2 disabled:opacity-40"
+              className="bg-exam-accent hover:bg-exam-accent/90 text-exam-accent-foreground px-6 gap-2 disabled:opacity-60"
             >
               Next →
             </Button>

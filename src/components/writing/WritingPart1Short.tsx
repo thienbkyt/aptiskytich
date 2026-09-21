@@ -61,7 +61,7 @@ const WritingPart1Short = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-card border border-border rounded-xl p-5"
+            className="bg-exam-surface border border-exam-border rounded-xl p-5"
           >
             <p className="text-sm font-medium text-foreground mb-3">
               {i + 1}. {q.text}

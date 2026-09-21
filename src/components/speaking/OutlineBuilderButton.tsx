@@ -5,7 +5,7 @@ interface Props {
   onToggle: () => void;
 }
 
-const NAVY = "#002F5F";
+const NAVY = "hsl(var(--exam-accent))";
 
 /**
  * Practice-only helper. Toggles the "Nháp" scratchpad panel.
@@ -16,7 +16,7 @@ export default function OutlineBuilderButton({ open, onToggle }: Props) {
     <button
       type="button"
       onClick={onToggle}
-      className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-exam-surface px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-exam-accent-soft/10"
+      className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-exam-accent-soft/15 px-3 py-1.5 text-xs font-semibold shadow-lg border-2 transition-colors hover:bg-exam-accent-soft/25"
       style={{ bottom: 160, left: 16, color: NAVY, borderColor: NAVY }}
       aria-label={open ? "Đóng nháp" : "Nháp"}
     >

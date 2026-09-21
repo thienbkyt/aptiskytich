@@ -75,7 +75,7 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
       <SpeakingHeader partLabel={title} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
 
       <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
-        <div className="bg-exam-surface rounded-xl shadow-sm max-w-3xl w-full p-8 md:p-12">
+        <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm max-w-3xl w-full p-8 md:p-12">
           <h2 className="text-xl font-bold text-exam-text mb-6">Prompt</h2>
           <div className="text-sm text-exam-text leading-relaxed whitespace-pre-line">
             {instructions}
