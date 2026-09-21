@@ -187,11 +187,11 @@
     --exam-text: 0 0% 95%;
     --exam-text-muted: 0 0% 72%;
     --exam-border: 240 10% 34%;
-    --exam-header: 258 45% 24%;
+    --exam-header: 262 52% 26%;
     --exam-header-foreground: 0 0% 100%;
-    --exam-accent: 250 80% 72%;
+    --exam-accent: 265 78% 72%;
     --exam-accent-foreground: 240 10% 10%;
-    --exam-accent-soft: 250 80% 72%;
+    --exam-accent-soft: 265 78% 72%;
   }
 }
 
