@@ -63,7 +63,6 @@ const adminLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillOpen, setSkillOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
@@ -76,7 +75,7 @@ const Navbar = () => {
   const moreHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
-  const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
+  const { isPro, isPremium, tier, proUntil } = useIsPro();
   const { unread_notification_count } = useUserBootstrap();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
@@ -364,16 +363,6 @@ const Navbar = () => {
         <div className="hidden xl:flex items-center gap-2 shrink-0">
           {user ? (
             <>
-              {!tierLoading && !isPro && !isPremium && (
-                <Link to="/pricing" {...prefetchHandlers("/pricing")}>
-                  <Button
-                    size="sm"
-                    className="rounded-full h-8 px-3.5 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
-                  >
-                    <Crown className="w-3.5 h-3.5" /> Nâng cấp
-                  </Button>
-                </Link>
-              )}
               <div className="absolute h-0 w-0 overflow-visible [&>div>button]:sr-only">
                 <NotificationBell />
               </div>
