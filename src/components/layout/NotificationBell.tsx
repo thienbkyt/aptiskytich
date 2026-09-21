@@ -34,7 +34,7 @@ const TYPE_META: Record<
     icon: Sparkles,
     iconBg: "bg-accent",
     iconText: "text-brand-brown",
-    pillClass: "text-brand-brown bg-accent/20",
+    pillClass: "text-brand-brown dark:text-accent bg-accent/20",
   },
   content: {
     label: "Update bài",
@@ -48,7 +48,7 @@ const TYPE_META: Record<
     icon: Megaphone,
     iconBg: "bg-brand-brown",
     iconText: "text-white",
-    pillClass: "text-brand-brown bg-brand-brown/10",
+    pillClass: "text-brand-brown dark:text-accent bg-brand-brown/10",
   },
   key_update: {
     label: "Key dự đoán",
@@ -260,7 +260,7 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
                 <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
                   <Bell className="w-3.5 h-3.5 text-white" />
                 </span>
-                <span className="text-sm font-bold text-brand-brown">Thông báo</span>
+                <span className="text-sm font-bold text-brand-brown dark:text-accent">Thông báo</span>
                 {unreadCount > 0 && (
                   <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                     {unreadCount} mới
@@ -329,7 +329,7 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
                               className={`text-sm leading-snug ${
                                 isRead
                                   ? "font-medium text-muted-foreground"
-                                  : "font-bold text-brand-brown"
+                                  : "font-bold text-brand-brown dark:text-accent"
                               }`}
                             >
                               {n.title}
@@ -368,7 +368,7 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
                   <Bell className="w-5 h-5 text-white" />
                 </span>
                 <div className="flex-1 min-w-0 pr-6">
-                  <h3 className="text-base font-bold text-brand-brown leading-snug">
+                  <h3 className="text-base font-bold text-brand-brown dark:text-accent leading-snug">
                     {selected.title}
                   </h3>
                   <span
