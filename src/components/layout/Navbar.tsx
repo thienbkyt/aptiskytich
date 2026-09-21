@@ -490,8 +490,8 @@ const Navbar = () => {
           {...prefetchHandlers("/thi-thu")}
           className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition-colors ${
             isActive("/thi-thu")
-              ? "bg-[#B01801] text-white"
-              : "bg-[#CC1C01] text-white hover:brightness-110"
+              ? "bg-brand-brown text-white"
+              : "bg-primary text-white hover:brightness-110"
           }`}
         >
           <ClipboardCheck className="w-4 h-4" />
@@ -505,8 +505,8 @@ const Navbar = () => {
           }}
           className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold border transition-colors ${
             isSkillActive
-              ? "bg-[#CC1C01]/10 border-[#CC1C01] text-[#CC1C01]"
-              : "border-[#CC1C01] text-[#CC1C01] hover:bg-[#CC1C01]/10"
+              ? "bg-primary/10 border-primary text-primary"
+              : "border-primary text-primary hover:bg-primary/10"
           }`}
           aria-label="Mở menu luyện tập từng kỹ năng"
         >

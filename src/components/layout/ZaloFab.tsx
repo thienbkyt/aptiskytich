@@ -43,7 +43,7 @@ const ZaloFab = () => {
   return (
     <div className="fixed bottom-5 right-5 z-[60] flex items-end gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
       <div className="hidden sm:flex flex-col items-end max-w-[260px] mr-1">
-        <div className="bg-white rounded-2xl rounded-br-sm shadow-lg border border-border px-3.5 py-2.5 text-xs text-foreground">
+        <div className="bg-card rounded-2xl rounded-br-sm shadow-lg border border-border px-3.5 py-2.5 text-xs text-foreground">
           Cần tư vấn lộ trình thi Aptis? <br />
           <span className="font-semibold text-primary">Nhắn Zalo miễn phí</span>
         </div>
@@ -54,7 +54,7 @@ const ZaloFab = () => {
           setDismissed(true);
           safeSessionStorage.setItem("zalo_fab_dismissed", "1");
         }}
-        className="w-6 h-6 rounded-full bg-white border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground -mr-1 self-start"
+        className="w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground -mr-1 self-start"
         aria-label="Đóng"
       >
         <X className="w-3.5 h-3.5" />

@@ -54,7 +54,7 @@ const Row = ({
             key={`${img.src}-${i}`}
             type="button"
             onClick={() => onPick(img)}
-            className="flex-shrink-0 rounded-2xl border border-[#F2E2D4] bg-white p-2 transition-transform hover:-translate-y-1"
+            className="flex-shrink-0 rounded-2xl border border-border bg-card p-2 transition-transform hover:-translate-y-1"
             style={{ boxShadow: "0 8px 20px -14px rgba(204, 28, 1, 0.22)" }}
           >
             <img
@@ -62,7 +62,7 @@ const Row = ({
               alt={img.alt}
               loading="lazy"
               decoding="async"
-              className="h-[300px] w-[240px] object-cover rounded-[16px] bg-white"
+              className="h-[300px] w-[240px] object-cover rounded-[16px] bg-muted"
             />
           </button>
         ))}
@@ -88,8 +88,8 @@ const FeedbackMarquee = () => {
         <Row images={bottomRow} reverse onPick={setActive} />
 
         {/* Gradient mờ hai mép */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-white to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-background to-transparent" />
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
