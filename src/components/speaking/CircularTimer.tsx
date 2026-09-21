@@ -15,7 +15,7 @@ const CircularTimer = ({ timeLeft, totalTime, label, isRecording, isPrep }: Circ
   const progress = totalTime > 0 ? (timeLeft / totalTime) : 1;
   const strokeDashoffset = circumference * (1 - progress);
 
-  const strokeColor = isRecording ? "#24085a" : "#24085a";
+  const strokeColor = "hsl(var(--exam-accent))";
   const bgColor = isRecording ? "bg-exam-surface" : "bg-exam-surface";
 
   return (
@@ -29,7 +29,7 @@ const CircularTimer = ({ timeLeft, totalTime, label, isRecording, isPrep }: Circ
           <circle
             cx="70" cy="70" r={radius}
             fill="none"
-            stroke="#e5e7eb"
+            stroke="hsl(var(--exam-border))"
             strokeWidth="4"
           />
           <motion.circle

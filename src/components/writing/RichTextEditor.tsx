@@ -32,7 +32,7 @@ const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answe
           onTextChange(next);
         }}
         style={{ minHeight }}
-        className="w-full rounded-md border border-border bg-exam-surface p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full rounded-md border border-exam-border bg-exam-surface p-3 text-sm text-exam-text caret-exam-accent selection:bg-exam-accent/30 selection:text-exam-text focus:outline-none focus:ring-2 focus:ring-exam-accent focus:ring-offset-1 placeholder:text-exam-text-muted whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
       />
       {wordLimit != null && (
         <div className="flex justify-end mt-1.5">

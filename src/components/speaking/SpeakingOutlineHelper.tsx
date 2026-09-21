@@ -62,7 +62,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
   const cardCls = (active: boolean) =>
     `flex-1 text-left rounded-xl border p-3 transition-colors ${
       active
-        ? "bg-exam-accent text-white border-exam-accent"
+        ? "bg-exam-accent text-exam-accent-foreground border-exam-accent"
         : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-accent/40"
     }`;
 
@@ -125,7 +125,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
                   onClick={() => setTab(gi)}
                   className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
                     gi === activeIdx
-                      ? "bg-exam-accent text-white border-exam-accent"
+                      ? "bg-exam-accent text-exam-accent-foreground border-exam-accent"
                       : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-accent/40"
                   }`}
                 >

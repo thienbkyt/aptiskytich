@@ -70,7 +70,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const cardCls = (active: boolean) =>
     `flex-1 text-left rounded-xl border p-3 transition-colors ${
       active
-        ? "bg-exam-accent text-white border-exam-accent"
+        ? "bg-exam-accent text-exam-accent-foreground border-exam-accent"
         : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-accent/40"
     }`;
 
@@ -266,7 +266,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                 const cardCls = (active: boolean) =>
                   `flex-1 text-left rounded-xl border p-3 transition-colors ${
                     active
-                      ? "bg-exam-accent text-white border-exam-accent"
+                      ? "bg-exam-accent text-exam-accent-foreground border-exam-accent"
                       : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-accent/40"
                   }`;
                 return (
