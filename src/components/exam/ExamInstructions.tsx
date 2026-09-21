@@ -65,7 +65,7 @@ const ExamInstructions = ({
       </div>
       <button
         onClick={onStart}
-        className="bg-exam-accent text-white text-sm rounded-md px-6 py-2.5 hover:bg-exam-accent/90 transition-colors"
+        className="bg-exam-accent text-exam-accent-foreground text-sm rounded-md px-6 py-2.5 hover:bg-exam-accent/90 transition-colors"
       >
         Start Assessment
       </button>

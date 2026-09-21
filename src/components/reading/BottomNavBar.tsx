@@ -585,7 +585,7 @@ const BottomNavBar = ({
                       </div>
                       <button
                         onClick={() => toggleReviewSection(sIdx)}
-                        className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded bg-exam-border/40 hover:bg-exam-border/60 transition-colors"
                         aria-label={expanded ? "Thu gọn" : "Mở rộng"}
                       >
                         {expanded ? <Minus className="w-3.5 h-3.5 text-exam-text" /> : <Plus className="w-3.5 h-3.5 text-exam-accent" />}

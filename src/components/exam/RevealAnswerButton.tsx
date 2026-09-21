@@ -5,7 +5,7 @@ interface Props {
   onToggle: () => void;
 }
 
-const NAVY = "#002F5F";
+const NAVY = "hsl(var(--exam-accent))";
 
 /**
  * Practice-only helper. Toggles reveal of correct answers + explanation

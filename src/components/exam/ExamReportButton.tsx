@@ -34,7 +34,7 @@ interface Props {
   questionNumber?: number | null;
 }
 
-const NAVY = "#002F5F";
+const NAVY = "hsl(var(--exam-accent))";
 
 function getDeviceInfo() {
   try {
@@ -147,7 +147,7 @@ export default function ExamReportButton({
           <div
             className="w-full max-w-md rounded-xl bg-exam-surface p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
-            style={{ color: "#111" }}
+            style={{ color: "hsl(var(--exam-text))" }}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-bold" style={{ color: NAVY }}>
@@ -178,8 +178,8 @@ export default function ExamReportButton({
                       onClick={() => setCategory(c.v)}
                       className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                       style={{
-                        backgroundColor: active ? NAVY : "white",
-                        color: active ? "white" : NAVY,
+                        backgroundColor: active ? NAVY : "hsl(var(--exam-surface))",
+                        color: active ? "hsl(var(--exam-accent-foreground))" : NAVY,
                         borderColor: NAVY,
                       }}
                     >
@@ -201,8 +201,8 @@ export default function ExamReportButton({
                     onClick={() => setActiveReason(r.value)}
                     className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                     style={{
-                      backgroundColor: active ? NAVY : "white",
-                      color: active ? "white" : NAVY,
+                      backgroundColor: active ? NAVY : "hsl(var(--exam-surface))",
+                      color: active ? "hsl(var(--exam-accent-foreground))" : NAVY,
                       borderColor: NAVY,
                     }}
                   >
@@ -218,7 +218,7 @@ export default function ExamReportButton({
               placeholder="Mô tả thêm (không bắt buộc)"
               rows={3}
               className="w-full rounded-md border border-exam-border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-              style={{ color: "#111" }}
+              style={{ color: "hsl(var(--exam-text))" }}
             />
 
             <div className="mt-4 flex items-center justify-end gap-2">
