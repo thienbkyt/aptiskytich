@@ -46,7 +46,7 @@ const CoverImage = ({ path, alt, className }: { path: string | null; alt: string
   if (!url) {
     return (
       <div className={`bg-gradient-to-br from-[#CC1C01]/10 via-[#FEAD5F]/20 to-[#FEAD5F]/5 flex items-center justify-center ${className}`}>
-        <FileText className="w-10 h-10 text-[#CC1C01]/40" />
+        <FileText className="w-10 h-10 text-primary/40" />
       </div>
     );
   }
@@ -54,7 +54,7 @@ const CoverImage = ({ path, alt, className }: { path: string | null; alt: string
 };
 
 const CategoryBadge = ({ category }: { category: BlogCategory }) => (
-  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-semibold">
+  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
     {CATEGORY_LABELS[category]}
   </span>
 );
@@ -75,7 +75,7 @@ const CardTags = ({ post }: { post: BlogPost }) => (
 const FeaturedCard = ({ post }: { post: BlogPost }) => (
   <Link
     to={`/meo-thi-aptis/${post.slug}`}
-    className="group grid md:grid-cols-2 gap-0 overflow-hidden rounded-2xl border border-[#CC1C01]/15 bg-card shadow-sm hover:shadow-xl hover:border-[#CC1C01]/40 transition-all"
+    className="group grid md:grid-cols-2 gap-0 overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-sm hover:shadow-xl hover:border-primary/40 transition-all"
   >
     <div className="relative aspect-[16/10] md:aspect-auto md:h-full overflow-hidden">
       <CoverImage
@@ -91,7 +91,7 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
     </div>
     <div className="p-6 md:p-8 flex flex-col justify-center">
       <CardTags post={post} />
-      <h2 className="mt-3 text-2xl md:text-3xl font-heading font-extrabold text-foreground leading-tight line-clamp-3 group-hover:text-[#CC1C01] transition-colors">
+      <h2 className="mt-3 text-2xl md:text-3xl font-heading font-extrabold text-foreground leading-tight line-clamp-3 group-hover:text-primary transition-colors">
         {post.title}
       </h2>
       {post.excerpt && (
@@ -110,7 +110,7 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
         )}
 
       </div>
-      <div className="mt-5 inline-flex items-center gap-2 text-[#CC1C01] font-semibold text-sm">
+      <div className="mt-5 inline-flex items-center gap-2 text-primary font-semibold text-sm">
         Đọc bài viết
         <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
       </div>
@@ -121,7 +121,7 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
 const PostCard = ({ post }: { post: BlogPost }) => (
   <Link
     to={`/meo-thi-aptis/${post.slug}`}
-    className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
+    className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all"
   >
     <div className="aspect-[16/9] overflow-hidden">
       <CoverImage
@@ -132,7 +132,7 @@ const PostCard = ({ post }: { post: BlogPost }) => (
     </div>
     <div className="p-5 flex flex-col flex-1">
       <CardTags post={post} />
-      <h3 className="mt-3 text-lg font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#CC1C01] transition-colors">
+      <h3 className="mt-3 text-lg font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
         {post.title}
       </h3>
       {post.excerpt && (
@@ -242,13 +242,13 @@ const BlogIndex = () => {
         />
         <div
           aria-hidden
-          className="absolute -bottom-32 -left-16 -z-10 h-72 w-72 rounded-full bg-[#CC1C01]/20 blur-3xl"
+          className="absolute -bottom-32 -left-16 -z-10 h-72 w-72 rounded-full bg-primary/20 blur-3xl"
         />
         <div className="max-w-[1200px] mx-auto px-4 text-center">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider">
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
             Blog Aptis Kỳ Tích
           </span>
-          <h1 className="mt-4 text-4xl md:text-6xl font-heading font-extrabold tracking-tight text-[#4D0D0D] dark:text-foreground">
+          <h1 className="mt-4 text-4xl md:text-6xl font-heading font-extrabold tracking-tight text-brand-brown dark:text-foreground">
             Blog - Mẹo ôn{" "}
             <span className="bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] bg-clip-text text-transparent">
               Aptis
@@ -270,7 +270,7 @@ const BlogIndex = () => {
       </section>
 
       {/* Category filter */}
-      <section className="bg-[#FFF8F5] dark:bg-background border-y border-[#CC1C01]/10">
+      <section className="bg-[#FFF8F5] dark:bg-background border-y border-primary/10">
         <div className="max-w-[1200px] mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-none">
           {([{ key: "all" as Filter, label: "Tất cả" }] as { key: Filter; label: string }[])
             .concat(CATEGORY_OPTIONS.map((c) => ({ key: c, label: CATEGORY_LABELS[c] })))
@@ -283,7 +283,7 @@ const BlogIndex = () => {
                   className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     active
                       ? "bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white shadow-[0_4px_14px_-4px_rgba(204,28,1,0.5)]"
-                      : "bg-white dark:bg-card text-foreground border border-border hover:border-[#CC1C01]/50 hover:text-[#CC1C01]"
+                      : "bg-white dark:bg-card text-foreground border border-border hover:border-primary/50 hover:text-primary"
                   }`}
                 >
                   {opt.label}
@@ -327,7 +327,7 @@ const BlogIndex = () => {
 
         {!loading && !error && filtered.length === 0 && (
           <Card className="p-14 text-center">
-            <FileText className="w-14 h-14 mx-auto text-[#CC1C01]/30 mb-4" />
+            <FileText className="w-14 h-14 mx-auto text-primary/30 mb-4" />
             <h2 className="text-xl font-heading font-bold text-foreground">
               Chưa có bài viết trong mục này
             </h2>
@@ -369,8 +369,8 @@ const BlogIndex = () => {
                       onClick={() => setPage(n)}
                       className={`h-9 min-w-9 px-3 rounded-md text-sm font-semibold transition-colors ${
                         active
-                          ? "bg-[#CC1C01] text-white"
-                          : "bg-white dark:bg-card border border-border text-foreground hover:border-[#CC1C01]/50"
+                          ? "bg-primary text-white"
+                          : "bg-white dark:bg-card border border-border text-foreground hover:border-primary/50"
                       }`}
                     >
                       {n}

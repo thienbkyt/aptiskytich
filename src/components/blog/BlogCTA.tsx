@@ -16,7 +16,7 @@ const BlogCTA = ({
 }: BlogCTAProps) => {
   const isExternal = href?.startsWith("http");
   const btnClasses =
-    "shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-[#CC1C01] font-bold text-sm md:text-base shadow-md hover:shadow-xl hover:scale-[1.02] transition-all";
+    "shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-primary font-bold text-sm md:text-base shadow-md hover:shadow-xl hover:scale-[1.02] transition-all";
 
   return (
     <div
