@@ -35,7 +35,7 @@ const LatestPostCard = ({ post }: { post: BlogPost }) => {
   return (
     <Link
       to={`/meo-thi-aptis/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all"
     >
       <div className="aspect-[16/9] overflow-hidden bg-muted">
         {cover ? (
@@ -48,15 +48,15 @@ const LatestPostCard = ({ post }: { post: BlogPost }) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#CC1C01]/10 to-[#FEAD5F]/20">
-            <FileText className="w-10 h-10 text-[#CC1C01]/40" />
+            <FileText className="w-10 h-10 text-primary/40" />
           </div>
         )}
       </div>
       <div className="p-5 flex flex-col flex-1">
-        <span className="inline-flex w-fit items-center px-2.5 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-semibold">
+        <span className="inline-flex w-fit items-center px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
           {CATEGORY_LABELS[post.category]}
         </span>
-        <h3 className="mt-3 text-lg font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#CC1C01] transition-colors">
+        <h3 className="mt-3 text-lg font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
           {post.title}
         </h3>
         {post.excerpt && (
@@ -120,15 +120,15 @@ const LatestBlogSection = () => {
   if (posts && posts.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-20 bg-[#FFF8F5] dark:bg-background border-t border-[#CC1C01]/10">
+    <section className="py-16 md:py-20 bg-[#FFF8F5] dark:bg-background border-t border-primary/10">
       <div ref={sentinelRef} aria-hidden className="max-w-[1200px] mx-auto px-4">
 
         <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
               <BookOpen className="w-3.5 h-3.5" /> Blog Aptis Kỳ Tích
             </span>
-            <h2 className="mt-3 text-3xl md:text-4xl font-heading font-extrabold tracking-tight text-[#4D0D0D] dark:text-foreground">
+            <h2 className="mt-3 text-3xl md:text-4xl font-heading font-extrabold tracking-tight text-brand-brown dark:text-foreground">
               Bài viết mới nhất
             </h2>
             <p className="mt-2 text-muted-foreground max-w-xl">
@@ -137,7 +137,7 @@ const LatestBlogSection = () => {
           </div>
           <Link
             to="/meo-thi-aptis"
-            className="inline-flex items-center gap-2 text-[#CC1C01] font-semibold hover:text-[#4D0D0D] transition-colors"
+            className="inline-flex items-center gap-2 text-primary font-semibold hover:text-brand-brown transition-colors"
           >
             Xem tất cả bài viết
             <ArrowRight className="w-4 h-4" />

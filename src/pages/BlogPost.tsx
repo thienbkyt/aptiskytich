@@ -159,7 +159,7 @@ const useSignedCover = (path: string | null) => {
 const CategoryBadge = ({ category }: { category: BlogCategory }) => (
   <Link
     to={BLOG_BASE}
-    className="inline-flex items-center px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider hover:bg-[#CC1C01]/20 transition-colors"
+    className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-colors"
   >
     {CATEGORY_LABELS[category]}
   </Link>
@@ -170,7 +170,7 @@ const RelatedCard = ({ post }: { post: BlogPost }) => {
   return (
     <Link
       to={`${BLOG_BASE}/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all"
     >
       <div className="aspect-[16/9] overflow-hidden bg-muted">
         {cover ? (
@@ -183,15 +183,15 @@ const RelatedCard = ({ post }: { post: BlogPost }) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#CC1C01]/10 to-[#FEAD5F]/20">
-            <FileText className="w-8 h-8 text-[#CC1C01]/40" />
+            <FileText className="w-8 h-8 text-primary/40" />
           </div>
         )}
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-[#CC1C01]">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
           {CATEGORY_LABELS[post.category]}
         </span>
-        <h3 className="mt-2 text-base font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#CC1C01] transition-colors">
+        <h3 className="mt-2 text-base font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
           {post.title}
         </h3>
         <div className="mt-3 text-xs text-muted-foreground inline-flex items-center gap-1">
@@ -241,7 +241,7 @@ const ShareBar = ({ url, title }: { url: string; title: string }) => {
       </button>
       <button
         onClick={copy}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm font-semibold hover:border-[#CC1C01]/50 hover:text-[#CC1C01] transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-card text-foreground text-sm font-semibold hover:border-primary/50 hover:text-primary transition-colors"
       >
         <Link2 className="w-4 h-4" /> Sao chép
       </button>
@@ -253,17 +253,17 @@ const NotFoundView = () => (
   <div className="min-h-screen bg-[#FFF8F5] dark:bg-background">
     <Navbar />
     <main className="max-w-3xl mx-auto px-4 py-24 text-center">
-      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider">
+      <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
         404
       </span>
-      <h1 className="mt-4 text-3xl md:text-4xl font-heading font-extrabold text-[#4D0D0D] dark:text-foreground">
+      <h1 className="mt-4 text-3xl md:text-4xl font-heading font-extrabold text-brand-brown dark:text-foreground">
         Không tìm thấy bài viết
       </h1>
       <p className="mt-3 text-muted-foreground">
         Bài viết bạn đang tìm không tồn tại hoặc đã bị gỡ.
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
-        <Button asChild className="bg-[#CC1C01] hover:bg-[#4D0D0D] text-white gap-2">
+        <Button asChild className="bg-primary hover:bg-brand-brown text-white gap-2">
           <Link to={BLOG_BASE}>
             <ArrowLeft className="w-4 h-4" /> Về trang Blog
           </Link>
@@ -506,14 +506,14 @@ const BlogPostPage = () => {
       );
     },
     strong: (p: any) => (
-      <strong className="font-semibold text-[#CC1C01]">{p.children}</strong>
+      <strong className="font-semibold text-primary">{p.children}</strong>
     ),
     a: (p: any) => (
       <a
         href={p.href}
         target={p.href?.startsWith("http") ? "_blank" : undefined}
         rel={p.href?.startsWith("http") ? "noopener noreferrer" : undefined}
-        className="text-[#CC1C01] font-medium no-underline hover:underline underline-offset-2"
+        className="text-primary font-medium no-underline hover:underline underline-offset-2"
       >
         {p.children}
       </a>
@@ -529,13 +529,13 @@ const BlogPostPage = () => {
       </ol>
     ),
     blockquote: (p: any) => (
-      <blockquote className="my-6 border-l-4 border-[#CC1C01] bg-[#CC1C01]/5 px-5 py-3 rounded-r-lg italic text-foreground/90">
+      <blockquote className="my-6 border-l-4 border-primary bg-primary/5 px-5 py-3 rounded-r-lg italic text-foreground/90">
         {p.children}
       </blockquote>
     ),
     code: ({ inline, children }: any) =>
       inline ? (
-        <code className="px-1.5 py-0.5 rounded bg-muted text-[#CC1C01] text-[0.9em] font-mono">
+        <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-[0.9em] font-mono">
           {children}
         </code>
       ) : (
@@ -558,7 +558,7 @@ const BlogPostPage = () => {
         <table className="w-full text-sm">{p.children}</table>
       </div>
     ),
-    thead: (p: any) => <thead className="bg-[#CC1C01]/5">{p.children}</thead>,
+    thead: (p: any) => <thead className="bg-primary/5">{p.children}</thead>,
     th: (p: any) => (
       <th className="px-4 py-2 text-left font-bold text-foreground border-b border-border">
         {p.children}
@@ -608,19 +608,19 @@ const BlogPostPage = () => {
         >
           <ol className="flex items-center gap-1.5 flex-wrap">
             <li>
-              <Link to="/" className="hover:text-[#CC1C01] inline-flex items-center gap-1">
+              <Link to="/" className="hover:text-primary inline-flex items-center gap-1">
                 <Home className="w-3.5 h-3.5" /> Trang chủ
               </Link>
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
-              <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
+              <Link to={BLOG_BASE} className="hover:text-primary">
                 {BLOG_LABEL}
               </Link>
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
-              <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
+              <Link to={BLOG_BASE} className="hover:text-primary">
                 {CATEGORY_LABELS[post.category]}
               </Link>
             </li>
@@ -634,7 +634,7 @@ const BlogPostPage = () => {
         {/* Header */}
         <header className="max-w-[900px] mx-auto px-4 text-center">
           <CategoryBadge category={post.category} />
-          <h1 className="mt-4 text-3xl md:text-5xl font-heading font-extrabold tracking-tight text-[#4D0D0D] dark:text-foreground leading-tight">
+          <h1 className="mt-4 text-3xl md:text-5xl font-heading font-extrabold tracking-tight text-brand-brown dark:text-foreground leading-tight">
             {post.title}
           </h1>
           <div className="mt-5 flex items-center justify-center gap-4 md:gap-6 text-sm text-muted-foreground flex-wrap">
@@ -664,7 +664,7 @@ const BlogPostPage = () => {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#CC1C01]/10 to-[#FEAD5F]/20">
-                  <FileText className="w-14 h-14 text-[#CC1C01]/40" />
+                  <FileText className="w-14 h-14 text-primary/40" />
                 </div>
               )}
             </div>
@@ -684,14 +684,14 @@ const BlogPostPage = () => {
             {hasToc && (
               <details className="lg:hidden mb-6 rounded-xl border border-border bg-card p-4">
                 <summary className="cursor-pointer font-semibold text-foreground inline-flex items-center gap-2">
-                  <List className="w-4 h-4 text-[#CC1C01]" /> Mục lục ({headings.length})
+                  <List className="w-4 h-4 text-primary" /> Mục lục ({headings.length})
                 </summary>
                 <ul className="mt-3 space-y-2 text-sm">
                   {headings.map((h) => (
                     <li key={h.id}>
                       <a
                         href={`#${h.id}`}
-                        className="text-muted-foreground hover:text-[#CC1C01] block"
+                        className="text-muted-foreground hover:text-primary block"
                       >
                         {h.text}
                       </a>
@@ -740,7 +740,7 @@ const BlogPostPage = () => {
               <div className="sticky top-24">
                 <div className="rounded-xl border border-border bg-card p-5">
                   <div className="inline-flex items-center gap-2 text-sm font-bold text-foreground mb-3">
-                    <List className="w-4 h-4 text-[#CC1C01]" /> Mục lục
+                    <List className="w-4 h-4 text-primary" /> Mục lục
                   </div>
                   <ul className="space-y-2 text-sm max-h-[70vh] overflow-y-auto pr-1">
                     {headings.map((h) => {
@@ -751,8 +751,8 @@ const BlogPostPage = () => {
                             href={`#${h.id}`}
                             className={`block py-1.5 pl-3 border-l-2 transition-colors ${
                               active
-                                ? "border-[#CC1C01] text-[#CC1C01] font-semibold"
-                                : "border-transparent text-muted-foreground hover:text-[#CC1C01] hover:border-[#CC1C01]/40"
+                                ? "border-primary text-primary font-semibold"
+                                : "border-transparent text-muted-foreground hover:text-primary hover:border-primary/40"
                             }`}
                           >
                             {h.text}
@@ -770,7 +770,7 @@ const BlogPostPage = () => {
         {/* Related */}
         {related.length > 0 && (
           <section className="max-w-[1100px] mx-auto px-4 mt-16">
-            <h2 className="text-2xl md:text-3xl font-heading font-extrabold text-[#4D0D0D] dark:text-foreground">
+            <h2 className="text-2xl md:text-3xl font-heading font-extrabold text-brand-brown dark:text-foreground">
               Bài viết liên quan
             </h2>
             <p className="mt-1 text-muted-foreground">
