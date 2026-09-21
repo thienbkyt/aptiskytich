@@ -67,7 +67,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
     }`;
 
   return (
-    <div className="p-4">
+    <div className="bg-exam-surface p-4 text-exam-text">
       <div className="flex items-start justify-between gap-3 mb-3">
         <p className="text-xs font-bold text-exam-accent uppercase tracking-wide">
           ✨ Dựng bài nhanh
@@ -111,7 +111,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
       ) : (
         <>
           {outline.targetWords && (
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-xs text-exam-text-muted mb-3">
               Mục tiêu: {outline.targetWords} từ
             </p>
           )}
@@ -138,7 +138,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
           <div className="space-y-5">
             {activeGroup && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">
+                <p className="text-xs text-exam-text-muted mb-2">
                   {activeGroup.question} · ~{activeGroup.seconds} giây
                 </p>
                 <div className="space-y-2">
@@ -156,7 +156,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
                           onChange={(e) =>
                             setChoices((p) => ({ ...p, [it.no]: Number(e.target.value) }))
                           }
-                          className="bg-amber-100 border rounded px-1.5 py-0.5 text-sm max-w-full"
+                          className="max-w-full rounded border border-exam-border bg-exam-accent-soft/15 px-1.5 py-0.5 text-sm text-exam-text outline-none focus:border-exam-accent focus:ring-2 focus:ring-exam-accent/40"
                         >
                           {it.options.map((o, oi) => (
                             <option key={oi} value={oi}>
@@ -173,7 +173,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
             )}
           </div>
 
-          <div className="mt-5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4">
+          <div className="mt-5 rounded-lg border border-exam-border bg-exam-accent-soft/10 p-4">
             <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
               Bài của bạn — đọc to 3 lần
             </p>
@@ -183,7 +183,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQue
             </p>
           </div>
 
-          <p className="text-xs text-muted-foreground mt-3">
+          <p className="text-xs text-exam-text-muted mt-3">
             Đây là gợi ý — hãy thay bằng chuyện của bạn, đừng học thuộc nguyên bài.
           </p>
         </>

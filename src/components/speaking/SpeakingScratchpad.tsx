@@ -88,7 +88,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
       </div>
 
       <textarea
-        className={`w-full min-h-0 resize-none border border-exam-border bg-exam-surface outline-none px-4 py-3 text-sm leading-relaxed text-exam-text caret-exam-accent selection:bg-exam-accent/30 placeholder:text-exam-text-muted ${showOutline ? "shrink-0" : "flex-1"}`}
+        className={`w-full min-h-0 resize-none border border-exam-border bg-exam-surface outline-none px-4 py-3 text-sm leading-relaxed text-exam-text caret-exam-accent selection:bg-exam-accent/30 placeholder:text-exam-text-muted focus:border-exam-accent focus:ring-2 focus:ring-inset focus:ring-exam-accent/40 ${showOutline ? "shrink-0" : "flex-1"}`}
         style={showOutline ? { height: `${noteRatio}%` } : undefined}
         placeholder="Gõ ý tưởng của bạn ở đây…"
         value={note}
@@ -124,7 +124,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
             <div className="w-8 h-0.5 rounded-full bg-exam-text-muted" />
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto border-t border-exam-border bg-exam-accent-soft/5">
+          <div className="flex-1 min-h-0 overflow-y-auto border-t border-exam-border bg-exam-surface">
             <SpeakingOutlineHelper outlineB1={outlineB1} outlineB2={outlineB2} currentQuestion={currentQuestion} />
           </div>
         </>
