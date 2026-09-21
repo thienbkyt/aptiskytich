@@ -75,8 +75,8 @@ const WritingPart3Questions = ({
               value={answers[i] || ""}
             />
             {showSample && (
-              <div className="mt-3 bg-white rounded-xl shadow-sm p-4 border-l-4 border-[#24085a]">
-                <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-1">
+              <div className="mt-3 bg-exam-surface rounded-xl shadow-sm p-4 border-l-4 border-exam-accent">
+                <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-1">
                   💡 Đáp án mẫu
                 </p>
                 <p className="text-sm text-foreground font-medium leading-relaxed">{q.sampleAnswer}</p>

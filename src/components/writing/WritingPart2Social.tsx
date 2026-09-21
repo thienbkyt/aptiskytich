@@ -68,7 +68,7 @@ const WritingPart2Social = ({
         data-gramm_editor="false"
         data-enable-grammarly="false"
         onChange={(e) => onAnswerChange(clampWords(e.target.value, WRITING_WORD_LIMITS.task2))}
-        className="min-h-[120px] w-full rounded-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
+        className="min-h-[120px] w-full rounded-md border border-exam-border bg-exam-surface p-3 text-sm text-exam-text caret-exam-accent selection:bg-exam-accent/30 selection:text-exam-text focus:outline-none focus:ring-2 focus:ring-exam-accent focus:ring-offset-1 placeholder:text-exam-text-muted whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
       />
 
       <div className="flex justify-end mt-1.5">
@@ -78,8 +78,8 @@ const WritingPart2Social = ({
       </div>
 
       {showSample && data.sampleAnswer && (
-        <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
-          <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+        <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+          <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
             💡 Bài viết mẫu
           </p>
           <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{data.sampleAnswer}</p>

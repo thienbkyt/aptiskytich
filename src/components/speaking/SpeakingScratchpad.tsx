@@ -59,15 +59,15 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
   return (
     <div
       ref={rootRef}
-      className="fixed z-[95] flex flex-col bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+      className="fixed z-[95] flex flex-col bg-exam-surface rounded-xl shadow-xl border border-exam-border overflow-hidden"
       style={{ right: 24, bottom: 96, width: size.w, height: size.h }}
     >
       <div
-        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize touch-none hover:bg-[#24085a]/20"
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize touch-none hover:bg-exam-accent-soft/20"
         onPointerDown={(e) => startResize(e, "left")}
       />
       <div
-        className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize touch-none hover:bg-[#24085a]/20"
+        className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize touch-none hover:bg-exam-accent-soft/20"
         onPointerDown={(e) => startResize(e, "top")}
       />
       <div
@@ -75,12 +75,12 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
         onPointerDown={(e) => startResize(e, "corner")}
       />
 
-      <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-200">
-        <span className="text-sm font-semibold text-[#24085a]">Nháp</span>
+      <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-exam-border">
+        <span className="text-sm font-semibold text-exam-accent">Nháp</span>
         <button
           type="button"
           onClick={onClose}
-          className="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="p-1 rounded-full text-exam-text-muted hover:bg-exam-border/40 hover:text-exam-text"
           aria-label="Đóng nháp"
         >
           <X className="w-4 h-4" />
@@ -88,7 +88,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
       </div>
 
       <textarea
-        className={`w-full min-h-0 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-gray-900 placeholder:text-gray-400 ${showOutline ? "shrink-0" : "flex-1"}`}
+        className={`w-full min-h-0 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-exam-text caret-exam-accent selection:bg-exam-accent/30 placeholder:text-exam-text-muted ${showOutline ? "shrink-0" : "flex-1"}`}
         style={showOutline ? { height: `${noteRatio}%` } : undefined}
         placeholder="Gõ ý tưởng của bạn ở đây…"
         value={note}
@@ -99,7 +99,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
       {showOutline && (
         <>
           <div
-            className="shrink-0 h-2 cursor-ns-resize touch-none bg-gray-100 hover:bg-[#24085a]/20 flex items-center justify-center"
+            className="shrink-0 h-2 cursor-ns-resize touch-none bg-exam-border/40 hover:bg-exam-accent-soft/20 flex items-center justify-center"
             onPointerDown={(e) => {
               e.preventDefault();
               const root = rootRef.current;
@@ -121,10 +121,10 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
               window.addEventListener("pointerup", onUp);
             }}
           >
-            <div className="w-8 h-0.5 rounded-full bg-gray-400" />
+            <div className="w-8 h-0.5 rounded-full bg-exam-text-muted" />
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto border-t border-gray-200 bg-[#24085a]/5">
+          <div className="flex-1 min-h-0 overflow-y-auto border-t border-exam-border bg-exam-accent-soft/5">
             <SpeakingOutlineHelper outlineB1={outlineB1} outlineB2={outlineB2} currentQuestion={currentQuestion} />
           </div>
         </>
@@ -134,7 +134,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
         <button
           type="button"
           onClick={() => setShowOutline((v) => !v)}
-          className="shrink-0 border-t border-gray-200 px-4 py-2.5 text-sm font-semibold text-[#24085a] hover:bg-gray-50"
+          className="shrink-0 border-t border-exam-border px-4 py-2.5 text-sm font-semibold text-exam-accent hover:bg-exam-border/30"
         >
           {showOutline ? "Ẩn form gợi ý" : "Gợi ý form"}
         </button>

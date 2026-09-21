@@ -485,7 +485,7 @@ const WritingExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
+      <div className="min-h-screen bg-exam-surface pl-20 pt-10 font-sans text-exam-text">
         <RotateDeviceOverlay />
         {adminControls}
         {hasStarted && (
@@ -493,22 +493,22 @@ const WritingExamEngine = ({
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
-        <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
+        <p className="text-sm text-exam-text mb-2">Aptis General Practice Test</p>
         <h1 className="text-xl font-bold mb-6">Writing Practice Test {testTitle}</h1>
         <div className="flex gap-16 mb-8">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Number of Questions</p>
+            <p className="text-xs text-exam-text-muted mb-1">Number of Questions</p>
             <p className="font-bold">4</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Time Allowed</p>
+            <p className="text-xs text-exam-text-muted mb-1">Time Allowed</p>
             <p className="font-bold">{Math.ceil(timeLimit / 60)} min</p>
           </div>
         </div>
         <p className="text-sm font-bold mb-4">Assessment Description</p>
         <button
           onClick={() => setPhase("writing_intro")}
-          className="bg-[#2D1B69] text-white rounded px-5 py-2.5 hover:bg-[#1f1149] transition-colors"
+          className="bg-exam-accent text-exam-accent-foreground rounded px-5 py-2.5 hover:bg-exam-accent/90 transition-colors"
         >
           Start Assessment
         </button>
@@ -518,7 +518,7 @@ const WritingExamEngine = ({
 
   if (phase === "writing_intro") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-surface flex flex-col">
         <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
@@ -527,7 +527,7 @@ const WritingExamEngine = ({
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
-        <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
+        <div className="flex-1 bg-exam-surface pl-[80px] pt-[40px] font-sans text-exam-text">
           <h1 className="text-xl mb-4">Aptis General Writing Instructions</h1>
           <p className="font-bold mb-2">Writing</p>
           {fullFlow ? (
@@ -574,7 +574,7 @@ const WritingExamEngine = ({
       return [];
     })();
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
@@ -627,7 +627,7 @@ const WritingExamEngine = ({
     (partType === "task4" && !part4Data);
   if (phase === "practice" && !reviewMode && missingData) {
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
@@ -648,7 +648,7 @@ const WritingExamEngine = ({
   const isLast = isLastPart ?? true;
   return (
     <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
-    <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
+    <div className={`bg-exam-bg flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
       {quotaModal && (
         <UpgradeLock
           asModal

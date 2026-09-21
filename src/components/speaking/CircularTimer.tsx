@@ -15,12 +15,12 @@ const CircularTimer = ({ timeLeft, totalTime, label, isRecording, isPrep }: Circ
   const progress = totalTime > 0 ? (timeLeft / totalTime) : 1;
   const strokeDashoffset = circumference * (1 - progress);
 
-  const strokeColor = isRecording ? "#24085a" : "#24085a";
-  const bgColor = isRecording ? "bg-white" : "bg-white";
+  const strokeColor = "hsl(var(--exam-accent))";
+  const bgColor = isRecording ? "bg-exam-surface" : "bg-exam-surface";
 
   return (
     <div className={`${bgColor} rounded-2xl shadow-lg p-6 flex flex-col items-center gap-3 min-w-[200px]`}>
-      <p className={`text-sm font-bold ${isRecording ? "text-red-600" : "text-[#24085a]"}`}>
+      <p className={`text-sm font-bold ${isRecording ? "text-red-600" : "text-exam-accent"}`}>
         {label}
       </p>
 
@@ -29,7 +29,7 @@ const CircularTimer = ({ timeLeft, totalTime, label, isRecording, isPrep }: Circ
           <circle
             cx="70" cy="70" r={radius}
             fill="none"
-            stroke="#e5e7eb"
+            stroke="hsl(var(--exam-border))"
             strokeWidth="4"
           />
           <motion.circle
@@ -54,9 +54,9 @@ const CircularTimer = ({ timeLeft, totalTime, label, isRecording, isPrep }: Circ
             </motion.div>
           )}
           {isPrep && !isRecording && (
-            <Mic className="w-5 h-5 text-[#24085a] mb-1 opacity-50" />
+            <Mic className="w-5 h-5 text-exam-accent mb-1 opacity-50" />
           )}
-          <span className="text-3xl font-bold text-[#24085a] tabular-nums">{timeLeft}s</span>
+          <span className="text-3xl font-bold text-exam-accent tabular-nums">{timeLeft}s</span>
         </div>
       </div>
 
