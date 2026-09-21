@@ -82,8 +82,8 @@ const WritingPart4TwoEmails = ({
           value={informalAnswer}
         />
         {showSample && informalSample && (
-          <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
-            <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+          <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+            <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
               💡 Bài viết mẫu
             </p>
             <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{informalSample}</p>
@@ -103,8 +103,8 @@ const WritingPart4TwoEmails = ({
           value={formalAnswer}
         />
         {showSample && formalSample && (
-          <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
-            <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+          <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+            <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
               💡 Bài viết mẫu
             </p>
             <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{formalSample}</p>

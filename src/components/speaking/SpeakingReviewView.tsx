@@ -115,9 +115,9 @@ const SpeakingReviewView = ({
       <div className="flex px-4 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: same layout as exam-taking screen */}
         <div className="flex-1">
-          <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
-            <p className="text-xs text-gray-500 mb-1">Speaking</p>
-            <p className="text-sm font-bold text-gray-900 mb-6">
+          <div className="bg-exam-surface rounded-xl shadow-sm p-8 min-h-[400px]">
+            <p className="text-xs text-exam-text-muted mb-1">Speaking</p>
+            <p className="text-sm font-bold text-exam-text mb-6">
               {isPart4 ? `Part ${partNumber} of ${totalParts}` : `Question ${rIdx + 1} of ${reviewTotal}`}
             </p>
 
@@ -139,33 +139,33 @@ const SpeakingReviewView = ({
             )}
 
             {partType === "part4" && part4Data && (
-              <div className="bg-gray-50 rounded-lg p-5 mb-4">
-                <p className="font-bold text-gray-900 mb-3">Topic: {part4Data.topic}</p>
+              <div className="bg-exam-border/30 rounded-lg p-5 mb-4">
+                <p className="font-bold text-exam-text mb-3">Topic: {part4Data.topic}</p>
                 {part4Data.imageUrl && (
-                  <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 max-w-md">
+                  <div className="mb-4 rounded-lg overflow-hidden border border-exam-border max-w-md">
                     <SignedImage src={part4Data.imageUrl} alt="Part 4 topic" className="w-full h-56 object-cover" />
                   </div>
                 )}
                 <ul className="space-y-1.5 mb-3">
                   {part4Data.questions.map((q, i) => (
-                    <li key={i} className="text-sm text-gray-700">• {q}</li>
+                    <li key={i} className="text-sm text-exam-text">• {q}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             {partType !== "part4" && (
-              <p className="text-sm text-gray-800 mt-4">{prompt}</p>
+              <p className="text-sm text-exam-text mt-4">{prompt}</p>
             )}
           </div>
         </div>
 
         {/* Right: review panel — audio + AI grading */}
         <div className="w-[340px] shrink-0 space-y-3">
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-exam-surface rounded-xl shadow-sm p-4">
             <p className="text-xs font-semibold text-muted-foreground mb-2">Bài ghi âm của bạn</p>
             {audioUrl === "__EXPIRED__" ? (
-              <p className="text-xs text-gray-500 italic leading-relaxed">
+              <p className="text-xs text-exam-text-muted italic leading-relaxed">
                 Bản ghi âm đã hết hạn lưu trữ (7 ngày). Điểm, nhận xét và transcript vẫn được giữ đầy đủ.
               </p>
             ) : audioUrl ? (
@@ -176,7 +176,7 @@ const SpeakingReviewView = ({
           </div>
 
           {(!g || "error" in g) ? (
-            <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+            <div className="bg-exam-surface rounded-xl shadow-sm p-4 space-y-3">
               <p className="text-xs text-muted-foreground italic">
                 {g && "error" in g ? `Không chấm được câu này: ${g.error}` : "Chưa có kết quả chấm cho câu này."}
               </p>
@@ -198,15 +198,15 @@ const SpeakingReviewView = ({
             </div>
           ) : (
             <>
-              <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+              <div className="bg-exam-surface rounded-xl shadow-sm p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
                   <p className="text-sm font-bold text-primary">
                     {g.partScore.toFixed(1)} / {g.maxPoints}
                   </p>
                 </div>
-                <div className="rounded-lg border border-[#24085a]/20 bg-[#24085a]/5 px-3 py-2">
-                  <p className="text-[11px] font-semibold text-[#24085a] mb-0.5">📐 Tiêu chí chấm</p>
+                <div className="rounded-lg border border-exam-accent-soft/20 bg-exam-accent-soft/5 px-3 py-2">
+                  <p className="text-[11px] font-semibold text-exam-accent mb-0.5">📐 Tiêu chí chấm</p>
                   <p className="text-[11px] text-foreground/80 leading-snug">
                     AI Kỳ Tích chấm dựa trên: trả lời đúng & đủ ý đề · ngữ pháp · từ vựng · phát âm · độ trôi chảy.
                   </p>

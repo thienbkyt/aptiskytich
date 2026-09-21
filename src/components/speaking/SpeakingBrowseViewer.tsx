@@ -70,8 +70,8 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const cardCls = (active: boolean) =>
     `flex-1 text-left rounded-xl border p-3 transition-colors ${
       active
-        ? "bg-[#24085a] text-white border-[#24085a]"
-        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+        ? "bg-exam-accent text-white border-exam-accent"
+        : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-accent/40"
     }`;
 
   const samplePairs = useMemo(() => {
@@ -266,8 +266,8 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                 const cardCls = (active: boolean) =>
                   `flex-1 text-left rounded-xl border p-3 transition-colors ${
                     active
-                      ? "bg-[#24085a] text-white border-[#24085a]"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                      ? "bg-exam-accent text-white border-exam-accent"
+                      : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-accent/40"
                   }`;
                 return (
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
