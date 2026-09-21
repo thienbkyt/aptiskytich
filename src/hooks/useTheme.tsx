@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
-type Theme = "light" | "dark" | "auto";
+type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,21 +11,16 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-function getSystemTheme(): "light" | "dark" {
-  try {
-    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  } catch {
-    return "light";
-  }
+function getInitialTheme(): Theme {
+  const stored = safeLocalStorage.getItem("theme");
+  if (stored === "dark") return "dark";
+  // "auto" (legacy) or anything else falls back to light; overwrite legacy value.
+  if (stored === "auto") safeLocalStorage.setItem("theme", "light");
+  return "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    return (safeLocalStorage.getItem("theme") as Theme) || "light";
-  });
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(
-    theme === "auto" ? getSystemTheme() : theme
-  );
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 
   const setTheme = (t: Theme) => {
     setThemeState(t);
@@ -33,32 +28,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const resolved = theme === "auto" ? getSystemTheme() : theme;
-    setResolvedTheme(resolved);
-
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(resolved);
-
-    if (theme === "auto") {
-      const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-      const handler = (e: MediaQueryListEvent) => {
-        const newTheme = e.matches ? "dark" : "light";
-        setResolvedTheme(newTheme);
-        root.classList.remove("light", "dark");
-        root.classList.add(newTheme);
-      };
-      if (mq?.addEventListener) mq.addEventListener("change", handler);
-      else mq?.addListener?.(handler as any);
-      return () => {
-        if (mq?.removeEventListener) mq.removeEventListener("change", handler);
-        else mq?.removeListener?.(handler as any);
-      };
-    }
+    root.classList.add(theme);
   }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme: theme }}>
       {children}
     </ThemeContext.Provider>
   );
