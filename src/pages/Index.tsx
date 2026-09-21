@@ -182,7 +182,7 @@ const Index = () => {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="text-base px-8 h-12 w-full sm:w-auto rounded-full bg-white border-2 border-primary text-primary hover:bg-primary/5"
+                      className="text-base px-8 h-12 w-full sm:w-auto rounded-full bg-white border-2 border-primary text-primary dark:text-primary hover:bg-primary/5"
                     >
                       Bắt đầu luyện tập
                     </Button>
@@ -453,7 +453,7 @@ const Index = () => {
                         {p.mock === "reading" && (
                           <div className="p-5 md:p-6 bg-white">
                             <div className="flex items-center justify-between mb-4">
-                              <div className="text-xs font-bold text-[#4D0D0D]">Reading · Part 2</div>
+                              <div className="text-xs font-bold text-brand-brown">Reading · Part 2</div>
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                                 <Timer className="w-3 h-3" /> 18:42
                               </div>

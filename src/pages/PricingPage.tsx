@@ -425,7 +425,7 @@ export default function PricingPage() {
         <div
           className={cn(
             "flex-1 rounded-xl bg-card p-5 flex flex-col text-center",
-            hero ? "border-2 border-[#CC1C01]" : "border-[0.5px] border-border",
+            hero ? "border-2 border-primary" : "border-[0.5px] border-border",
           )}
           style={voucherOn && !eligible ? { opacity: 0.55 } : undefined}
         >
@@ -466,7 +466,7 @@ export default function PricingPage() {
             <span
               className={cn(
                 "font-extrabold tracking-tight leading-none",
-                hero ? "text-[44px] text-[#CC1C01]" : "text-[38px] text-foreground",
+                hero ? "text-[44px] text-primary" : "text-[38px] text-foreground",
               )}
             >
               {pd != null ? formatVnd(pd) : formatVnd(plan.price_vnd)}
@@ -478,7 +478,7 @@ export default function PricingPage() {
             <div
               className={cn(
                 "inline-flex items-baseline gap-2 rounded-full px-3 py-1.5",
-                hero ? "bg-[#CC1C01]/10" : "bg-muted",
+                hero ? "bg-primary/10" : "bg-muted",
               )}
             >
               {voucherPrice != null ? (
@@ -486,12 +486,12 @@ export default function PricingPage() {
                   <span className="text-[12px] text-muted-foreground line-through">
                     {formatVnd(plan.price_vnd)}
                   </span>
-                  <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                  <span className={cn("text-[14px] font-bold", hero ? "text-primary" : "text-foreground")}>
                     {formatVnd(voucherPrice)}
                   </span>
                 </>
               ) : (
-                <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                <span className={cn("text-[14px] font-bold", hero ? "text-primary" : "text-foreground")}>
                   {formatVnd(plan.price_vnd)}
                 </span>
               )}
@@ -512,7 +512,7 @@ export default function PricingPage() {
 
           {hero && cheaper != null && (
             <p
-              className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-[#CC1C01]"
+              className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-primary"
               style={{ backgroundColor: "rgba(204,28,1,0.08)" }}
             >
               Rẻ hơn ~{cheaper}%/ngày so với gói 1 tháng — lượt chấm AI cao nhất
@@ -525,7 +525,7 @@ export default function PricingPage() {
               className={cn(
                 "w-full",
                 hero
-                  ? "bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground"
+                  ? "bg-primary hover:bg-brand-brown text-primary-foreground"
                   : "border-border text-foreground hover:bg-muted",
               )}
               disabled={buying === plan.key}
@@ -549,7 +549,7 @@ export default function PricingPage() {
             {planDiffs(plan).map((b) => (
               <li key={b} className="flex items-start gap-2 text-[13px] text-foreground">
                 <Check
-                  className={cn("mt-[3px] flex-shrink-0 w-[14px] h-[14px]", hero ? "text-[#CC1C01]" : "text-foreground")}
+                  className={cn("mt-[3px] flex-shrink-0 w-[14px] h-[14px]", hero ? "text-primary" : "text-foreground")}
                   strokeWidth={3}
                 />
                 <span className="flex-1">{b}</span>
@@ -579,7 +579,7 @@ export default function PricingPage() {
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Hero */}
           <div className="text-center">
-            <Badge className="bg-[#FEAD5F]/20 text-[#CC1C01] border-0 mb-3">
+            <Badge className="bg-accent/20 text-primary border-0 mb-3">
               <Sparkles className="w-3.5 h-3.5 mr-1" /> Bảng giá
             </Badge>
             <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground">
@@ -603,7 +603,7 @@ export default function PricingPage() {
                   key={text}
                   className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-[12px] text-foreground"
                 >
-                  <Icon className="w-3.5 h-3.5 text-[#CC1C01]" />
+                  <Icon className="w-3.5 h-3.5 text-primary" />
                   <span className="font-semibold">{text}</span>
                 </span>
               ))}
@@ -641,12 +641,12 @@ export default function PricingPage() {
                   style={{ backgroundColor: "rgba(204,28,1,0.06)", border: "1px dashed #CC1C01", borderRadius: 12 }}
                 >
                   {voucherExpired && (
-                    <p className="mb-2 text-[12px] font-medium text-[#B45309] dark:text-[#FEAD5F]">
+                    <p className="mb-2 text-[12px] font-medium text-[#B45309] dark:text-accent">
                       {voucherExpired.message}
                     </p>
                   )}
                   <p className="inline-flex items-center gap-1.5 text-[15px] font-bold text-foreground">
-                    <Ticket className="w-4 h-4 text-[#CC1C01]" /> Có mã ưu đãi?
+                    <Ticket className="w-4 h-4 text-primary" /> Có mã ưu đãi?
                   </p>
                   <p className="text-[12px] text-muted-foreground mt-0.5 mb-3">
                     Nhập mã trước khi chọn gói để được cộng thêm ngày và lượt chấm AI.
@@ -711,13 +711,13 @@ export default function PricingPage() {
           {/* Gói 6 tháng — dòng nổi bật */}
           {!loading && halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
             <div
-              className="mt-5 rounded-xl border border-[#CC1C01]/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className="mt-5 rounded-xl border border-primary/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               style={{ backgroundColor: "rgba(254,173,95,0.12)" }}
             >
               <div className="text-center sm:text-left">
                 <p className="text-[13px] font-bold text-foreground">
-                  Ôn dài hơi hơn? <span className="text-[#CC1C01]">6 Tháng</span> — chỉ{" "}
-                  <span className="text-[#CC1C01]">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
+                  Ôn dài hơi hơn? <span className="text-primary">6 Tháng</span> — chỉ{" "}
+                  <span className="text-primary">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
                 </p>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
                   {formatVnd(halfYearPlan.price_vnd)} cho {halfYearPlan.duration_days} ngày
@@ -725,7 +725,7 @@ export default function PricingPage() {
                 </p>
               </div>
               <Button
-                className="bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground shrink-0"
+                className="bg-primary hover:bg-brand-brown text-primary-foreground shrink-0"
                 disabled={buying === halfYearPlan.key}
                 onClick={() => onPick(halfYearPlan)}
               >
@@ -742,7 +742,7 @@ export default function PricingPage() {
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
               {allIncluded.map((f) => (
                 <div key={f} className="flex items-start gap-2 text-[13px] text-muted-foreground">
-                  <Check className="mt-[3px] flex-shrink-0 w-[14px] h-[14px] text-[#CC1C01]" strokeWidth={3} />
+                  <Check className="mt-[3px] flex-shrink-0 w-[14px] h-[14px] text-primary" strokeWidth={3} />
                   <span className="flex-1">{f}</span>
                 </div>
               ))}
@@ -757,7 +757,7 @@ export default function PricingPage() {
             <div className="text-center">
               <button
                 onClick={() => setShowCompare((v) => !v)}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-[#CC1C01] transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
               >
                 So sánh chi tiết Miễn phí vs Trả phí
                 <ChevronDown className={cn("w-4 h-4 transition-transform", showCompare && "rotate-180")} />
@@ -778,7 +778,7 @@ export default function PricingPage() {
                     <th className="text-left p-3 text-sm font-semibold text-foreground">Tính năng</th>
                     <th className="p-3 text-sm font-semibold text-center text-muted-foreground">Miễn phí</th>
                     <th
-                      className="p-3 text-sm font-semibold text-center text-[#CC1C01] rounded-t-xl"
+                      className="p-3 text-sm font-semibold text-center text-primary rounded-t-xl"
                       style={{
                         backgroundColor: "rgba(204,28,1,0.06)",
                         borderTop: "1px solid rgba(204,28,1,0.2)",
@@ -839,7 +839,7 @@ export default function PricingPage() {
         <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Crown className="w-5 h-5 text-[#CC1C01]" />
+              <Crown className="w-5 h-5 text-primary" />
               Thanh toán gói {picked?.label}
             </DialogTitle>
             <DialogDescription>
@@ -851,7 +851,7 @@ export default function PricingPage() {
 
           {payInfo?.accountNumber ? (
             <>
-              <div className="rounded-xl border-2 border-dashed border-[#CC1C01]/40 bg-[#CC1C01]/5 p-4 space-y-2">
+              <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 space-y-2">
                 <div className="flex justify-between gap-3 text-sm">
                   <span className="text-muted-foreground shrink-0">Ngân hàng</span>
                   <span className="font-semibold text-foreground text-right">{bankNameFromBin(payInfo.bin)}</span>
@@ -880,9 +880,9 @@ export default function PricingPage() {
                     <span className="font-semibold text-foreground text-right">{payInfo.accountName}</span>
                   </div>
                 )}
-                <div className="flex justify-between gap-3 text-sm pt-2 border-t border-[#CC1C01]/20">
+                <div className="flex justify-between gap-3 text-sm pt-2 border-t border-primary/20">
                   <span className="text-muted-foreground shrink-0">Số tiền (chuyển đúng số tiền)</span>
-                  <span className="font-extrabold text-[#CC1C01] text-right">
+                  <span className="font-extrabold text-primary text-right">
                     {payInfo.amount != null ? formatVnd(Number(payInfo.amount)) : ""}
                   </span>
                 </div>

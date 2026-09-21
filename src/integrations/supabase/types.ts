@@ -1887,6 +1887,60 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_pay_huongthao_20260921: {
+        Row: {
+          amount_vnd: number | null
+          at_time: string | null
+          checkout_url: string | null
+          created_at: string | null
+          gateway: string | null
+          id: string | null
+          order_code: number | null
+          paid_at: string | null
+          payos_link_id: string | null
+          plan_key: string | null
+          raw_response: Json | null
+          status: string | null
+          tier: string | null
+          user_id: string | null
+          voucher_code: string | null
+        }
+        Insert: {
+          amount_vnd?: number | null
+          at_time?: string | null
+          checkout_url?: string | null
+          created_at?: string | null
+          gateway?: string | null
+          id?: string | null
+          order_code?: number | null
+          paid_at?: string | null
+          payos_link_id?: string | null
+          plan_key?: string | null
+          raw_response?: Json | null
+          status?: string | null
+          tier?: string | null
+          user_id?: string | null
+          voucher_code?: string | null
+        }
+        Update: {
+          amount_vnd?: number | null
+          at_time?: string | null
+          checkout_url?: string | null
+          created_at?: string | null
+          gateway?: string | null
+          id?: string | null
+          order_code?: number | null
+          paid_at?: string | null
+          payos_link_id?: string | null
+          plan_key?: string | null
+          raw_response?: Json | null
+          status?: string | null
+          tier?: string | null
+          user_id?: string | null
+          voucher_code?: string | null
+        }
+        Relationships: []
+      }
       backup_phu_speaking_20260819: {
         Row: {
           backed_up_at: string | null
@@ -2850,6 +2904,36 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_sub_huongthao_20260921: {
+        Row: {
+          ai_daily_cap: number | null
+          at_time: string | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          at_time?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          at_time?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_urbanfarming_de11_20260826: {
         Row: {
           audio_url: string | null
@@ -3201,6 +3285,57 @@ export type Database = {
           test_result_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_writing_11cu_20260921: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
