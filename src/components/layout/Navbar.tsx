@@ -363,7 +363,7 @@ const Navbar = () => {
         <div className="hidden xl:flex items-center gap-2 shrink-0">
           {user ? (
             <>
-              <div className="absolute h-0 w-0 overflow-visible [&>div>button]:sr-only">
+              <div className="absolute h-0 w-0 overflow-visible [&>div>button]:hidden">
                 <NotificationBell />
               </div>
               <DropdownMenu>
