@@ -453,7 +453,7 @@ const Index = () => {
                         {p.mock === "reading" && (
                           <div className="p-5 md:p-6 bg-white">
                             <div className="flex items-center justify-between mb-4">
-                              <div className="text-xs font-bold text-[#4D0D0D]">Reading · Part 2</div>
+                              <div className="text-xs font-bold text-brand-brown">Reading · Part 2</div>
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                                 <Timer className="w-3 h-3" /> 18:42
                               </div>
