@@ -6,13 +6,15 @@ import {
   BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
-  MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare,
+  MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare, Bell, Sun, Moon, UserRound, LogOut,
   type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
+import { useTheme } from "@/hooks/useTheme";
+import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import ThemeToggle from "@/components/ThemeToggle";
 
 import { prefetchHandlers } from "@/lib/routePrefetch";
@@ -59,13 +61,17 @@ const Navbar = () => {
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moreHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
+  const { theme, setTheme } = useTheme();
+  const { unread_notification_count } = useUserBootstrap();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
@@ -90,6 +96,24 @@ const Navbar = () => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    const handleOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setProfileMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [profileMenuOpen]);
 
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
@@ -348,7 +372,6 @@ const Navbar = () => {
 
         {/* ── Desktop right actions ── */}
         <div className="hidden xl:flex items-center gap-2 shrink-0">
-          <ThemeToggle />
           {isAdmin && (
             <div
               className="relative inline-flex"
@@ -434,24 +457,111 @@ const Navbar = () => {
                   </Button>
                 </Link>
               )}
-              <NotificationBell />
               <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
                   <Flame className="w-4 h-4 text-primary" />
                   Dashboard
                 </Button>
               </Link>
-              <button
-                onClick={() => setProfileOpen(true)}
-                aria-label="Thông tin tài khoản"
-                className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
-              >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="avatar" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                ) : (
-                  (user.email?.[0] ?? "U").toUpperCase()
-                )}
-              </button>
+              <div ref={profileMenuRef} className="relative inline-flex">
+                <button
+                  onClick={() => setProfileMenuOpen((open) => !open)}
+                  aria-label="Mở menu tài khoản"
+                  aria-expanded={profileMenuOpen}
+                  className={`relative w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity ${unread_notification_count > 0 ? "animate-pulse" : ""}`}
+                >
+                  <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="avatar" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    ) : (
+                      (user.email?.[0] ?? "U").toUpperCase()
+                    )}
+                  </span>
+                  {unread_notification_count > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-background" />
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {profileMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full right-0 pt-2 z-50"
+                    >
+                      <div className="w-64 rounded-xl border border-border bg-popover text-popover-foreground p-2 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            window.dispatchEvent(new CustomEvent("kt-open-notifications"));
+                          }}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left hover:bg-muted transition-colors"
+                        >
+                          <Bell className="w-4 h-4 text-primary" />
+                          <span>Thông báo</span>
+                          {unread_notification_count > 0 && (
+                            <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                              {unread_notification_count > 99 ? "99+" : unread_notification_count}
+                            </span>
+                          )}
+                        </button>
+
+                        <div className="my-2 border-t border-border" />
+                        <div className="px-3 pb-1 text-xs font-semibold text-muted-foreground">Giao diện</div>
+                        <button
+                          type="button"
+                          onClick={() => setTheme("light")}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
+                        >
+                          <Sun className="w-4 h-4" />
+                          <span>Sáng</span>
+                          {theme === "light" && <span className="ml-auto text-primary">✓</span>}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTheme("dark")}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
+                        >
+                          <Moon className="w-4 h-4" />
+                          <span>Tối</span>
+                          {theme === "dark" && <span className="ml-auto text-primary">✓</span>}
+                        </button>
+
+                        <div className="my-2 border-t border-border" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            setProfileOpen(true);
+                          }}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left hover:bg-muted transition-colors"
+                        >
+                          <UserRound className="w-4 h-4" />
+                          Thông tin tài khoản
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            signOut();
+                          }}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left text-destructive hover:bg-muted transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="absolute pointer-events-none opacity-0 [&>div>button]:hidden">
+                  <NotificationBell />
+                </div>
+              </div>
             </>
           ) : (
             <>
