@@ -329,7 +329,7 @@ const GrammarExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         {!reviewMode && !submitted && (
           <AdminExamControls
@@ -362,7 +362,7 @@ const GrammarExamEngine = ({
 
   if (phase === "grammar_intro") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         {!reviewMode && !submitted && (
           <AdminExamControls
@@ -377,7 +377,7 @@ const GrammarExamEngine = ({
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
-        <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
+        <div className="flex-1 pl-[80px] pt-[40px] font-sans text-exam-text">
           <h1 className="text-xl mb-6">Aptis General Grammar & Vocabulary Instructions</h1>
           <p className="font-bold mb-2">Grammar & Vocabulary</p>
           <p className="mb-2">The test has {groups.length} questions.</p>
@@ -455,7 +455,7 @@ const GrammarExamEngine = ({
   const isLastGroup = currentGroupIdx === groups.length - 1;
 
   return (
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+    <div className="min-h-screen bg-exam-bg flex flex-col">
       <RotateDeviceOverlay />
       {phase === "practice" && !submitted && (
         <AdminExamControls
@@ -487,10 +487,10 @@ const GrammarExamEngine = ({
           {/* Top bar */}
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-sm font-heading font-bold text-gray-900">
+              <p className="text-sm font-heading font-bold text-exam-text">
                 Grammar & Vocabulary
               </p>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-exam-text">
               {`Question ${currentGroupIdx + 1} of ${groups.length}`}
               </p>
             </div>
@@ -499,13 +499,13 @@ const GrammarExamEngine = ({
                 onClick={() => toggleBookmark(currentIndex)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
                   bookmarked.has(currentIndex)
-                    ? "border-[#24085a] bg-[#24085a]/10 text-[#24085a]"
-                    : "border-gray-300 text-gray-500 hover:border-[#24085a]/30"
+                    ? "border-exam-accent bg-exam-accent-soft/10 text-exam-accent"
+                    : "border-exam-border text-exam-text-muted hover:border-exam-accent/30"
                 }`}
               >
                 <Bookmark
                   className={`w-4 h-4 ${
-                    bookmarked.has(currentIndex) ? "fill-[#24085a]" : ""
+                    bookmarked.has(currentIndex) ? "fill-exam-accent" : ""
                   }`}
                 />
                 Bookmark
@@ -559,13 +559,13 @@ const GrammarExamEngine = ({
                 const showExampleRow =
                   gType === "synonym" || (isCollocation && !collocationGroupIsSentence);
                 return (
-                <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                <div className="bg-exam-surface rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#24085a]/10 text-[#24085a]">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-exam-accent-soft/10 text-exam-accent">
                       {badge}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-800 mb-5 leading-relaxed">
+                  <p className="text-sm text-exam-text mb-5 leading-relaxed">
                     {instruction}
                   </p>
 
@@ -573,13 +573,13 @@ const GrammarExamEngine = ({
                   {showExampleRow && (
                     <>
                       <div className="flex items-center gap-3 mb-2 opacity-60">
-                        <div className="w-24 text-xs text-gray-500">Example</div>
+                        <div className="w-24 text-xs text-exam-text-muted">Example</div>
                         <div className="flex-1 flex items-center gap-3">
-                          <div className={`w-32 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
+                          <div className={`w-32 px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text`}>
                             big
                           </div>
-                          <span className="text-gray-500 whitespace-nowrap">{separator}</span>
-                          <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
+                          <span className="text-exam-text-muted whitespace-nowrap">{separator}</span>
+                          <div className="w-40 px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text">
                             {isCollocation ? "house" : "large"}
                           </div>
                         </div>
@@ -604,9 +604,9 @@ const GrammarExamEngine = ({
 
                       let triggerCls = "";
                       if (itemCorrect)
-                        triggerCls = "border-emerald-500 bg-emerald-500/10 text-emerald-700";
+                        triggerCls = "border-success bg-success/15 text-success";
                       else if (itemWrong)
-                        triggerCls = "border-destructive bg-destructive/10 text-destructive";
+                        triggerCls = "border-destructive bg-destructive/15 text-destructive";
                       else if (itemBlank)
                         triggerCls = "border-amber-400 bg-amber-50 text-amber-700";
 
@@ -625,7 +625,7 @@ const GrammarExamEngine = ({
                         <div key={idx} className="flex items-center gap-3">
                           {useInlineGap ? (
                             <div className="flex-1 flex items-center gap-2 flex-wrap">
-                              <span className="text-sm text-gray-900">{beforeGap}</span>
+                              <span className="text-sm text-exam-text">{beforeGap}</span>
                               <div className="w-56">
                                 <Select
                                   value={userAns !== null ? String(userAns) : undefined}
@@ -649,10 +649,10 @@ const GrammarExamEngine = ({
                                 </Select>
                               </div>
                               {afterGap && (
-                                <span className="text-sm text-gray-900">{afterGap}</span>
+                                <span className="text-sm text-exam-text">{afterGap}</span>
                               )}
                               {effectiveSubmitted && !itemCorrect && (
-                                <span className="text-xs text-emerald-700">
+                                <span className="text-xs text-success">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
                               )}
@@ -660,11 +660,11 @@ const GrammarExamEngine = ({
                             </div>
                           ) : (
                             <div className="flex-1 flex items-center gap-3">
-                              <div className={`${isAnyDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
+                              <div className={`${isAnyDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-exam-border bg-exam-surface text-sm font-medium text-exam-text`}>
                                 {item.question_text}
                               </div>
                               {!isDefinitionMatching && (
-                                <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                                <span className="text-exam-text-muted whitespace-nowrap">{separator}</span>
                               )}
                               <div className="w-56">
                                 <Select
@@ -689,7 +689,7 @@ const GrammarExamEngine = ({
                                 </Select>
                               </div>
                               {effectiveSubmitted && !itemCorrect && (
-                                <span className="text-xs text-emerald-700">
+                                <span className="text-xs text-success">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
                               )}
@@ -703,7 +703,7 @@ const GrammarExamEngine = ({
                 </div>
                 );
               })() : (
-                <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                <div className="bg-exam-surface rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     {isFillBlank && (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600">
@@ -711,13 +711,13 @@ const GrammarExamEngine = ({
                       </span>
                     )}
                     {!isFillBlank && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#24085a]/10 text-[#24085a]">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-exam-accent-soft/10 text-exam-accent">
                         Multiple Choice
                       </span>
                     )}
                   </div>
 
-                  <h2 className="text-sm font-heading font-bold text-gray-900 mb-6 leading-relaxed">
+                  <h2 className="text-sm font-heading font-bold text-exam-text mb-6 leading-relaxed">
                     {q.question_text}
                   </h2>
 
@@ -730,12 +730,12 @@ const GrammarExamEngine = ({
                           "bg-background hover:bg-muted/50 text-foreground";
                         if (effectiveSubmitted) {
                           if (i === q.correct_answer)
-                            cls = "bg-emerald-500/10 text-emerald-700";
+                            cls = "bg-success/15 text-success";
                           else if (i === selected)
                             cls = "bg-destructive/10 text-destructive";
                           else cls = "bg-background text-muted-foreground";
                         } else if (selected === i) {
-                          cls = "bg-muted-foreground/30 text-foreground";
+                          cls = "bg-exam-accent-soft/15 text-exam-text";
                         }
                         return (
                           <button
@@ -754,7 +754,7 @@ const GrammarExamEngine = ({
                             <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
                               <span>{opt}</span>
                               {effectiveSubmitted && i === q.correct_answer && (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                <CheckCircle2 className="w-4 h-4 text-success" />
                               )}
                               {effectiveSubmitted &&
                                 i === selected &&
@@ -781,15 +781,15 @@ const GrammarExamEngine = ({
                         className={`text-base h-12 ${
                           effectiveSubmitted
                             ? isCorrect(currentIndex)
-                              ? "border-green-500 bg-green-50"
-                              : "border-red-500 bg-red-50"
+                              ? "border-success bg-success/15"
+                              : "border-destructive bg-destructive/15"
                             : ""
                         }`}
                       />
                       {effectiveSubmitted && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-exam-text-muted">
                           Đáp án đúng:{" "}
-                          <span className="font-bold text-green-600">
+                          <span className="font-bold text-success">
                             {q.options[q.correct_answer]}
                           </span>
                         </p>
@@ -804,18 +804,18 @@ const GrammarExamEngine = ({
                       animate={{ opacity: 1, height: "auto" }}
                       className={`mt-4 p-4 rounded-lg ${
                         qIsCorrect
-                          ? "bg-green-50 border border-green-200"
-                          : "bg-red-50 border border-red-200"
+                          ? "bg-success/15 border border-success/40"
+                          : "bg-destructive/15 border border-destructive/40"
                       }`}
                     >
                       <p
                         className={`text-sm font-semibold mb-1 ${
-                          qIsCorrect ? "text-green-600" : "text-red-600"
+                          qIsCorrect ? "text-success" : "text-destructive"
                         }`}
                       >
                         {qIsCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-exam-text-muted">
                         {q.explanation}
                       </p>
                     </motion.div>
