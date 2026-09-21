@@ -164,7 +164,7 @@ function HistorySkeleton() {
 function VocabStudySkeleton() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 pt-[112px] md:pt-16">
+      <main className="flex-1 pt-16">
         {/* Header */}
         <div className="relative overflow-hidden border-b border-border bg-card p-4">
           <div className="section-container flex items-center gap-4">
@@ -193,7 +193,7 @@ function VocabStudySkeleton() {
 function SkillVocabSkeleton() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 pt-[112px] md:pt-16">
+      <main className="flex-1 pt-16">
         {/* Header */}
         <div className="relative overflow-hidden border-b border-border py-10 md:py-14">
           <div className="section-container flex flex-col md:flex-row items-center gap-6">

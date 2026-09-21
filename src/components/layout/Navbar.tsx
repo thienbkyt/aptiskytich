@@ -471,49 +471,16 @@ const Navbar = () => {
         </div>
 
         {/* ── Mobile: theme + hamburger ── */}
-        <div className="xl:hidden flex items-center gap-1 ml-auto">
+        <div className="xl:hidden flex items-center gap-1 ml-auto [&_button]:max-[767px]:h-11 [&_button]:max-[767px]:w-11">
           <ThemeToggle />
           <button
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            className="p-2 rounded-lg hover:bg-muted transition-colors max-[767px]:h-11 max-[767px]:w-11"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
-      </div>
-
-      {/* ── Mobile: secondary nav row (2 primary entry points) ── */}
-      <div className="xl:hidden grid grid-cols-2 gap-2 px-4 py-2 bg-background border-b border-border">
-        <Link
-          to="/thi-thu"
-          {...prefetchHandlers("/thi-thu")}
-          className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition-colors ${
-            isActive("/thi-thu")
-              ? "bg-brand-brown text-white"
-              : "bg-primary text-white hover:brightness-110"
-          }`}
-        >
-          <ClipboardCheck className="w-4 h-4" />
-          Thi thử
-        </Link>
-        <button
-          type="button"
-          onClick={() => {
-            setMobileOpen(true);
-            setMobileSkillOpen(true);
-          }}
-          className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold border transition-colors ${
-            isSkillActive
-              ? "bg-primary/10 border-primary text-primary"
-              : "border-primary text-primary hover:bg-primary/10"
-          }`}
-          aria-label="Mở menu luyện tập từng kỹ năng"
-        >
-          <BookOpen className="w-4 h-4" />
-          Luyện tập
-          <ChevronDown className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       {/* ── Mobile menu ── */}

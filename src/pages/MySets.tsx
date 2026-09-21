@@ -63,7 +63,7 @@ const MySets = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-[112px] md:pt-16">
+      <main className="flex-1 pt-16">
         <section className="border-b border-border bg-card">
           <div className="section-container py-10">
             <div className="flex flex-wrap items-center justify-between gap-4">
