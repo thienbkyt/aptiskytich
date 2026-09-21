@@ -180,6 +180,18 @@
     --shadow-glow-red: 0 0 28px hsl(8 99% 50% / 0.5), 0 0 70px hsl(8 99% 50% / 0.22);
     --shadow-glow-soft: 0 0 24px hsl(8 99% 50% / 0.2);
     --shadow-elevated: 0 16px 50px -10px hsl(0 0% 0% / 0.6), 0 0 0 1px hsl(240 15% 16%);
+
+    /* Exam room tokens (dark) */
+    --exam-bg: 240 8% 10%;
+    --exam-surface: 240 8% 14%;
+    --exam-text: 0 0% 92%;
+    --exam-text-muted: 0 0% 68%;
+    --exam-border: 240 8% 26%;
+    --exam-header: 258 45% 24%;
+    --exam-header-foreground: 0 0% 100%;
+    --exam-accent: 250 80% 72%;
+    --exam-accent-foreground: 240 10% 10%;
+    --exam-accent-soft: 250 80% 72%;
   }
 }
 
