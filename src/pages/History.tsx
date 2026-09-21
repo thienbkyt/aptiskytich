@@ -820,14 +820,7 @@ const History = () => {
                                     {g.customSetTitle ? "Bộ của tôi" : "Full Part"}
                                   </Badge>
                                   {g.ungradedCount > 0 && (
-                                    <span
-                                      className="inline-flex items-center select-none text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                      style={{
-                                        color: "#92400e",
-                                        background: "#fef3c7",
-                                        border: "1px solid #fde68a",
-                                      }}
-                                    >
+                                    <span className="inline-flex items-center select-none text-[10px] font-bold px-2 py-0.5 rounded-full bg-warning/20 text-brand-brown dark:text-warning border border-warning/40">
                                       Chấm chưa đủ
                                     </span>
                                   )}

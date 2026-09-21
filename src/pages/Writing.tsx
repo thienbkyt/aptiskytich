@@ -388,7 +388,7 @@ const Writing = () => {
                   value={task.id}
                   className={`flex-1 min-w-[120px] overflow-hidden text-xs sm:text-sm py-2.5 transition-all ${
                     task.id === "full"
-                      ? "data-[state=active]:bg-[#CC1C01] data-[state=active]:text-white data-[state=active]:shadow-md"
+                      ? "data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md"
                       : "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md"
                   }`}
                 >
@@ -500,7 +500,7 @@ const Writing = () => {
                             <div className="flex flex-col gap-2">
                               <Button
                                 onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true, priorityLabel: activePrio }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
-                                className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
+                                className="w-full gap-1.5 font-semibold bg-primary hover:bg-brand-brown text-primary-foreground"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
                               </Button>
@@ -542,7 +542,7 @@ const Writing = () => {
                           <PriorityBadge label={priorityLabels.get(set.id)?.label} />
 
                           {isNewSet(set) && (
-                            <Badge className="w-fit text-[11px] font-semibold bg-emerald-500 text-white border-0 hover:bg-emerald-500">MỚI</Badge>
+                            <Badge className="w-fit text-[11px] font-semibold bg-success text-success-foreground border-0 hover:bg-success">MỚI</Badge>
                           )}
                         </div>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>

@@ -241,10 +241,10 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
             <button
               type="button"
               onClick={() => (isPro ? setOverlay({ kind: "create" }) : navigate("/pricing"))}
-              className="relative text-left bg-[#CC1C01]/5 border-2 border-[#CC1C01] rounded-xl p-5 flex flex-col h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              className="relative text-left bg-primary/5 border-2 border-primary rounded-xl p-5 flex flex-col h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1 select-none text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#CC1C01] text-white">
+                <span className="inline-flex items-center gap-1 select-none text-[11px] font-semibold px-2.5 py-1 rounded-full bg-primary text-white">
                   {isPro ? (<><Plus className="w-3 h-3" /> Tự tạo</>) : (<><Lock className="w-3 h-3" /> PRO</>)}
                 </span>
               </div>
@@ -256,7 +256,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
               </p>
               <div className="flex-1" />
               <div className="flex justify-end mt-4">
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full bg-[#CC1C01] text-white">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full bg-primary text-white">
                   {isPro ? "Tạo bộ đề" : "Nâng cấp để tạo"} <ArrowRight className="w-4 h-4" />
                 </span>
               </div>
@@ -271,10 +271,10 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
             return (
               <div
                 key={s.id}
-                className="group relative bg-card border-2 border-[#CC1C01] rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
+                className="group relative bg-card border-2 border-primary rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <Badge className="w-fit text-[11px] font-medium bg-[#CC1C01]/10 text-[#CC1C01] border-0">
+                  <Badge className="w-fit text-[11px] font-medium bg-primary/10 text-primary border-0">
                     Bộ của tôi
                   </Badge>
                 </div>
@@ -321,7 +321,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                       touchCustomSetPlayed(s.id).then(invalidate);
                       onStartCustom?.(s);
                     }}
-                    className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                    className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                   >
                     Bắt đầu luyện tập
                     <ArrowRight className="w-4 h-4" />
@@ -363,14 +363,14 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
             >
-              <div className="group relative bg-card border-2 border-[#CC1C01] rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+              <div className="group relative bg-card border-2 border-primary rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
                 {bandLabel && (
                   <div className="absolute top-3 right-3 z-10">
                     <CornerResultBadge label={bandLabel} />
                   </div>
                 )}
                 <div className="flex items-center gap-2 mb-3">
-                  <Badge className="w-fit text-[11px] font-medium bg-[#CC1C01]/10 text-[#CC1C01] border-0">
+                  <Badge className="w-fit text-[11px] font-medium bg-primary/10 text-primary border-0">
                     Full Part
                   </Badge>
                   <ExamTierBadge tier={set.access_tier} locked={isLocked ? isLocked(set) : false} />
@@ -412,7 +412,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                       variant="ghost"
                       size="sm"
                       onClick={() => onLockedClick?.(set)}
-                      className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                      className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                     >
                       <Lock className="w-4 h-4" />
                       Mở khóa
@@ -422,7 +422,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                       variant="ghost"
                       size="sm"
                       onClick={() => onStart(set)}
-                      className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                      className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                     >
                       Bắt đầu luyện tập
                       <ArrowRight className="w-4 h-4" />

@@ -565,7 +565,7 @@ const Listening = () => {
                   value={part.id}
                   className={`flex-1 min-w-[120px] overflow-hidden text-xs sm:text-sm py-2.5 transition-all ${
                     part.id === "full"
-                      ? "data-[state=active]:bg-[#CC1C01] data-[state=active]:text-white data-[state=active]:shadow-md"
+                      ? "data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md"
                       : "data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md"
                   }`}
                 >
@@ -803,7 +803,7 @@ const Listening = () => {
                           <PriorityBadge label={priorityLabels.get(set.id)?.label} />
 
                           {isNewSet(set) && (
-                            <Badge className="w-fit text-[11px] font-semibold bg-emerald-500 text-white border-0 hover:bg-emerald-500">MỚI</Badge>
+                            <Badge className="w-fit text-[11px] font-semibold bg-success text-success-foreground border-0 hover:bg-success">MỚI</Badge>
                           )}
                         </div>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
