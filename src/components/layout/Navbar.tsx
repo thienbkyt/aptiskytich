@@ -558,7 +558,7 @@ const Navbar = () => {
                   )}
                 </AnimatePresence>
 
-                <div className="absolute pointer-events-none opacity-0 [&>div>button]:hidden">
+                <div className="absolute top-0 right-0 [&>div>button]:hidden">
                   <NotificationBell />
                 </div>
               </div>
