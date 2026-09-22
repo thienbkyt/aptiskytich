@@ -22,13 +22,14 @@ interface Props {
   isLast?: boolean;
   hideBottomNav?: boolean;
   hideTimer?: boolean;
+  afterSample?: React.ReactNode;
 }
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
-  hideBottomNav = false, hideTimer = false,
+  hideBottomNav = false, hideTimer = false, afterSample,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
@@ -85,6 +86,8 @@ const WritingPart2Social = ({
           <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{data.sampleAnswer}</p>
         </div>
       )}
+
+      {afterSample}
 
       {!reviewMode && !hideBottomNav && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
