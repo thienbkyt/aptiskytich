@@ -175,6 +175,21 @@ const WritingFullResults = ({
 
         </div>
 
+        {showcaseParts.length > 0 && (
+          <div className="space-y-3 text-left">
+            {showcaseParts.map((sp) => (
+              <ShowcaseSection
+                key={sp.partType}
+                skill="writing"
+                partType={sp.partType}
+                testResultId={sp.testResultId}
+                examSetId={sp.examSetId}
+                rawPart={sp.rawPart}
+              />
+            ))}
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           {parts.length > 0 && (
             <button
