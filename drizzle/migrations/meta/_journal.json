@@ -99,6 +99,13 @@
       "when": 1790069308942,
       "tag": "0013_enable_rls_backup_sync_lab",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790072774557,
+      "tag": "0014_voucher_codes_kind_allow_referral",
+      "breakpoints": true
     }
   ]
 }
