@@ -797,14 +797,9 @@ const WritingExamEngine = ({
             revealAnswers={revealed}
             hideBottomNav={hideBottomNav}
             hideTimer={hideTimer}
-          />
-        )}
-
-        {revealed && !submitted && !reviewMode && examSetId && /^task[2-4]$/.test(partType) && (
-          <ShowcaseInExam
-            examSetId={examSetId}
-            skill="writing"
-            partType={partType}
+            afterSample={revealed && !submitted && !reviewMode && examSetId ? (
+              <ShowcaseInExam examSetId={examSetId} skill="writing" partType={partType} />
+            ) : null}
           />
         )}
 

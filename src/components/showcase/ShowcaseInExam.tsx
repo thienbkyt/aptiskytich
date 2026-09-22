@@ -87,10 +87,10 @@ const ShowcaseInExam = ({ examSetId, skill, partType }: Props) => {
   };
 
   return (
-    <section className="mt-4 rounded-xl border border-exam-border border-l-4 border-l-[hsl(43_65%_47%)] bg-exam-surface p-4 shadow-sm sm:p-5">
+    <section className="mt-3 rounded-xl border border-exam-border border-l-4 border-l-[hsl(43_65%_47%)] bg-exam-surface p-4 shadow-sm sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-exam-text">
-          🏆 BÀI KỲ TÍCH CỦA ĐỀ NÀY · {total} bài
+          🏆 BẢNG KỲ TÍCH · {total} bài
         </h3>
         <a
           target="_blank"
