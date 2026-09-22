@@ -6,10 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 type PlanItem =
   | { kind: "weak_part"; skill: string; part: string; avg_pct: number; runs: number }
-  | { kind: "key_sets"; sets: { exam_set_id: string; title: string; skill: string; part: string }[] }
   | { kind: "wrong"; count: number; detail: string | null }
-  | { kind: "grammar_error"; group: string; times: number }
-  | { kind: "countdown"; days: number };
+  | { kind: "grammar_error"; group: string; times: number };
 
 const SKILL_LABEL: Record<string, string> = {
   grammar_vocab: "Grammar & Vocabulary",
