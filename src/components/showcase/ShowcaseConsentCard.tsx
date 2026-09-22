@@ -29,14 +29,11 @@ const ShowcaseConsentCard = ({ skill, partType, testResultId, rawPart }: Props) 
   const eligible = !!testResultId && !!user && isShowcasePart(partType) && !!band;
 
   const defaultName =
-    (user?.user_metadata?.full_name as string) ||
-    (user?.user_metadata?.name as string) ||
-    (user?.email ? String(user.email).split("@")[0] : "") ||
-    "";
+    (user?.user_metadata?.full_name as string) || (user?.user_metadata?.name as string) || "";
 
-  const [hidden, setHidden] = useState(
-    () => (eligible ? isShowcaseDismissed(testResultId as string, partType as string) : true),
-  );
+  const [dismissed, setDismissed] = useState(false);
+  const hidden =
+    dismissed || (eligible && isShowcaseDismissed(testResultId as string, partType as string));
   const [name, setName] = useState(defaultName);
   const [anonymous, setAnonymous] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
