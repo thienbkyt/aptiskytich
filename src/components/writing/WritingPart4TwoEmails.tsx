@@ -25,6 +25,7 @@ interface Props {
   isLast?: boolean;
   hideBottomNav?: boolean;
   hideTimer?: boolean;
+  afterSample?: React.ReactNode;
 }
 
 const WritingPart4TwoEmails = ({
@@ -32,7 +33,7 @@ const WritingPart4TwoEmails = ({
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
-  hideBottomNav = false, hideTimer = false,
+  hideBottomNav = false, hideTimer = false, afterSample,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   const [informalSample, formalSample] = (() => {
