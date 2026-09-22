@@ -541,7 +541,7 @@ const Dashboard = () => {
                       <>Đã có dữ liệu <strong className="text-foreground">{d.skillsCovered}/4 kỹ năng</strong> — làm thêm để biết band tổng</>
                     )}
                     {d.streak > 0 && <> · Streak <strong className="text-primary">{d.streak} ngày</strong> 🔥</>}
-                    {" "}— hôm nay luyện tiếp nhé!
+                    {" - "}hôm nay luyện tiếp nhé!
                   </p>
                 </div>
                 <Button asChild variant="glow" size="lg" className="shrink-0">
