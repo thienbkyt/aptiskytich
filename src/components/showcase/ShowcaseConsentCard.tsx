@@ -43,7 +43,7 @@ const ShowcaseConsentCard = ({ skill, partType, testResultId, rawPart }: Props) 
 
   const handleLater = () => {
     dismissShowcase(testResultId as string, partType as string);
-    setHidden(true);
+    setDismissed(true);
   };
 
   const handleSubmit = async () => {
