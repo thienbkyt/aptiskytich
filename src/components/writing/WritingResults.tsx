@@ -4,6 +4,7 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
 import WritingGradingReview from "@/components/writing/WritingGradingReview";
+import ShowcaseSection from "@/components/showcase/ShowcaseSection";
 
 
 interface SubmissionPart {
@@ -23,9 +24,11 @@ interface WritingResultsProps {
   quotaExceeded?: { freeQuota: number; used: number; remaining: number; need?: "pro" | "premium" } | null;
   testResultId?: string | null;
   partType?: string;
+  /** Exam set of this part — used for the Bảng Kỳ Tích samples. */
+  examSetId?: string | null;
 }
 
-const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quotaExceeded, testResultId, partType = "task1" }: WritingResultsProps) => {
+const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quotaExceeded, testResultId, partType = "task1", examSetId }: WritingResultsProps) => {
   const status = useWritingGradingStatus({
     testResultIds: [testResultId],
     expectedParts: [partType],
@@ -98,6 +101,14 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
       </div>
 
       <WritingGradingReview grading={grading} />
+
+      <ShowcaseSection
+        skill="writing"
+        partType={partType}
+        testResultId={testResultId}
+        examSetId={examSetId}
+        rawPart={grading.partScore}
+      />
 
       {/* Submission display */}
       {submission && submission.length > 0 && (
