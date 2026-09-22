@@ -594,6 +594,7 @@ const Dashboard = () => {
 
           {/* GOAL & EXAM COUNTDOWN */}
           <GoalCountdownCard />
+          <TodayPlanCard />
 
 
           {/* VOUCHER / AI CREDITS CARD */}
