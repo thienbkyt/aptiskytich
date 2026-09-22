@@ -121,7 +121,7 @@ const TodayPlanCard = () => {
     <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
       <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground">⚡ Hôm nay nên làm</h3>
       <p className="text-sm text-muted-foreground mt-0.5">
-        Dựa trên các lượt làm gần đây của bạn
+        Gợi ý dựa trên lịch sử ôn tập của bạn
         {countdown ? ` · còn ${countdown.days} ngày tới ngày thi` : ""}
       </p>
 
