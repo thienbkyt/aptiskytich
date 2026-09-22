@@ -1887,6 +1887,21 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_nga_speaking_20260922: {
+        Row: {
+          data: Json | null
+          src: string | null
+        }
+        Insert: {
+          data?: Json | null
+          src?: string | null
+        }
+        Update: {
+          data?: Json | null
+          src?: string | null
+        }
+        Relationships: []
+      }
       backup_outline_s42_s31_20260917: {
         Row: {
           audio_url: string | null
