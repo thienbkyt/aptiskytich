@@ -33,7 +33,7 @@ const KeyPrediction = () => {
                 Đề Key Dự Đoán
               </h1>
               <p className="text-base text-muted-foreground leading-relaxed max-w-2xl md:text-lg font-medium">
-                Key dự đoán đề thi Aptis update hằng ngày — luyện đúng đề trọng tâm trước ngày thi.
+                Key dự đoán đề thi Aptis update hằng ngày - luyện đúng đề trọng tâm trước ngày thi.
               </p>
             </div>
           </div>
