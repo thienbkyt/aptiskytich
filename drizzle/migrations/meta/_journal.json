@@ -8,6 +8,13 @@
       "when": 1789985545624,
       "tag": "0000_secure_backup_writing_11cu_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790041538567,
+      "tag": "0001_create_showcase_entries",
+      "breakpoints": true
     }
   ]
 }
