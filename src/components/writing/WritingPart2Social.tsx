@@ -22,13 +22,14 @@ interface Props {
   isLast?: boolean;
   hideBottomNav?: boolean;
   hideTimer?: boolean;
+  afterSample?: React.ReactNode;
 }
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
-  hideBottomNav = false, hideTimer = false,
+  hideBottomNav = false, hideTimer = false, afterSample,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
