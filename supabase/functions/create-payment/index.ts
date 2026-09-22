@@ -88,14 +88,16 @@ Deno.serve(async (req) => {
     if (promoCode) {
       const { data: vc } = await admin
         .from("voucher_codes")
-        .select("code_norm,kind,enabled,expires_at,applies_to_plans,discount_percent,discount_max_vnd")
+        .select("id,code_norm,kind,enabled,expires_at,applies_to_plans,discount_percent,discount_max_vnd,created_by")
         .eq("code_norm", promoCode)
         .maybeSingle();
       const nowIso = Date.now();
       const notExpired = !vc?.expires_at || new Date(vc.expires_at as string).getTime() > nowIso;
       const plans = (vc as any)?.applies_to_plans as string[] | null | undefined;
       const planOk = !plans || plans.length === 0 || plans.includes(planKey);
-      if (vc && vc.enabled === true && notExpired && vc.kind === "checkout" && planOk) {
+      const baseOk = !!vc && vc.enabled === true && notExpired;
+
+      if (baseOk && vc!.kind === "checkout" && planOk) {
         validVoucherCode = promoCode;
         const pct = Number((vc as any).discount_percent ?? 0);
         const capVnd = (vc as any).discount_max_vnd as number | null;
@@ -103,6 +105,35 @@ Deno.serve(async (req) => {
           const off = Math.floor((amount * pct) / 100);
           const capped = capVnd ? Math.min(off, capVnd) : off;
           finalAmount = Math.max(1000, amount - capped); // sàn 1000đ, payOS không nhận 0
+        }
+      } else if (baseOk && vc!.kind === "referral") {
+        const createdBy = (vc as any).created_by as string | null;
+        if (!createdBy || createdBy === userId) {
+          console.log("create-payment: referral: own code", promoCode);
+        } else if (planKey === "day" || !planOk) {
+          console.log("create-payment: referral: plan not eligible", promoCode, planKey);
+        } else {
+          const { data: paidRows } = await admin
+            .from("payments")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("status", "paid")
+            .limit(1);
+          if (paidRows && paidRows.length > 0) {
+            console.log("create-payment: referral: not new user", promoCode);
+          } else {
+            const { data: rateRows, error: rateErr } = await admin.rpc("referral_rate_for", {
+              p_user: createdBy,
+            });
+            const row = Array.isArray(rateRows) ? rateRows[0] : rateRows;
+            const pct = Number((row as any)?.discount_percent ?? 0);
+            if (rateErr || !pct || pct <= 0) {
+              console.log("create-payment: referral: no rate", promoCode, rateErr?.message);
+            } else {
+              validVoucherCode = promoCode;
+              finalAmount = Math.max(1000, amount - Math.floor((amount * pct) / 100));
+            }
+          }
         }
       } else {
         console.log("create-payment: promo code ignored", promoCode);
