@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, TrendingDown, KeyRound, RotateCcw, SpellCheck, CalendarClock } from "lucide-react";
+import { ArrowRight, TrendingDown, RotateCcw, SpellCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
