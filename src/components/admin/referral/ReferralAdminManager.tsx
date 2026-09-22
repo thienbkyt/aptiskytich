@@ -173,7 +173,7 @@ export default function ReferralAdminManager() {
     enabled: (payouts.data || []).length > 0,
     queryFn: async (): Promise<Record<string, string>> => {
       const ids = (payouts.data || []).map((p) => p.user_id);
-      const { data } = await db.rpc("admin_emails_by_ids", { p_ids: ids });
+      const { data } = await db.rpc("admin_emails_by_ids", { p_user_ids: ids });
       const map: Record<string, string> = {};
       (data || []).forEach((r: any) => {
         if (r.user_id && r.email) map[r.user_id] = r.email;
