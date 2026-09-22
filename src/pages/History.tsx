@@ -26,6 +26,10 @@ import {
 } from "@/components/ui/pagination";
 import { useFailedGradingJobs } from "@/hooks/useFailedGradingJobs";
 import { toast } from "@/hooks/use-toast";
+import {
+  fetchMyShowcaseEntries, withdrawShowcase, showcasePartLabel,
+  type MyShowcaseEntry,
+} from "@/lib/showcase";
 
 
 interface HistoryRow {
@@ -162,6 +166,8 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [showcaseByResult, setShowcaseByResult] = useState<Record<string, MyShowcaseEntry[]>>({});
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   // Bài mà AI chấm lỗi hẳn → hiện nút "Chấm lại" thay cho dấu "—".
   const { jobsByResult: failedJobs, retry: retryGrading, retryingId } =
     useFailedGradingJobs(Boolean(user));
