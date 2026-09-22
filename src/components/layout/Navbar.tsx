@@ -318,19 +318,16 @@ const Navbar = () => {
                   className="absolute top-full left-0 pt-2 z-50"
                 >
                   <div className="w-64 bg-popover border border-border rounded-xl shadow-lg p-2">
-                    {/* Bảng Kỳ Tích — nổi bật, đầu danh sách */}
+                    {/* Bảng Kỳ Tích — đầu danh sách */}
                     <Link
                       to="/bang-ky-tich"
-                      className="flex items-start gap-3 px-3 py-2.5 rounded-lg rounded-l-none transition-colors bg-primary/10 border-l-[3px] border-primary"
+                      className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-muted"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Trophy className="w-4 h-4 text-primary" />
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+                        <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       </div>
-                      <div className="min-w-0">
-                        <p className="flex items-center gap-1.5 text-sm font-bold leading-tight text-foreground">
-                          Bảng Kỳ Tích
-                          <span className="text-[10px] font-bold rounded-full px-1.5 py-px bg-primary text-primary-foreground shrink-0">MỚI</span>
-                        </p>
+                      <div>
+                        <p className="text-sm font-bold leading-tight">Bảng Kỳ Tích</p>
                         <p className="text-xs text-muted-foreground mt-0.5">Bài Writing & Speaking điểm đỉnh</p>
                       </div>
                     </Link>
@@ -741,14 +738,13 @@ const Navbar = () => {
                     className="overflow-hidden"
                   >
                     <div className="pl-6 space-y-0.5">
-                      {/* Bảng Kỳ Tích — nổi bật, đầu danh sách */}
+                      {/* Bảng Kỳ Tích — đầu danh sách */}
                       <Link
                         to="/bang-ky-tich"
-                        className="flex items-center gap-3 px-4 py-2 rounded-lg rounded-l-none text-sm transition-colors bg-primary/10 border-l-[3px] border-primary"
+                        className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       >
-                        <Trophy className="w-4 h-4 text-primary shrink-0" />
+                        <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                         <span className="font-bold text-foreground">Bảng Kỳ Tích</span>
-                        <span className="text-[10px] font-bold rounded-full px-1.5 py-px bg-primary text-primary-foreground">MỚI</span>
                       </Link>
                       <div className="border-t border-border my-2 mx-2" />
                       <button
