@@ -962,6 +962,23 @@ const History = () => {
                               <div className="text-[11px] text-muted-foreground truncate">
                                 {r.title}{r.isMarathon ? " · Marathon" : ""}
                               </div>
+                              {(showcaseByResult[r.id] || []).map((entry) => (
+                                <div key={entry.id} className="mt-1 flex items-center gap-2 flex-wrap">
+                                  <Badge className="bg-success/15 text-success border-0 text-[10px] gap-1">
+                                    <Trophy className="w-3 h-3" />
+                                    Đang trên Bảng Kỳ Tích · {showcasePartLabel(entry.part_type)}
+                                  </Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                                    disabled={withdrawingId === entry.id}
+                                    onClick={() => handleWithdrawShowcase(entry)}
+                                  >
+                                    {withdrawingId === entry.id ? "Đang rút…" : "Rút khỏi bảng"}
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </TableCell>
