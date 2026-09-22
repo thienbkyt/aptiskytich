@@ -4,6 +4,7 @@ import SpeakingHeader from "./SpeakingHeader";
 import SpeakingProfileView from "./SpeakingProfileView";
 import type { SpeakingPartResultV2 } from "./speakingGradingV2";
 import type { SampleAnswerPair } from "@/data/speakingQuestions";
+import ShowcaseConsentCard from "@/components/showcase/ShowcaseConsentCard";
 
 export interface SpeakingV2PartEntry {
   partType: "part1" | "part2" | "part3" | "part4";
@@ -24,6 +25,12 @@ interface Props {
   onExit: () => void;
   isGrading?: boolean;
   gradingMessage?: string;
+  /** Per-part ids + điểm thô để mời chia sẻ lên Bảng Kỳ Tích. */
+  showcaseParts?: {
+    partType: string;
+    testResultId?: string | null;
+    rawPart?: number | null;
+  }[];
 }
 
 const SpeakingFullResultsV2 = ({
@@ -36,6 +43,7 @@ const SpeakingFullResultsV2 = ({
   onExit,
   isGrading,
   gradingMessage,
+  showcaseParts = [],
 }: Props) => {
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewPartIdx, setReviewPartIdx] = useState(0);
@@ -105,6 +113,20 @@ const SpeakingFullResultsV2 = ({
                 ))}
               </div>
             </div>
+
+            {showcaseParts.length > 0 && (
+              <div className="space-y-3">
+                {showcaseParts.map((sp) => (
+                  <ShowcaseConsentCard
+                    key={sp.partType}
+                    skill="speaking"
+                    partType={sp.partType}
+                    testResultId={sp.testResultId}
+                    rawPart={sp.rawPart}
+                  />
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button

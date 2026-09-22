@@ -14,7 +14,7 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "openai/gpt-6-astra";
 
 const WRITING_WORD_LIMITS: Record<string, number> = {
   task2: 45,

@@ -612,6 +612,7 @@ const WritingExamEngine = ({
             quotaExceeded={quotaExceeded}
             testResultId={submittedTestResultId}
             partType={partType}
+            examSetId={examSetId}
           />
           )}
         </div>

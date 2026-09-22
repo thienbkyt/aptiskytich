@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, Loader2 } from "lucide-react";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+import ShowcaseConsentCard from "@/components/showcase/ShowcaseConsentCard";
 
 import type {
   WritingPart1Data,
@@ -46,6 +47,13 @@ interface WritingFullResultsProps {
   testResultIds?: (string | null | undefined)[];
   /** Parts expected in this attempt (task1..task4). */
   expectedParts?: string[];
+  /** Per-part ids + điểm thô để mời chia sẻ lên Bảng Kỳ Tích. */
+  showcaseParts?: {
+    partType: string;
+    testResultId?: string | null;
+    examSetId?: string | null;
+    rawPart?: number | null;
+  }[];
 }
 
 const partLabel = (pt: string) => {
@@ -62,6 +70,7 @@ const WritingFullResults = ({
   sessionId,
   testResultIds,
   expectedParts,
+  showcaseParts = [],
 }: WritingFullResultsProps) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewIdx, setReviewIdx] = useState(0);
@@ -165,6 +174,20 @@ const WritingFullResults = ({
           })}
 
         </div>
+
+        {showcaseParts.length > 0 && (
+          <div className="space-y-3 text-left">
+            {showcaseParts.map((sp) => (
+              <ShowcaseConsentCard
+                key={sp.partType}
+                skill="writing"
+                partType={sp.partType}
+                testResultId={sp.testResultId}
+                rawPart={sp.rawPart}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           {parts.length > 0 && (

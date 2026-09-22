@@ -62,6 +62,7 @@ import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
 
 import SpeakingProfileView from "./SpeakingProfileView";
+import ShowcaseSection from "@/components/showcase/ShowcaseSection";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
@@ -1650,6 +1651,16 @@ const SpeakingExamEngine = ({
                 }
                 sharedSample={partType === "part4"}
 
+              />
+            )}
+
+            {v2Result && (
+              <ShowcaseSection
+                skill="speaking"
+                partType={partType}
+                testResultId={testResultIdRef.current}
+                examSetId={examSetId}
+                rawPart={v2Result.rawPart}
               />
             )}
 

@@ -73,6 +73,7 @@ const Dictation = lazy(() => import("./pages/Dictation"));
 const MySets = lazy(() => import("./pages/MySets"));
 const FeedbackPage = lazy(() => import("./pages/Feedback"));
 const ReviewsPage = lazy(() => import("./pages/Reviews"));
+const ShowcaseBoardPage = lazy(() => import("./pages/ShowcaseBoard"));
 
 
 const queryClient = new QueryClient({
@@ -213,6 +214,7 @@ const App = () => (
                       <Route path="/pricing" element={<PricingPage />} />
                       <Route path="/feedback" element={<FeedbackPage />} />
                       <Route path="/reviews" element={<ReviewsPage />} />
+                      <Route path="/bang-ky-tich" element={<WithDict><ShowcaseBoardPage /></WithDict>} />
                       <Route path="/meo-thi-aptis" element={<Blog />} />
                       <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
                       <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
