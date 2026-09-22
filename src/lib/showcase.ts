@@ -141,6 +141,27 @@ export async function fetchShowcaseBySet(
   return (data ?? []) as ShowcaseCard[];
 }
 
+export async function fetchShowcaseBandCounts(
+  examSetId: string,
+  skill: "writing" | "speaking",
+  partType: string,
+): Promise<Record<ShowcaseBand, number>> {
+  const { data, error } = await (supabase as any).rpc("get_showcase_band_counts", {
+    p_exam_set_id: examSetId,
+    p_skill: skill,
+    p_part_type: partType,
+  });
+  if (error) throw error;
+
+  const counts: Record<ShowcaseBand, number> = { B1: 0, B2: 0, C: 0 };
+  for (const row of data ?? []) {
+    if (row.band === "B1" || row.band === "B2" || row.band === "C") {
+      counts[row.band] = Number(row.n) || 0;
+    }
+  }
+  return counts;
+}
+
 export async function fetchShowcaseBoard(args: {
   skill?: string | null;
   partType?: string | null;
