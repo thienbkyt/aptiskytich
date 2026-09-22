@@ -6814,6 +6814,7 @@ export type Database = {
           size_mb: number
         }[]
       }
+      get_today_plan: { Args: never; Returns: Json }
       get_user_bootstrap: { Args: never; Returns: Json }
       get_wrong_questions: {
         Args: { p_part: string; p_skill: string }
