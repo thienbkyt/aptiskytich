@@ -114,6 +114,20 @@ const SpeakingFullResultsV2 = ({
               </div>
             </div>
 
+            {showcaseParts.length > 0 && (
+              <div className="space-y-3">
+                {showcaseParts.map((sp) => (
+                  <ShowcaseConsentCard
+                    key={sp.partType}
+                    skill="speaking"
+                    partType={sp.partType}
+                    testResultId={sp.testResultId}
+                    rawPart={sp.rawPart}
+                  />
+                ))}
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => { setReviewPartIdx(0); setReviewDetail(true); }}
