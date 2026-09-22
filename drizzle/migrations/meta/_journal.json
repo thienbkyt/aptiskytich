@@ -64,6 +64,27 @@
       "when": 1790065737721,
       "tag": "0008_referral_payout_reverse_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790066408901,
+      "tag": "0009_admin_referral_overview",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790066651192,
+      "tag": "0010_fix_admin_referral_overview_group_by",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790066695884,
+      "tag": "0011_fix_admin_referral_overview_burst",
+      "breakpoints": true
     }
   ]
 }

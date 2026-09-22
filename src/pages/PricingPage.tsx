@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpenCheck, Check, ChevronDown, Crown, Loader2, Sparkles, Ticket, Users, Wand2, X } from "lucide-react";
+import { BookOpenCheck, Check, ChevronDown, Crown, Gift, Loader2, Sparkles, Ticket, Users, Wand2, X } from "lucide-react";
 import VoucherInput, { type VoucherInfo } from "@/components/voucher/VoucherInput";
 
 import Navbar from "@/components/layout/Navbar";
@@ -606,6 +606,21 @@ export default function PricingPage() {
               </>
             )}
           </div>
+
+          {/* Sau thanh toán thành công */}
+          {watchPaid && user && (
+            <div className="mt-5 mx-auto max-w-xl rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-center">
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                Đang xác nhận thanh toán — gói sẽ tự kích hoạt trong giây lát.
+              </p>
+              <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-foreground">
+                <Gift className="w-4 h-4 text-primary" />
+                <Link to="/gioi-thieu" className="text-primary font-semibold underline underline-offset-2">
+                  Tặng bạn bè 10% và nhận hoa hồng — lấy mã giới thiệu
+                </Link>
+              </p>
+            </div>
+          )}
 
           {/* Stats strip */}
           {statChips.length > 0 && (
