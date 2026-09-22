@@ -741,6 +741,16 @@ const Navbar = () => {
                     className="overflow-hidden"
                   >
                     <div className="pl-6 space-y-0.5">
+                      {/* Bảng Kỳ Tích — nổi bật, đầu danh sách */}
+                      <Link
+                        to="/bang-ky-tich"
+                        className="flex items-center gap-3 px-4 py-2 rounded-lg rounded-l-none text-sm transition-colors bg-primary/10 border-l-[3px] border-primary"
+                      >
+                        <Trophy className="w-4 h-4 text-primary shrink-0" />
+                        <span className="font-bold text-foreground">Bảng Kỳ Tích</span>
+                        <span className="text-[10px] font-bold rounded-full px-1.5 py-px bg-primary text-primary-foreground">MỚI</span>
+                      </Link>
+                      <div className="border-t border-border my-2 mx-2" />
                       <button
                         type="button"
                         onClick={() => { setMobileOpen(false); setSuggestOpen(true); }}
