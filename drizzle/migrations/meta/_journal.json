@@ -57,6 +57,13 @@
       "when": 1790065354566,
       "tag": "0007_referral_affiliate_system",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790065737721,
+      "tag": "0008_referral_payout_reverse_scope",
+      "breakpoints": true
     }
   ]
 }

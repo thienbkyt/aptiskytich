@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpenCheck, Check, ChevronDown, Crown, Loader2, Sparkles, Ticket, Users, Wand2, X } from "lucide-react";
 import VoucherInput, { type VoucherInfo } from "@/components/voucher/VoucherInput";
@@ -83,7 +83,7 @@ export default function PricingPage() {
   const [showCompare, setShowCompare] = useState(false);
   const [watchPaid, setWatchPaid] = useState(false);
   const [voucher, setVoucher] = useState<VoucherInfo | null>(null);
-  const [voucherExpired, setVoucherExpired] = useState<{ code: string; message: string } | null>(null);
+  const [voucherExpired, setVoucherExpired] = useState<{ code: string; message: string; destructive?: boolean } | null>(null);
   const { user } = useAuth();
   const { isPro, isPremium, refetch } = useIsPro();
   const navigate = useNavigate();
@@ -122,6 +122,10 @@ export default function PricingPage() {
       if (error || !info?.ok) {
         localStorage.removeItem("voucher_code");
         setVoucher(null);
+        if (info?.reason === "own_code" || info?.reason === "not_new_user") {
+          setVoucherExpired({ code: saved, message: info.message as string, destructive: true });
+          return;
+        }
         const day = info?.expires_at
           ? new Date(info.expires_at).toLocaleDateString("vi-VN")
           : "trước đó";
@@ -589,9 +593,17 @@ export default function PricingPage() {
               Mở khóa toàn bộ tính năng. Tối ưu thời gian ôn tập và đạt AIM cùng AI và bộ Key chuẩn
             </p>
             {(isPro || isPremium) && (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
-                <Crown className="w-4 h-4" /> Bạn đang là thành viên {tierLabel}
-              </div>
+              <>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
+                  <Crown className="w-4 h-4" /> Bạn đang là thành viên {tierLabel}
+                </div>
+                <p className="mt-2 text-[13px] text-muted-foreground">
+                  Tặng bạn bè 10% —{" "}
+                  <Link to="/gioi-thieu" className="text-primary font-semibold underline underline-offset-2">
+                    lấy mã giới thiệu
+                  </Link>
+                </p>
+              </>
             )}
           </div>
 
@@ -611,7 +623,7 @@ export default function PricingPage() {
           )}
 
           {/* Voucher */}
-          {hasCampaign && (
+          {(hasCampaign || voucher?.ok || !!voucherExpired) && (
             <div className="mt-4 mb-8 max-w-2xl mx-auto">
               {voucher?.ok ? (
                 <div
@@ -623,8 +635,16 @@ export default function PricingPage() {
                     <Ticket className="w-3.5 h-3.5" /> Đã áp mã {voucher.code}
                   </span>
                   <span className="text-[13px] font-semibold" style={{ color: "#085041" }}>
-                    {Number(voucher.discount_percent ?? 0) > 0 && `Giảm ${voucher.discount_percent}% · `}
-                    +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
+                    {(voucher as any).is_referral
+                      ? `Giảm ${voucher.discount_percent}% từ bạn ${
+                          String((voucher as any).referrer_name ?? "").trim() || "bè"
+                        }`
+                      : (
+                        <>
+                          {Number(voucher.discount_percent ?? 0) > 0 && `Giảm ${voucher.discount_percent}% · `}
+                          +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
+                        </>
+                      )}
                   </span>
 
                   <button
@@ -641,7 +661,13 @@ export default function PricingPage() {
                   style={{ backgroundColor: "rgba(204,28,1,0.06)", border: "1px dashed #CC1C01", borderRadius: 12 }}
                 >
                   {voucherExpired && (
-                    <p className="mb-2 text-[12px] font-medium text-[#B45309] dark:text-accent">
+                    <p
+                      className={
+                        voucherExpired.destructive
+                          ? "mb-2 text-[12px] font-medium text-destructive"
+                          : "mb-2 text-[12px] font-medium text-[#B45309] dark:text-accent"
+                      }
+                    >
                       {voucherExpired.message}
                     </p>
                   )}

@@ -18,6 +18,7 @@ import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
 import SupportChatFab from "@/components/support/SupportChatFab";
 import VisitLogger from "@/components/VisitLogger";
+import ReferralCapture from "@/components/referral/ReferralCapture";
 import PostLoginFBGroupModal from "@/components/PostLoginFBGroupModal";
 import NotificationToaster from "@/components/NotificationToaster";
 import RequireAdmin from "@/components/auth/RequireAdmin";
@@ -74,6 +75,7 @@ const MySets = lazy(() => import("./pages/MySets"));
 const FeedbackPage = lazy(() => import("./pages/Feedback"));
 const ReviewsPage = lazy(() => import("./pages/Reviews"));
 const ShowcaseBoardPage = lazy(() => import("./pages/ShowcaseBoard"));
+const ReferralPage = lazy(() => import("./pages/Referral"));
 
 
 const queryClient = new QueryClient({
@@ -215,6 +217,7 @@ const App = () => (
                       <Route path="/feedback" element={<FeedbackPage />} />
                       <Route path="/reviews" element={<ReviewsPage />} />
                       <Route path="/bang-ky-tich" element={<WithDict><ShowcaseBoardPage /></WithDict>} />
+                      <Route path="/gioi-thieu" element={<ReferralPage />} />
                       <Route path="/meo-thi-aptis" element={<Blog />} />
                       <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
                       <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
@@ -238,6 +241,7 @@ const App = () => (
                 <ReportFab />
                 <SupportChatFab />
                 <VisitLogger />
+                <ReferralCapture />
                 <PostLoginFBGroupModal />
                 <NotificationToaster />
                 <DeviceSessionGuard />

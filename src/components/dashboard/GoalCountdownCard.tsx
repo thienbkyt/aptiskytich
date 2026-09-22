@@ -108,6 +108,9 @@ const GoalCountdownCard = () => {
                 <Link to="/reviews">Chia sẻ lại đề — Review tích đức</Link>
               </Button>
               <Button variant="outline" onClick={() => setOpen(true)}>Đặt mục tiêu mới</Button>
+              <Button asChild variant="outline">
+                <Link to="/gioi-thieu">Rủ bạn thi đợt sau</Link>
+              </Button>
             </div>
           </div>
         </Shell>
