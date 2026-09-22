@@ -168,3 +168,29 @@ export function showcaseQuestionList(q: unknown): string[] {
   if (Array.isArray(q)) return q.filter((x) => typeof x === "string" && x.trim()) as string[];
   return [];
 }
+
+/* ---------- Rút bài khỏi bảng (chủ bài) ---------- */
+
+export type MyShowcaseEntry = {
+  id: string;
+  test_result_id: string;
+  part_type: string;
+  skill: string;
+  band: string;
+  status: string;
+};
+
+/** Các bài của chính user đang hiển thị trên bảng (approved). */
+export async function fetchMyShowcaseEntries(): Promise<MyShowcaseEntry[]> {
+  const { data, error } = await (supabase as any)
+    .from("showcase_entries")
+    .select("id,test_result_id,part_type,skill,band,status")
+    .eq("status", "approved");
+  if (error) throw error;
+  return (data ?? []) as MyShowcaseEntry[];
+}
+
+export async function withdrawShowcase(entryId: string): Promise<void> {
+  const { error } = await (supabase as any).rpc("showcase_withdraw", { p_entry_id: entryId });
+  if (error) throw error;
+}

@@ -6954,6 +6954,7 @@ export type Database = {
         }
         Returns: string
       }
+      showcase_withdraw: { Args: { p_entry_id: string }; Returns: undefined }
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }

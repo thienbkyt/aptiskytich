@@ -234,6 +234,40 @@ serve(async (req) => {
       })
       .eq("id", entry.id);
 
+    /* ---------- notify the owner (approved only) ---------- */
+    try {
+      const { data: owner } = await admin
+        .from("showcase_entries")
+        .select("user_id, part_type, skill")
+        .eq("id", entry.id)
+        .maybeSingle();
+
+      let setTitle = "";
+      if (entry.exam_set_id) {
+        const { data: s } = await admin
+          .from("exam_sets")
+          .select("title")
+          .eq("id", entry.exam_set_id)
+          .maybeSingle();
+        setTitle = (s as any)?.title ?? "";
+      }
+
+      if ((owner as any)?.user_id) {
+        const partNum = String(entry.part_type ?? "").replace(/^(task|part)/, "");
+        const skillLabel = entry.skill === "speaking" ? "Speaking" : "Writing";
+        await admin.from("notifications").insert({
+          title: "Bài của bạn đã lên Bảng Kỳ Tích",
+          body: `Bài ${skillLabel} Part ${partNum}${setTitle ? ` – ${setTitle}` : ""} đã được duyệt và đang hiển thị cho các bạn khác tham khảo.`,
+          type: "general",
+          link_url: "/bang-ky-tich",
+          is_active: true,
+          target_user_id: (owner as any).user_id,
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[showcase-review] notify failed", entry.id, notifyErr);
+    }
+
     return json({ ok: true, status: "approved", extraction });
   } catch (e) {
     console.error("[showcase-review] failed", entryId, e);
