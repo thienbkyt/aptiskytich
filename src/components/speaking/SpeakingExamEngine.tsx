@@ -1653,6 +1653,16 @@ const SpeakingExamEngine = ({
               />
             )}
 
+            {v2Result && (
+              <ShowcaseSection
+                skill="speaking"
+                partType={partType}
+                testResultId={testResultIdRef.current}
+                examSetId={examSetId}
+                rawPart={v2Result.rawPart}
+              />
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={onExit}
