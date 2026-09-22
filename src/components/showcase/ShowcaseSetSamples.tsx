@@ -12,10 +12,14 @@ interface Props {
   examSetId: string | null | undefined;
   /** Điểm thô của học viên để chọn band bài mẫu nên đọc. */
   rawPart: number | null | undefined;
+  /** Kỹ năng của màn kết quả hiện tại để lọc bài mẫu. */
+  skill?: string | null;
+  /** Part của màn kết quả hiện tại để lọc bài mẫu. */
+  partType?: string | null;
   title?: string;
 }
 
-const ShowcaseSetSamples = ({ examSetId, rawPart, title }: Props) => {
+const ShowcaseSetSamples = ({ examSetId, rawPart, skill, partType, title }: Props) => {
   const { isPro, isPremium } = useIsPro();
   const canRead = isPro || isPremium;
   const band = browseBandFor(rawPart);
@@ -34,14 +38,14 @@ const ShowcaseSetSamples = ({ examSetId, rawPart, title }: Props) => {
     }
     let alive = true;
     setLoading(true);
-    fetchShowcaseBySet(examSetId, band, seed)
+    fetchShowcaseBySet(examSetId, band, seed, skill, partType)
       .then((rows) => alive && setCards(rows))
       .catch(() => alive && setCards([]))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [examSetId, band, seed]);
+  }, [examSetId, band, seed, skill, partType]);
 
   if (!examSetId) return null;
   if (loading) {
