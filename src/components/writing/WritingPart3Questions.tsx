@@ -31,7 +31,7 @@ const WritingPart3Questions = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
-  hideBottomNav = false, hideTimer = false,
+  hideBottomNav = false, hideTimer = false, afterSample,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   return (
@@ -86,6 +86,8 @@ const WritingPart3Questions = ({
           </motion.div>
         ))}
       </div>
+
+      {afterSample}
 
       {!reviewMode && !hideBottomNav && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
