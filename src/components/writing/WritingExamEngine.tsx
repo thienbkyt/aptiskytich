@@ -741,6 +741,9 @@ const WritingExamEngine = ({
             revealAnswers={revealed}
             hideBottomNav={hideBottomNav}
             hideTimer={hideTimer}
+            afterSample={revealed && !submitted && !reviewMode && examSetId ? (
+              <ShowcaseInExam examSetId={examSetId} skill="writing" partType={partType} />
+            ) : null}
           />
         )}
 
@@ -767,6 +770,9 @@ const WritingExamEngine = ({
             revealAnswers={revealed}
             hideBottomNav={hideBottomNav}
             hideTimer={hideTimer}
+            afterSample={revealed && !submitted && !reviewMode && examSetId ? (
+              <ShowcaseInExam examSetId={examSetId} skill="writing" partType={partType} />
+            ) : null}
           />
         )}
 
