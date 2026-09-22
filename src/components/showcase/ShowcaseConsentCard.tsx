@@ -107,7 +107,7 @@ const ShowcaseConsentCard = ({ skill, partType, testResultId, rawPart }: Props) 
                   value={anonymous ? "" : name}
                   onChange={(e) => setName(e.target.value.slice(0, 40))}
                   disabled={anonymous || phase === "sending" || phase === "checking"}
-                  placeholder="Tên hiển thị"
+                  placeholder={defaultName ? "Tên hiển thị" : "Nhập tên hiển thị"}
                   className="sm:max-w-[220px]"
                 />
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
