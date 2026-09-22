@@ -44,16 +44,6 @@ function render(item: PlanItem): { title: string; desc: string; linkLabel: strin
         to: skillPage(item.skill),
       };
     }
-    case "key_sets": {
-      const sets = item.sets || [];
-      if (!sets.length) return null;
-      return {
-        title: `${sets.length} đề key ưu tiên cao bạn chưa làm`,
-        desc: sets.map((s) => s.title).join(" · "),
-        linkLabel: "Làm đề key ngay",
-        to: examRoute(sets[0].skill, sets[0].exam_set_id),
-      };
-    }
     case "wrong": {
       const first = (item.detail || "").split(",")[0]?.trim().split(" ")[0];
       return {
