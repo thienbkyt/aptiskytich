@@ -71,6 +71,13 @@
       "when": 1790066408901,
       "tag": "0009_admin_referral_overview",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790066651192,
+      "tag": "0010_fix_admin_referral_overview_group_by",
+      "breakpoints": true
     }
   ]
 }
