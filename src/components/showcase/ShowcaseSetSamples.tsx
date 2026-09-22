@@ -38,14 +38,14 @@ const ShowcaseSetSamples = ({ examSetId, rawPart, skill, partType, title }: Prop
     }
     let alive = true;
     setLoading(true);
-    fetchShowcaseBySet(examSetId, band, seed)
+    fetchShowcaseBySet(examSetId, band, seed, skill, partType)
       .then((rows) => alive && setCards(rows))
       .catch(() => alive && setCards([]))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [examSetId, band, seed]);
+  }, [examSetId, band, seed, skill, partType]);
 
   if (!examSetId) return null;
   if (loading) {

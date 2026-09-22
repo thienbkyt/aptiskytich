@@ -19,7 +19,12 @@ const ShowcaseSection = ({ skill, partType, testResultId, examSetId, rawPart }: 
         testResultId={testResultId}
         rawPart={rawPart}
       />
-      <ShowcaseSetSamples examSetId={examSetId} rawPart={rawPart} />
+      <ShowcaseSetSamples
+        examSetId={examSetId}
+        rawPart={rawPart}
+        skill={skill}
+        partType={partType}
+      />
     </div>
   );
 };
