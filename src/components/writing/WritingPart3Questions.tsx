@@ -24,6 +24,7 @@ interface Props {
   isLast?: boolean;
   hideBottomNav?: boolean;
   hideTimer?: boolean;
+  afterSample?: React.ReactNode;
 }
 
 const WritingPart3Questions = ({
