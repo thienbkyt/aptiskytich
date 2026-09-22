@@ -6,7 +6,7 @@ import { ArrowLeft, Eye, Loader2 } from "lucide-react";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
-import ShowcaseSection from "@/components/showcase/ShowcaseSection";
+import ShowcaseConsentCard from "@/components/showcase/ShowcaseConsentCard";
 
 import type {
   WritingPart1Data,
@@ -178,12 +178,11 @@ const WritingFullResults = ({
         {showcaseParts.length > 0 && (
           <div className="space-y-3 text-left">
             {showcaseParts.map((sp) => (
-              <ShowcaseSection
+              <ShowcaseConsentCard
                 key={sp.partType}
                 skill="writing"
                 partType={sp.partType}
                 testResultId={sp.testResultId}
-                examSetId={sp.examSetId}
                 rawPart={sp.rawPart}
               />
             ))}
