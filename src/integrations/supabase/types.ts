@@ -6852,6 +6852,13 @@ export type Database = {
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_intro_video: { Args: never; Returns: Json }
+      get_showcase_band_counts: {
+        Args: { p_exam_set_id: string; p_part_type: string; p_skill: string }
+        Returns: {
+          band: string
+          n: number
+        }[]
+      }
       get_showcase_board: {
         Args: {
           p_band?: string
