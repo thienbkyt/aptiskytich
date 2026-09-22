@@ -62,6 +62,7 @@ import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
 
 import SpeakingProfileView from "./SpeakingProfileView";
+import ShowcaseSection from "@/components/showcase/ShowcaseSection";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
