@@ -5156,6 +5156,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bank_account: string | null
+          bank_holder: string | null
+          bank_name: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -5166,6 +5169,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bank_account?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -5176,6 +5182,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bank_account?: string | null
+          bank_holder?: string | null
+          bank_name?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -5317,6 +5326,140 @@ export type Database = {
           created_at?: string
           data?: Json
           exam_set_id?: string
+        }
+        Relationships: []
+      }
+      referral_clicks: {
+        Row: {
+          clicked_at: string
+          code_id: string | null
+          id: string
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          code_id?: string | null
+          id?: string
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          code_id?: string | null
+          id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_clicks_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_earnings: {
+        Row: {
+          available_at: string
+          code_id: string | null
+          commission_percent: number
+          commission_vnd: number
+          created_at: string
+          id: string
+          order_amount_vnd: number
+          payment_id: string
+          payout_id: string | null
+          plan_key: string | null
+          referred_user_id: string
+          referrer_user_id: string
+          status: string
+        }
+        Insert: {
+          available_at: string
+          code_id?: string | null
+          commission_percent: number
+          commission_vnd: number
+          created_at?: string
+          id?: string
+          order_amount_vnd: number
+          payment_id: string
+          payout_id?: string | null
+          plan_key?: string | null
+          referred_user_id: string
+          referrer_user_id: string
+          status?: string
+        }
+        Update: {
+          available_at?: string
+          code_id?: string | null
+          commission_percent?: number
+          commission_vnd?: number
+          created_at?: string
+          id?: string
+          order_amount_vnd?: number
+          payment_id?: string
+          payout_id?: string | null
+          plan_key?: string | null
+          referred_user_id?: string
+          referrer_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_earnings_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_earnings_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_payouts: {
+        Row: {
+          account_holder: string | null
+          admin_note: string | null
+          amount_vnd: number
+          bank_account: string | null
+          bank_name: string | null
+          id: string
+          paid_at: string | null
+          paid_by: string | null
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          account_holder?: string | null
+          admin_note?: string | null
+          amount_vnd: number
+          bank_account?: string | null
+          bank_name?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          account_holder?: string | null
+          admin_note?: string | null
+          amount_vnd?: number
+          bank_account?: string | null
+          bank_name?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          requested_at?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -6635,6 +6778,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_mark_referral_payout: {
+        Args: { p_note: string; p_payout_id: string; p_status: string }
+        Returns: undefined
+      }
       admin_online_users: {
         Args: { p_window_seconds?: number }
         Returns: number
@@ -6903,6 +7050,20 @@ export type Database = {
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_intro_video: { Args: never; Returns: Json }
+      get_my_referral_code: { Args: never; Returns: Json }
+      get_my_referral_history: {
+        Args: never
+        Returns: {
+          available_at: string
+          commission_percent: number
+          commission_vnd: number
+          created_at: string
+          order_amount_vnd: number
+          plan_key: string
+          referred_name: string
+          status: string
+        }[]
+      }
       get_showcase_band_counts: {
         Args: { p_exam_set_id: string; p_part_type: string; p_skill: string }
         Returns: {
@@ -7084,6 +7245,7 @@ export type Database = {
         Args: { p_key: string; p_ref?: string; p_scope?: string }
         Returns: undefined
       }
+      log_referral_click: { Args: { p_code: string }; Returns: undefined }
       merge_test_result_review_snapshot: {
         Args: { p_review_snapshot: Json; p_test_result_id: string }
         Returns: undefined
@@ -7092,9 +7254,21 @@ export type Database = {
       promo_active: { Args: never; Returns: boolean }
       public_stats: { Args: never; Returns: Json }
       redeem_voucher: { Args: { p_code: string }; Returns: Json }
+      referral_rate_for: {
+        Args: { p_user: string }
+        Returns: {
+          discount_percent: number
+          referrer_percent: number
+        }[]
+      }
+      referral_release_available: { Args: never; Returns: undefined }
       register_device: {
         Args: { p_device_id: string; p_label: string; p_type: string }
         Returns: undefined
+      }
+      request_referral_payout: {
+        Args: { p_bank_account: string; p_bank_name: string; p_holder: string }
+        Returns: Json
       }
       requeue_grading_jobs: {
         Args: { _test_result_id: string }
