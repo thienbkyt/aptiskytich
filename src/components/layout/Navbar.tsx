@@ -7,7 +7,7 @@ import {
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
   MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare, Bell, Sun, Moon, UserRound, LogOut,
-  Trophy,
+  Trophy, Gift,
   type LucideIcon } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
@@ -556,6 +556,14 @@ const Navbar = () => {
                           <UserRound className="w-4 h-4" />
                           Thông tin tài khoản
                         </button>
+                        <Link
+                          to="/gioi-thieu"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-left hover:bg-muted transition-colors"
+                        >
+                          <Gift className="w-4 h-4" />
+                          Giới thiệu bạn
+                        </Link>
                         <button
                           type="button"
                           onClick={() => {
