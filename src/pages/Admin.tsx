@@ -126,6 +126,10 @@ const Admin = () => {
               <BlogManager />
             </TabsContent>
 
+            <TabsContent value="showcase">
+              <ShowcaseAdminManager />
+            </TabsContent>
+
             <TabsContent value="legacy">
               {selectedTest ? (
                 <QuestionManager
