@@ -318,6 +318,23 @@ const Navbar = () => {
                   className="absolute top-full left-0 pt-2 z-50"
                 >
                   <div className="w-64 bg-popover border border-border rounded-xl shadow-lg p-2">
+                    {/* Bảng Kỳ Tích — nổi bật, đầu danh sách */}
+                    <Link
+                      to="/bang-ky-tich"
+                      className="flex items-start gap-3 px-3 py-2.5 rounded-lg rounded-l-none transition-colors bg-primary/10 border-l-[3px] border-primary"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Trophy className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-1.5 text-sm font-bold leading-tight text-foreground">
+                          Bảng Kỳ Tích
+                          <span className="text-[10px] font-bold rounded-full px-1.5 py-px bg-primary text-primary-foreground shrink-0">MỚI</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Bài Writing & Speaking điểm đỉnh</p>
+                      </div>
+                    </Link>
+                    <div className="border-t border-border my-2" />
                     <button
                       type="button"
                       onClick={() => { setMoreOpen(false); setSuggestOpen(true); }}
