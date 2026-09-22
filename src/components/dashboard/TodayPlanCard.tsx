@@ -27,16 +27,10 @@ function skillPage(skill: string | null | undefined): string {
   return "/grammar";
 }
 
-function examRoute(skill: string | null | undefined, setId: string): string {
-  return `${skillPage(skill)}?set=${setId}&jump=1&from=key`;
-}
-
 const ICONS = {
   weak_part: TrendingDown,
-  key_sets: KeyRound,
   wrong: RotateCcw,
   grammar_error: SpellCheck,
-  countdown: CalendarClock,
 } as const;
 
 function render(item: PlanItem): { title: string; desc: string; linkLabel: string; to: string } | null {
