@@ -81,17 +81,10 @@ const TodayPlanCard = () => {
   const items = (data || []).slice(0, 4);
   if (!items.length) return null;
 
-  const countdown = (data || []).find((i) => i.kind === "countdown") as
-    | { kind: "countdown"; days: number }
-    | undefined;
-
   return (
     <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
       <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground">⚡ Hôm nay nên làm</h3>
-      <p className="text-sm text-muted-foreground mt-0.5">
-        Gợi ý dựa trên lịch sử ôn tập của bạn
-        {countdown ? ` · còn ${countdown.days} ngày tới ngày thi` : ""}
-      </p>
+      <p className="text-sm text-muted-foreground mt-0.5">Gợi ý dựa trên lịch sử ôn tập của bạn</p>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         {items.map((item, idx) => {
