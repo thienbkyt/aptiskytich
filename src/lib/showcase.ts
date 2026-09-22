@@ -127,11 +127,15 @@ export async function fetchShowcaseBySet(
   examSetId: string,
   band: ShowcaseBand,
   seed: number,
+  skill?: string | null,
+  partType?: string | null,
 ): Promise<ShowcaseCard[]> {
   const { data, error } = await (supabase as any).rpc("get_showcase_by_set", {
     p_exam_set_id: examSetId,
     p_band: band,
     p_seed: seed,
+    p_skill: skill ?? null,
+    p_part_type: partType ?? null,
   });
   if (error) throw error;
   return (data ?? []) as ShowcaseCard[];

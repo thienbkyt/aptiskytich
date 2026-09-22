@@ -12,10 +12,14 @@ interface Props {
   examSetId: string | null | undefined;
   /** Điểm thô của học viên để chọn band bài mẫu nên đọc. */
   rawPart: number | null | undefined;
+  /** Kỹ năng của màn kết quả hiện tại để lọc bài mẫu. */
+  skill?: string | null;
+  /** Part của màn kết quả hiện tại để lọc bài mẫu. */
+  partType?: string | null;
   title?: string;
 }
 
-const ShowcaseSetSamples = ({ examSetId, rawPart, title }: Props) => {
+const ShowcaseSetSamples = ({ examSetId, rawPart, skill, partType, title }: Props) => {
   const { isPro, isPremium } = useIsPro();
   const canRead = isPro || isPremium;
   const band = browseBandFor(rawPart);
