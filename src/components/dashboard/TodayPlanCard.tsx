@@ -60,20 +60,6 @@ function render(item: PlanItem): { title: string; desc: string; linkLabel: strin
         linkLabel: "Luyện Grammar",
         to: "/grammar",
       };
-    case "countdown":
-      return item.days <= 1
-        ? {
-            title: "Mai thi rồi — đừng học đề mới",
-            desc: "Ôn lại câu sai và đề key là đủ",
-            linkLabel: "Xem đề key",
-            to: "/key-du-doan",
-          }
-        : {
-            title: `Còn ${item.days} ngày tới ngày thi`,
-            desc: "Nên làm 1 Full Test để canh sức",
-            linkLabel: "Vào thi thử",
-            to: "/thi-thu",
-          };
     default:
       return null;
   }
