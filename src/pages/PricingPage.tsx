@@ -589,9 +589,17 @@ export default function PricingPage() {
               Mở khóa toàn bộ tính năng. Tối ưu thời gian ôn tập và đạt AIM cùng AI và bộ Key chuẩn
             </p>
             {(isPro || isPremium) && (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
-                <Crown className="w-4 h-4" /> Bạn đang là thành viên {tierLabel}
-              </div>
+              <>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
+                  <Crown className="w-4 h-4" /> Bạn đang là thành viên {tierLabel}
+                </div>
+                <p className="mt-2 text-[13px] text-muted-foreground">
+                  Tặng bạn bè 10% —{" "}
+                  <Link to="/gioi-thieu" className="text-primary font-semibold underline underline-offset-2">
+                    lấy mã giới thiệu
+                  </Link>
+                </p>
+              </>
             )}
           </div>
 

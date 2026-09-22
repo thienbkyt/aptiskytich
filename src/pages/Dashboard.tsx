@@ -792,6 +792,25 @@ const Dashboard = () => {
                 <BlogTipsCard />
               </motion.div>
 
+              {/* REFERRAL */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <GlowCard className="p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <Gift className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-heading font-bold text-sm text-foreground">
+                        Rủ bạn ôn cùng — bạn giảm 10%, bạn nhận 10%
+                      </p>
+                      <Button asChild size="sm" className="mt-3">
+                        <Link to="/gioi-thieu">Lấy mã</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </GlowCard>
+              </motion.div>
+
               {/* CONTINUE CTA */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
                 <GlowCard className="p-6 overflow-hidden relative" spotlight>
