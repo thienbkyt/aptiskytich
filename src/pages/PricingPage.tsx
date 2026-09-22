@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpenCheck, Check, ChevronDown, Crown, Loader2, Sparkles, Ticket, Users, Wand2, X } from "lucide-react";
 import VoucherInput, { type VoucherInfo } from "@/components/voucher/VoucherInput";
@@ -122,6 +122,10 @@ export default function PricingPage() {
       if (error || !info?.ok) {
         localStorage.removeItem("voucher_code");
         setVoucher(null);
+        if (info?.reason === "own_code" || info?.reason === "not_new_user") {
+          setVoucherExpired({ code: saved, message: info.message as string });
+          return;
+        }
         const day = info?.expires_at
           ? new Date(info.expires_at).toLocaleDateString("vi-VN")
           : "trước đó";
