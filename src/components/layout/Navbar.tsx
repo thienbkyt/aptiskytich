@@ -7,7 +7,8 @@ import {
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
   MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare, Bell, Sun, Moon, UserRound, LogOut,
-  type LucideIcon,, Trophy } from "lucide-react";
+  Trophy,
+  type LucideIcon } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
