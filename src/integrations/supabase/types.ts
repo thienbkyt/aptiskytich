@@ -6791,6 +6791,7 @@ export type Database = {
         Returns: Json
       }
       admin_outcomes: { Args: { p_from: string; p_to: string }; Returns: Json }
+      admin_referral_overview: { Args: { p_days?: number }; Returns: Json }
       admin_search_users: {
         Args: { p_query: string }
         Returns: {
