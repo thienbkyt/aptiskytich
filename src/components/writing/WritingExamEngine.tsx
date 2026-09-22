@@ -18,6 +18,7 @@ import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
+import ShowcaseInExam from "@/components/showcase/ShowcaseInExam";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
@@ -790,6 +791,14 @@ const WritingExamEngine = ({
             revealAnswers={revealed}
             hideBottomNav={hideBottomNav}
             hideTimer={hideTimer}
+          />
+        )}
+
+        {revealed && !submitted && !reviewMode && examSetId && /^task[2-4]$/.test(partType) && (
+          <ShowcaseInExam
+            examSetId={examSetId}
+            skill="writing"
+            partType={partType}
           />
         )}
 

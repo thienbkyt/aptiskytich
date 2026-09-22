@@ -63,6 +63,7 @@ import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
 import SpeakingProfileView from "./SpeakingProfileView";
 import ShowcaseSection from "@/components/showcase/ShowcaseSection";
+import ShowcaseInExam from "@/components/showcase/ShowcaseInExam";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
@@ -1897,6 +1898,13 @@ const SpeakingExamEngine = ({
               </div>
             );
           })()}
+          {allowReveal && revealed && examSetId && /^part[2-4]$/.test(partType) && (
+            <ShowcaseInExam
+              examSetId={examSetId}
+              skill="speaking"
+              partType={partType}
+            />
+          )}
         </div>
 
         {/* Right: Timer panel */}

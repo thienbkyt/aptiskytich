@@ -16,9 +16,10 @@ interface Props {
   id: string | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  hidePractice?: boolean;
 }
 
-const ShowcaseDetailDialog = ({ id, open, onOpenChange }: Props) => {
+const ShowcaseDetailDialog = ({ id, open, onOpenChange, hidePractice = false }: Props) => {
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState<ShowcaseDetail | null>(null);
   const [error, setError] = useState("");
@@ -121,7 +122,7 @@ const ShowcaseDetailDialog = ({ id, open, onOpenChange }: Props) => {
               </div>
             ) : null}
 
-            {practiceHref ? (
+            {practiceHref && !hidePractice ? (
               <Button asChild className="w-full sm:w-auto">
                 <Link to={practiceHref} onClick={() => onOpenChange(false)}>
                   Luyện đề này

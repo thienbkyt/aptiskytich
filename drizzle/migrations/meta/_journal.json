@@ -36,6 +36,20 @@
       "when": 1790048273984,
       "tag": "0004_fix_showcase_consent_and_today_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790051209573,
+      "tag": "0005_add_showcase_band_counts",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790051298574,
+      "tag": "0006_protect_exposed_backup_exam_tables",
+      "breakpoints": true
     }
   ]
 }
