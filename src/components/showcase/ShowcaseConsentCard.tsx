@@ -29,14 +29,11 @@ const ShowcaseConsentCard = ({ skill, partType, testResultId, rawPart }: Props) 
   const eligible = !!testResultId && !!user && isShowcasePart(partType) && !!band;
 
   const defaultName =
-    (user?.user_metadata?.full_name as string) ||
-    (user?.user_metadata?.name as string) ||
-    (user?.email ? String(user.email).split("@")[0] : "") ||
-    "";
+    (user?.user_metadata?.full_name as string) || (user?.user_metadata?.name as string) || "";
 
-  const [hidden, setHidden] = useState(
-    () => (eligible ? isShowcaseDismissed(testResultId as string, partType as string) : true),
-  );
+  const [dismissed, setDismissed] = useState(false);
+  const hidden =
+    dismissed || (eligible && isShowcaseDismissed(testResultId as string, partType as string));
   const [name, setName] = useState(defaultName);
   const [anonymous, setAnonymous] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -46,7 +43,7 @@ const ShowcaseConsentCard = ({ skill, partType, testResultId, rawPart }: Props) 
 
   const handleLater = () => {
     dismissShowcase(testResultId as string, partType as string);
-    setHidden(true);
+    setDismissed(true);
   };
 
   const handleSubmit = async () => {
@@ -110,7 +107,7 @@ const ShowcaseConsentCard = ({ skill, partType, testResultId, rawPart }: Props) 
                   value={anonymous ? "" : name}
                   onChange={(e) => setName(e.target.value.slice(0, 40))}
                   disabled={anonymous || phase === "sending" || phase === "checking"}
-                  placeholder="Tên hiển thị"
+                  placeholder={defaultName ? "Tên hiển thị" : "Nhập tên hiển thị"}
                   className="sm:max-w-[220px]"
                 />
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">

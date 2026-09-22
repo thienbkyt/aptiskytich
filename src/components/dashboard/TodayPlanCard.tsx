@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, TrendingDown, KeyRound, RotateCcw, SpellCheck, CalendarClock } from "lucide-react";
+import { ArrowRight, TrendingDown, RotateCcw, SpellCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 type PlanItem =
   | { kind: "weak_part"; skill: string; part: string; avg_pct: number; runs: number }
-  | { kind: "key_sets"; sets: { exam_set_id: string; title: string; skill: string; part: string }[] }
   | { kind: "wrong"; count: number; detail: string | null }
-  | { kind: "grammar_error"; group: string; times: number }
-  | { kind: "countdown"; days: number };
+  | { kind: "grammar_error"; group: string; times: number };
 
 const SKILL_LABEL: Record<string, string> = {
   grammar_vocab: "Grammar & Vocabulary",
@@ -29,16 +27,10 @@ function skillPage(skill: string | null | undefined): string {
   return "/grammar";
 }
 
-function examRoute(skill: string | null | undefined, setId: string): string {
-  return `${skillPage(skill)}?set=${setId}&jump=1&from=key`;
-}
-
 const ICONS = {
   weak_part: TrendingDown,
-  key_sets: KeyRound,
   wrong: RotateCcw,
   grammar_error: SpellCheck,
-  countdown: CalendarClock,
 } as const;
 
 function render(item: PlanItem): { title: string; desc: string; linkLabel: string; to: string } | null {
@@ -50,16 +42,6 @@ function render(item: PlanItem): { title: string; desc: string; linkLabel: strin
         desc: `${item.runs} lượt gần đây trung bình ${item.avg_pct}%, thấp hơn các part khác`,
         linkLabel: `Luyện ${label}`,
         to: skillPage(item.skill),
-      };
-    }
-    case "key_sets": {
-      const sets = item.sets || [];
-      if (!sets.length) return null;
-      return {
-        title: `${sets.length} đề key ưu tiên cao bạn chưa làm`,
-        desc: sets.map((s) => s.title).join(" · "),
-        linkLabel: "Làm đề key ngay",
-        to: examRoute(sets[0].skill, sets[0].exam_set_id),
       };
     }
     case "wrong": {
@@ -78,20 +60,6 @@ function render(item: PlanItem): { title: string; desc: string; linkLabel: strin
         linkLabel: "Luyện Grammar",
         to: "/grammar",
       };
-    case "countdown":
-      return item.days <= 1
-        ? {
-            title: "Mai thi rồi — đừng học đề mới",
-            desc: "Ôn lại câu sai và đề key là đủ",
-            linkLabel: "Xem đề key",
-            to: "/key-du-doan",
-          }
-        : {
-            title: `Còn ${item.days} ngày tới ngày thi`,
-            desc: "Nên làm 1 Full Test để canh sức",
-            linkLabel: "Vào thi thử",
-            to: "/thi-thu",
-          };
     default:
       return null;
   }
@@ -113,17 +81,10 @@ const TodayPlanCard = () => {
   const items = (data || []).slice(0, 4);
   if (!items.length) return null;
 
-  const countdown = (data || []).find((i) => i.kind === "countdown") as
-    | { kind: "countdown"; days: number }
-    | undefined;
-
   return (
     <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
       <h3 className="font-heading font-extrabold text-base md:text-lg text-foreground">⚡ Hôm nay nên làm</h3>
-      <p className="text-sm text-muted-foreground mt-0.5">
-        Gợi ý dựa trên lịch sử ôn tập của bạn
-        {countdown ? ` · còn ${countdown.days} ngày tới ngày thi` : ""}
-      </p>
+      <p className="text-sm text-muted-foreground mt-0.5">Gợi ý dựa trên lịch sử ôn tập của bạn</p>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
         {items.map((item, idx) => {
