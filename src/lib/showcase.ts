@@ -162,6 +162,16 @@ export async function fetchShowcaseBandCounts(
   return counts;
 }
 
+export async function fetchShowcaseExamTitle(examSetId: string): Promise<string> {
+  const { data, error } = await (supabase as any)
+    .from("exam_sets")
+    .select("title")
+    .eq("id", examSetId)
+    .maybeSingle();
+  if (error) throw error;
+  return typeof data?.title === "string" ? data.title : "";
+}
+
 export async function fetchShowcaseBoard(args: {
   skill?: string | null;
   partType?: string | null;

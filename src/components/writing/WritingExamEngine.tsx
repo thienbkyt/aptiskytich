@@ -799,7 +799,6 @@ const WritingExamEngine = ({
             examSetId={examSetId}
             skill="writing"
             partType={partType}
-            title={testTitle}
           />
         )}
 

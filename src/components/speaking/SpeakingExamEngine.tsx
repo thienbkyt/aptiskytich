@@ -1903,7 +1903,6 @@ const SpeakingExamEngine = ({
               examSetId={examSetId}
               skill="speaking"
               partType={partType}
-              title={testTitle}
             />
           )}
         </div>

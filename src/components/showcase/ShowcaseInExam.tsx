@@ -7,6 +7,7 @@ import { useIsPro } from "@/hooks/useIsPro";
 import {
   fetchShowcaseBandCounts,
   fetchShowcaseBySet,
+  fetchShowcaseExamTitle,
   type ShowcaseBand,
   type ShowcaseCard,
 } from "@/lib/showcase";
@@ -16,15 +17,15 @@ interface Props {
   examSetId: string;
   skill: "writing" | "speaking";
   partType: string;
-  title: string;
 }
 
 const BANDS: ShowcaseBand[] = ["B1", "B2", "C"];
 
-const ShowcaseInExam = ({ examSetId, skill, partType, title }: Props) => {
+const ShowcaseInExam = ({ examSetId, skill, partType }: Props) => {
   const { isPro, isPremium } = useIsPro();
   const canRead = isPro || isPremium;
   const [counts, setCounts] = useState<Record<ShowcaseBand, number> | null>(null);
+  const [examTitle, setExamTitle] = useState("");
   const [band, setBand] = useState<ShowcaseBand | null>(null);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 100000));
   const [cards, setCards] = useState<ShowcaseCard[]>([]);
@@ -37,10 +38,14 @@ const ShowcaseInExam = ({ examSetId, skill, partType, title }: Props) => {
     let alive = true;
     setCounts(null);
     setBand(null);
-    fetchShowcaseBandCounts(examSetId, skill, partType)
-      .then((nextCounts) => {
+    Promise.all([
+      fetchShowcaseBandCounts(examSetId, skill, partType),
+      fetchShowcaseExamTitle(examSetId),
+    ])
+      .then(([nextCounts, nextTitle]) => {
         if (!alive) return;
         setCounts(nextCounts);
+        setExamTitle(nextTitle);
         setBand(BANDS.find((item) => nextCounts[item] > 0) ?? null);
       })
       .catch(() => alive && setCounts({ B1: 0, B2: 0, C: 0 }));
@@ -90,7 +95,7 @@ const ShowcaseInExam = ({ examSetId, skill, partType, title }: Props) => {
         <a
           target="_blank"
           rel="noopener"
-          href={`/bang-ky-tich?q=${encodeURIComponent(title)}`}
+          href={`/bang-ky-tich?q=${encodeURIComponent(examTitle)}`}
           className="text-xs font-semibold text-exam-accent hover:underline"
         >
           Xem Bảng Kỳ Tích ↗
