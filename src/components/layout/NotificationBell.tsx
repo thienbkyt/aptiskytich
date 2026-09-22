@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, CheckCheck, Clock, Key } from "lucide-react";
+import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, CheckCheck, Clock, Key, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 
-type NotifType = "feature" | "content" | "general" | "key_update";
+type NotifType = "feature" | "content" | "general" | "key_update" | "referral";
 
 interface Notification {
   id: string;
@@ -56,6 +56,13 @@ const TYPE_META: Record<
     iconBg: "bg-primary",
     iconText: "text-white",
     pillClass: "text-primary bg-primary/10",
+  },
+  referral: {
+    label: "Giới thiệu bạn",
+    icon: Gift,
+    iconBg: "bg-accent",
+    iconText: "text-brand-brown",
+    pillClass: "text-brand-brown dark:text-accent bg-accent/20",
   },
 };
 
