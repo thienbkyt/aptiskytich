@@ -645,6 +645,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             flagReview={speakingV2FlagReview}
             rawTotal={speakingV2RawTotal}
             onExit={onExit}
+            showcaseParts={speakingV2Parts.map((entry) => {
+              const idx = parts.findIndex((p: any) => p?.partNorm === entry.partType);
+              return {
+                partType: entry.partType,
+                testResultId: idx >= 0 ? speakingTestResultIdByPartRef.current[idx] ?? null : null,
+                rawPart: entry.result.rawPart ?? null,
+              };
+            })}
           />
         </>
       );
@@ -1445,6 +1453,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           expectedParts={orderedIndices
             .map((idx) => parts[idx]?.partNorm?.replace("part", "task"))
             .filter(Boolean) as string[]}
+          showcaseParts={orderedIndices
+            .map((idx) => {
+              const pt = parts[idx]?.partNorm?.replace("part", "task");
+              if (!pt) return null;
+              const sub: any = writingPartsRef.current.find((p: any) => p?.partType === pt);
+              const g = writingResults.find((r) => r.partType === pt);
+              return {
+                partType: pt,
+                testResultId: sub?.testResultId ?? null,
+                examSetId: parts[idx]?.id ?? null,
+                rawPart: g?.partScore ?? null,
+              };
+            })
+            .filter(Boolean) as any[]}
         />
 
       );
