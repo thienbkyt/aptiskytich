@@ -5185,6 +5185,78 @@ export type Database = {
         }
         Relationships: []
       }
+      showcase_entries: {
+        Row: {
+          ai_check: Json | null
+          approved_at: string | null
+          band: string
+          content_text: string
+          created_at: string | null
+          display_name: string | null
+          exam_set_id: string | null
+          extraction: Json | null
+          id: string
+          part_type: string
+          question_texts: Json | null
+          raw_part: number
+          skill: string
+          status: string
+          test_result_id: string
+          user_id: string
+        }
+        Insert: {
+          ai_check?: Json | null
+          approved_at?: string | null
+          band: string
+          content_text: string
+          created_at?: string | null
+          display_name?: string | null
+          exam_set_id?: string | null
+          extraction?: Json | null
+          id?: string
+          part_type: string
+          question_texts?: Json | null
+          raw_part: number
+          skill: string
+          status?: string
+          test_result_id: string
+          user_id: string
+        }
+        Update: {
+          ai_check?: Json | null
+          approved_at?: string | null
+          band?: string
+          content_text?: string
+          created_at?: string | null
+          display_name?: string | null
+          exam_set_id?: string | null
+          extraction?: Json | null
+          id?: string
+          part_type?: string
+          question_texts?: Json | null
+          raw_part?: number
+          skill?: string
+          status?: string
+          test_result_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showcase_entries_exam_set_id_fkey"
+            columns: ["exam_set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showcase_entries_test_result_id_fkey"
+            columns: ["test_result_id"]
+            isOneToOne: false
+            referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_visits: {
         Row: {
           created_at: string
@@ -6675,6 +6747,59 @@ export type Database = {
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_intro_video: { Args: never; Returns: Json }
+      get_showcase_board: {
+        Args: {
+          p_band?: string
+          p_limit?: number
+          p_offset?: number
+          p_part_type?: string
+          p_search?: string
+          p_skill?: string
+        }
+        Returns: {
+          approved_at: string
+          band: string
+          created_at: string
+          display_name: string
+          exam_set_id: string
+          exam_set_title: string
+          id: string
+          part_type: string
+          preview: string
+          raw_part: number
+          skill: string
+          total_count: number
+        }[]
+      }
+      get_showcase_by_set: {
+        Args: { p_band: string; p_exam_set_id: string; p_seed?: number }
+        Returns: {
+          band: string
+          created_at: string
+          display_name: string
+          id: string
+          preview: string
+          raw_part: number
+        }[]
+      }
+      get_showcase_detail: {
+        Args: { p_id: string }
+        Returns: {
+          approved_at: string
+          band: string
+          content_text: string
+          created_at: string
+          display_name: string
+          exam_set_id: string
+          exam_set_title: string
+          extraction: Json
+          id: string
+          part_type: string
+          question_texts: Json
+          raw_part: number
+          skill: string
+        }[]
+      }
       get_site_stats: { Args: never; Returns: Json }
       get_storage_size_mb: {
         Args: never
@@ -6821,6 +6946,14 @@ export type Database = {
       }
       send_signup_nurture_emails: { Args: never; Returns: number }
       send_subscription_reminder_emails: { Args: never; Returns: number }
+      showcase_consent: {
+        Args: {
+          p_display_name?: string
+          p_part_type: string
+          p_test_result_id: string
+        }
+        Returns: string
+      }
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }
