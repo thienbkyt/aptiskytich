@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell, Sparkles, Newspaper, ListMusic, Inbox } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell, Sparkles, Newspaper, ListMusic, Inbox, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
@@ -8,6 +8,7 @@ import ImportCenter from "@/components/admin/import/ImportCenter";
 import VocabManager from "@/components/admin/VocabManager";
 import MergeManager from "@/components/admin/merge/MergeManager";
 import BlogManager from "@/components/admin/blog/BlogManager";
+import ShowcaseAdminManager from "@/components/admin/showcase/ShowcaseAdminManager";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -88,7 +89,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="import-center" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="import-center" className="gap-2">
                 <FileSpreadsheet className="w-4 h-4" /> Import Center
               </TabsTrigger>
@@ -100,6 +101,9 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger value="blog" className="gap-2">
                 <Newspaper className="w-4 h-4" /> Blog
+              </TabsTrigger>
+              <TabsTrigger value="showcase" className="gap-2">
+                <Trophy className="w-4 h-4" /> Bảng Kỳ Tích
               </TabsTrigger>
               <TabsTrigger value="legacy" className="gap-2">
                 <Database className="w-4 h-4" /> Quản lý bộ đề cũ
