@@ -415,12 +415,13 @@ async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: numb
   } as any).eq("id", job.test_result_id);
   if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
 
-  // ── Standalone part (no full-test session) ────────────────────────────────
-  // Same reasoning as persistWritingPart: the session finalizer only runs for
-  // full tests, so a lone part must write its own speaking_skill_results row.
-  // The single-part client polls this table for the result.
-  const sessionId: string | null = meta.fullTestSessionId ?? null;
-  if (!sessionId) {
+  // ── Standalone part row (always, per test_result_id) ──────────────────────
+  // The session finalizer only writes aggregate rows for full tests, and
+  // SkillFullPracticeEngine polls speaking_skill_results by test_result_id
+  // while this part is graded in the background — so always ensure a row
+  // exists for this test_result_id (full_test_session_id = null), even when
+  // the part also belongs to a full-test session.
+  {
     const { data: existing, error: exErr } = await admin
       .from("speaking_skill_results")
       .select("id")
