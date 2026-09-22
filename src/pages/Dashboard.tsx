@@ -22,6 +22,7 @@ import GlowCard from "@/components/ui/glow-card";
 import StatPill from "@/components/dashboard/StatPill";
 import AiQuotaPill from "@/components/dashboard/AiQuotaPill";
 import GoalCountdownCard from "@/components/dashboard/GoalCountdownCard";
+import TodayPlanCard from "@/components/dashboard/TodayPlanCard";
 
 import TierPill from "@/components/dashboard/TierPill";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
@@ -594,6 +595,7 @@ const Dashboard = () => {
 
           {/* GOAL & EXAM COUNTDOWN */}
           <GoalCountdownCard />
+          <TodayPlanCard />
 
 
           {/* VOUCHER / AI CREDITS CARD */}

@@ -6772,7 +6772,13 @@ export type Database = {
         }[]
       }
       get_showcase_by_set: {
-        Args: { p_band: string; p_exam_set_id: string; p_seed?: number }
+        Args: {
+          p_band: string
+          p_exam_set_id: string
+          p_part_type?: string
+          p_seed?: number
+          p_skill?: string
+        }
         Returns: {
           band: string
           created_at: string
@@ -6808,6 +6814,7 @@ export type Database = {
           size_mb: number
         }[]
       }
+      get_today_plan: { Args: never; Returns: Json }
       get_user_bootstrap: { Args: never; Returns: Json }
       get_wrong_questions: {
         Args: { p_part: string; p_skill: string }
