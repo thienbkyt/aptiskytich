@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -28,6 +29,8 @@ const PAGE_SIZE = 12;
 const ALL = "all";
 
 const ShowcaseBoard = () => {
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get("q") ?? "";
   usePageMeta({
     title: "Bảng Kỳ Tích — Bài Writing & Speaking điểm đỉnh | APTIS KỲ TÍCH",
     description:
@@ -40,8 +43,8 @@ const ShowcaseBoard = () => {
   const [skill, setSkill] = useState(ALL);
   const [part, setPart] = useState(ALL);
   const [band, setBand] = useState(ALL);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [search, setSearch] = useState(initialSearch);
 
   const [rows, setRows] = useState<ShowcaseBoardRow[]>([]);
   const [total, setTotal] = useState(0);
