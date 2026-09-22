@@ -583,6 +583,44 @@ const History = () => {
     return () => { cancelled = true; };
   }, [user]);
 
+  // Bài của chính học viên đang trên Bảng Kỳ Tích (gộp theo lượt làm bài).
+  useEffect(() => {
+    if (!user) { setShowcaseByResult({}); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const entries = await fetchMyShowcaseEntries();
+        if (cancelled) return;
+        const map: Record<string, MyShowcaseEntry[]> = {};
+        for (const e of entries) {
+          if (!e.test_result_id) continue;
+          (map[e.test_result_id] ||= []).push(e);
+        }
+        setShowcaseByResult(map);
+      } catch { /* im lặng, không ảnh hưởng lịch sử */ }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const handleWithdrawShowcase = async (entry: MyShowcaseEntry) => {
+    setWithdrawingId(entry.id);
+    try {
+      await withdrawShowcase(entry.id);
+      setShowcaseByResult((prev) => {
+        const next = { ...prev };
+        const list = (next[entry.test_result_id] || []).filter((e) => e.id !== entry.id);
+        if (list.length) next[entry.test_result_id] = list;
+        else delete next[entry.test_result_id];
+        return next;
+      });
+      toast({ title: "Đã rút bài khỏi Bảng Kỳ Tích" });
+    } catch {
+      toast({ title: "Chưa rút được bài", description: "Bạn thử lại sau nhé.", variant: "destructive" });
+    } finally {
+      setWithdrawingId(null);
+    }
+  };
+
   const perSkillRows = useMemo(
     () => rows.filter(
       (r) => !r.full_test_session_id && !r.fullPartSession && !groupedMarathonRowIds.has(r.id),
