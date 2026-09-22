@@ -40,6 +40,7 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đề thi các bạn chia sẻ lại" },
+  { label: "Bảng Kỳ Tích", path: "/bang-ky-tich", icon: Trophy, desc: "Bài Writing & Speaking điểm đỉnh" },
   { label: "Mẹo thi Aptis", path: "/meo-thi-aptis", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
 ];
 
