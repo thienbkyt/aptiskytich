@@ -18,6 +18,20 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 const BATCH = 6;
 const TIMEOUT_MS = 120_000;
 
+// Fetch once per run; grade-exam bills feature_usage against this user
+// (an admin) instead of the student, so students keep their quota.
+let cachedAdminUserId: string | null = null;
+async function getAdminUserId(): Promise<string | null> {
+  if (cachedAdminUserId) return cachedAdminUserId;
+  const { data } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin")
+    .limit(1);
+  cachedAdminUserId = (data?.[0] as any)?.user_id ?? null;
+  return cachedAdminUserId;
+}
+
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split(".");
   if (parts.length < 2) return null;
