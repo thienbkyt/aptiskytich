@@ -61,7 +61,7 @@ async function buildPayload(
 ): Promise<{ payload: Record<string, unknown>; userId: string | null; partType: TaskType } | null> {
   const { data: result } = await admin
     .from("test_results")
-    .select("id,user_id,score,total_questions,grade_payload,review_snapshot")
+    .select("id,user_id,score,total,grade_payload,review_snapshot")
     .eq("id", testResultId)
     .maybeSingle();
   if (!result) return null;
