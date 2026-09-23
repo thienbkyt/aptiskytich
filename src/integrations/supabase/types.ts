@@ -6780,6 +6780,54 @@ export type Database = {
           },
         ]
       }
+      writing_calibration: {
+        Row: {
+          bands_v3: Json | null
+          created_at: string | null
+          done_at: string | null
+          error: string | null
+          id: string
+          label: string | null
+          part: string | null
+          raw_old: number | null
+          raw_v3: number | null
+          result: Json | null
+          session_id: string | null
+          status: string
+          test_result_id: string
+        }
+        Insert: {
+          bands_v3?: Json | null
+          created_at?: string | null
+          done_at?: string | null
+          error?: string | null
+          id?: string
+          label?: string | null
+          part?: string | null
+          raw_old?: number | null
+          raw_v3?: number | null
+          result?: Json | null
+          session_id?: string | null
+          status?: string
+          test_result_id: string
+        }
+        Update: {
+          bands_v3?: Json | null
+          created_at?: string | null
+          done_at?: string | null
+          error?: string | null
+          id?: string
+          label?: string | null
+          part?: string | null
+          raw_old?: number | null
+          raw_v3?: number | null
+          result?: Json | null
+          session_id?: string | null
+          status?: string
+          test_result_id?: string
+        }
+        Relationships: []
+      }
       writing_question_gradings: {
         Row: {
           created_at: string
