@@ -175,7 +175,10 @@ async function processRow(row: any) {
     const built = await buildPayload(row.test_result_id);
     if (!built) throw new Error("cannot rebuild writing payload for this attempt");
 
-    const { ok, status, body } = await callGradeExam(built.payload, built.userId ?? row.test_result_id);
+    // Header user id = admin's user_id (once per run) so grade-exam does not
+    // deduct the student's AI quota.
+    const adminId = (await getAdminUserId()) ?? built.userId ?? row.test_result_id;
+    const { ok, status, body } = await callGradeExam(built.payload, adminId);
     if (!ok || !body || body.error) {
       throw new Error(`grade-exam ${status}: ${body?.error ?? "unknown"}`);
     }
