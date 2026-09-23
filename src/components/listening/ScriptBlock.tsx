@@ -86,8 +86,10 @@ function phraseRegex(phrase: string): RegExp | null {
 function findSignalRanges(script: string): SignalRange[] {
   const candidates: SignalRange[] = [];
   for (const group of SIGNAL_PHRASES) {
-    for (const phrase of group.phrases) {
-      const re = phraseRegex(phrase);
+    for (const entry of group.phrases) {
+      const text = typeof entry === "string" ? entry : entry.text;
+      const underline = typeof entry === "string" ? false : !!entry.underline;
+      const re = phraseRegex(text);
       if (!re) continue;
       let m: RegExpExecArray | null;
       while ((m = re.exec(script)) !== null) {
@@ -95,7 +97,7 @@ function findSignalRanges(script: string): SignalRange[] {
           re.lastIndex++;
           continue;
         }
-        candidates.push({ start: m.index, end: m.index + m[0].length, cat: group.cat });
+        candidates.push({ start: m.index, end: m.index + m[0].length, cat: group.cat, underline });
       }
     }
   }
@@ -141,7 +143,7 @@ const ScriptBlock = ({ script, spans = [], loading, highlightSignals }: Props) =
     }
 
     // Split this chunk by signal ranges (answer highlights take precedence).
-    const segs: Array<{ text: string; cat?: SignalCat }> = [];
+    const segs: Array<{ text: string; cat?: SignalCat; underline?: boolean }> = [];
     let cursor = partStart;
     for (const s of signals) {
       if (s.end <= partStart || s.start >= partEnd) continue;
@@ -150,7 +152,7 @@ const ScriptBlock = ({ script, spans = [], loading, highlightSignals }: Props) =
       if (sStart > cursor) {
         segs.push({ text: p.text.slice(cursor - partStart, sStart - partStart) });
       }
-      segs.push({ text: p.text.slice(sStart - partStart, sEnd - partStart), cat: s.cat });
+      segs.push({ text: p.text.slice(sStart - partStart, sEnd - partStart), cat: s.cat, underline: s.underline });
       cursor = sEnd;
     }
     if (cursor < partEnd) segs.push({ text: p.text.slice(cursor - partStart) });
