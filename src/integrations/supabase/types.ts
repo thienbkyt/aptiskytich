@@ -582,6 +582,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_de35_p6_20260922: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_de36_q11_20260903: {
         Row: {
           audio_url: string | null
@@ -2853,6 +2904,21 @@ export type Database = {
           exam_set_id?: string | null
           extra_data?: Json | null
           id?: string | null
+        }
+        Relationships: []
+      }
+      backup_speaking_fullpart_patch_20260922: {
+        Row: {
+          backed_at: string | null
+          data: Json | null
+        }
+        Insert: {
+          backed_at?: string | null
+          data?: Json | null
+        }
+        Update: {
+          backed_at?: string | null
+          data?: Json | null
         }
         Relationships: []
       }
@@ -6180,6 +6246,42 @@ export type Database = {
           part?: string | null
           skill?: string | null
           ten?: string | null
+        }
+        Relationships: []
+      }
+      tmp_spk_patch: {
+        Row: {
+          created_at: string | null
+          existing: Json | null
+          part: string | null
+          raw: number | null
+          row_id: string | null
+          sid: string | null
+          trid: string | null
+          user_id: string | null
+          worker: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          existing?: Json | null
+          part?: string | null
+          raw?: number | null
+          row_id?: string | null
+          sid?: string | null
+          trid?: string | null
+          user_id?: string | null
+          worker?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          existing?: Json | null
+          part?: string | null
+          raw?: number | null
+          row_id?: string | null
+          sid?: string | null
+          trid?: string | null
+          user_id?: string | null
+          worker?: Json | null
         }
         Relationships: []
       }
