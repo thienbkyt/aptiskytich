@@ -586,7 +586,7 @@ const Dashboard = () => {
                 </p>
               </div>
               <Button asChild variant="outline" className="shrink-0 border-primary text-primary hover:bg-primary/10 hover:text-primary font-bold gap-1.5">
-                <Link to="/meo-thi-aptis/huong-dan-lo-trinh-hoc-tren-aptis-ky-tich-cho-nguoi-moi">
+                <Link to="/meo-thi-aptis/huong-dan-hoc-tren-aptis-ky-tich-cho-nguoi-moi">
                   Xem hướng dẫn <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
