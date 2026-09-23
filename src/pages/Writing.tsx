@@ -411,7 +411,13 @@ const Writing = () => {
                 bandBySetId={writingBandBySetId}
                 skillKey="writing"
                 skillName="Writing"
-                sets={fullSets}
+                sets={searchQuery.trim()
+                  ? fullSets.filter((s) => {
+                      const q = searchQuery.trim().toLowerCase();
+                      return (s.title || "").toLowerCase().includes(q)
+                        || String(s.title || "").replace(/\D/g, "") === q.replace(/\D/g, "") && q.replace(/\D/g, "") !== "";
+                    })
+                  : fullSets}
                 loading={fullLoading}
                 onStart={(set) => guard(set as any, () => handleStartFullPractice(set), { feature: 'full_part', itemKey: set.fullTestId, setIds: set.examSetIds })}
                 isLocked={isLocked}
