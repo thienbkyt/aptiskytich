@@ -75,7 +75,7 @@ export const useAudioRecording = ({
       });
       setIsRequestingMic(false);
       const pickMime = () => {
-        const c = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+        const c = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"];
         return c.find((t) => {
           try { return MediaRecorder.isTypeSupported(t); } catch { return false; }
         }) || "";
@@ -93,7 +93,7 @@ export const useAudioRecording = ({
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mime || "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || mime || "audio/webm" });
         if (blob.size < minBlobBytes) {
           toast.warning("Không nhận được âm thanh", {
             description: "Micro có vẻ không thu được tiếng. Kiểm tra micro rồi thu lại — bài không thu được tiếng sẽ không chấm được.",
@@ -106,7 +106,7 @@ export const useAudioRecording = ({
         stream.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setTimeLeft(maxDuration);
 
