@@ -13,8 +13,18 @@ const SPEAKER_RE = /\s*(Speaker [A-D]|Woman|Man|Boy|Girl|Interviewer|Presenter|H
 
 type SignalCat = "agree" | "disagree" | "turn";
 
+type PhraseEntry = string | { text: string; underline?: boolean };
+
+interface SignalRange {
+  start: number;
+  end: number;
+  cat: SignalCat;
+  /** Extra underline (TURN-style) — e.g. partial-agreement cues that usually lead to a rebuttal. */
+  underline?: boolean;
+}
+
 // Signal phrase lists — matched case-insensitively, whole phrase, longest first.
-const SIGNAL_PHRASES: Array<{ cat: SignalCat; phrases: string[] }> = [
+const SIGNAL_PHRASES: Array<{ cat: SignalCat; phrases: PhraseEntry[] }> = [
   {
     cat: "agree",
     phrases: [
@@ -23,6 +33,9 @@ const SIGNAL_PHRASES: Array<{ cat: SignalCat; phrases: string[] }> = [
       "you're absolutely right", "you are absolutely right", "i couldn't agree more",
       "absolutely", "definitely", "same here", "me too", "i think so too",
       "good point", "fair enough",
+      "true enough", "fair point", "that's fair", "i'd go along with that",
+      "you've got a point", "i feel the same", "i share that view",
+      "no argument there", "can't argue with that", "same for me", "i'm with you",
     ],
   },
   {
@@ -32,11 +45,16 @@ const SIGNAL_PHRASES: Array<{ cat: SignalCat; phrases: string[] }> = [
       "that's one perspective", "i don't think so", "i'm not sure", "i am not sure",
       "i disagree", "i don't agree", "not really", "i'm not convinced", "i doubt",
       "on the contrary", "that's not how i see it", "i wouldn't say that",
+      "that's not my experience", "i beg to differ", "that's debatable",
+      // Partial agreement that usually leads to a rebuttal — orange + TURN-style underline.
+      { text: "sometimes, perhaps", underline: true },
+      { text: "up to a point", underline: true },
+      "i'd say the opposite",
     ],
   },
   {
     cat: "turn",
-    phrases: ["but", "however", "although", "though", "on the other hand", "having said that", "then again"],
+    phrases: ["but", "however", "although", "though", "on the other hand", "having said that", "then again", "and yet", "still,", "even so", "that said", "mind you"],
   },
 ];
 
@@ -48,11 +66,6 @@ const SIGNAL_CLASS: Record<SignalCat, string> = {
 
 const SIGNAL_PRIORITY: Record<SignalCat, number> = { agree: 0, disagree: 1, turn: 2 };
 
-interface SignalRange {
-  start: number;
-  end: number;
-  cat: SignalCat;
-}
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -73,8 +86,10 @@ function phraseRegex(phrase: string): RegExp | null {
 function findSignalRanges(script: string): SignalRange[] {
   const candidates: SignalRange[] = [];
   for (const group of SIGNAL_PHRASES) {
-    for (const phrase of group.phrases) {
-      const re = phraseRegex(phrase);
+    for (const entry of group.phrases) {
+      const text = typeof entry === "string" ? entry : entry.text;
+      const underline = typeof entry === "string" ? false : !!entry.underline;
+      const re = phraseRegex(text);
       if (!re) continue;
       let m: RegExpExecArray | null;
       while ((m = re.exec(script)) !== null) {
@@ -82,7 +97,7 @@ function findSignalRanges(script: string): SignalRange[] {
           re.lastIndex++;
           continue;
         }
-        candidates.push({ start: m.index, end: m.index + m[0].length, cat: group.cat });
+        candidates.push({ start: m.index, end: m.index + m[0].length, cat: group.cat, underline });
       }
     }
   }
@@ -128,7 +143,7 @@ const ScriptBlock = ({ script, spans = [], loading, highlightSignals }: Props) =
     }
 
     // Split this chunk by signal ranges (answer highlights take precedence).
-    const segs: Array<{ text: string; cat?: SignalCat }> = [];
+    const segs: Array<{ text: string; cat?: SignalCat; underline?: boolean }> = [];
     let cursor = partStart;
     for (const s of signals) {
       if (s.end <= partStart || s.start >= partEnd) continue;
@@ -137,7 +152,7 @@ const ScriptBlock = ({ script, spans = [], loading, highlightSignals }: Props) =
       if (sStart > cursor) {
         segs.push({ text: p.text.slice(cursor - partStart, sStart - partStart) });
       }
-      segs.push({ text: p.text.slice(sStart - partStart, sEnd - partStart), cat: s.cat });
+      segs.push({ text: p.text.slice(sStart - partStart, sEnd - partStart), cat: s.cat, underline: s.underline });
       cursor = sEnd;
     }
     if (cursor < partEnd) segs.push({ text: p.text.slice(cursor - partStart) });
@@ -145,7 +160,10 @@ const ScriptBlock = ({ script, spans = [], loading, highlightSignals }: Props) =
     segs.forEach((seg) => {
       if (seg.cat) {
         nodes.push(
-          <mark key={key++} className={`rounded px-0.5 ${SIGNAL_CLASS[seg.cat]}`}>
+          <mark
+            key={key++}
+            className={`rounded px-0.5 ${SIGNAL_CLASS[seg.cat]}${seg.underline ? " underline underline-offset-2" : ""}`}
+          >
             {seg.text}
           </mark>
         );
