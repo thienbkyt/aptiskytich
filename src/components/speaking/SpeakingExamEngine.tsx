@@ -839,7 +839,9 @@ const SpeakingExamEngine = ({
         };
       });
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const recMime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"]
+        .find((t) => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) || "";
+      const mediaRecorder = new MediaRecorder(stream, recMime ? { mimeType: recMime } : undefined);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -869,7 +871,7 @@ const SpeakingExamEngine = ({
           }
           return;
         }
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || recMime || "audio/webm" });
         const maxRms = currentMaxRmsRef.current;
         const isSilent = volumeMeasurementActiveRef.current && maxRms < SILENCE_RMS_THRESHOLD;
         maxRmsByQuestionRef.current[recordingIndex] = maxRms;
@@ -917,7 +919,7 @@ const SpeakingExamEngine = ({
         }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       recordingStartRef.current = Date.now();
 
       // Enable "Finish Recording" after 10 seconds
