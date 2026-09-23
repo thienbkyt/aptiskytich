@@ -113,6 +113,13 @@
       "when": 1790083739806,
       "tag": "0015_recheck_finalize_speaking_skill_result",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790145430863,
+      "tag": "0016_secure_exposed_backup_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -23,6 +23,8 @@ import { toTimeSafe } from "@/lib/safeDate";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
 import GradingFailedRetryBox from "@/components/history/GradingFailedRetryBox";
+import SignedImage from "@/components/exam/SignedImage";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Props {
   userId: string;
@@ -52,6 +54,55 @@ const setCached = (id: string, url: string) => {
   safeSessionStorage.setItem(cacheKey(id), JSON.stringify({ url, exp: Date.now() + SIGNED_TTL }));
 };
 
+type ReviewImages = { first: string; second?: string } | null;
+
+const SpeakingReviewImages = ({ images }: { images: ReviewImages }) => {
+  if (!images) return null;
+  const entries = [images.first, images.second].filter((src): src is string => Boolean(src));
+  if (entries.length === 0) return null;
+
+  return (
+    <section className="mb-4" aria-labelledby="speaking-review-images-title">
+      <p id="speaking-review-images-title" className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+        Đề bài
+      </p>
+      <div className={entries.length > 1 ? "grid grid-cols-1 gap-3 sm:grid-cols-2" : "max-w-3xl"}>
+        {entries.map((src, index) => (
+          <div key={`${src}-${index}`} className="space-y-1.5">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start rounded-lg border border-border p-0 hover:bg-muted/40"
+                  aria-label={`Xem lớn ${entries.length > 1 ? `ảnh ${index + 1}` : "ảnh đề bài"}`}
+                >
+                  <SignedImage
+                    src={src}
+                    alt={entries.length > 1 ? `Ảnh ${index + 1}` : "Ảnh đề bài"}
+                    className="max-h-64 w-full rounded-lg object-contain"
+                  />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-5xl p-4">
+                <DialogTitle className="text-sm">{entries.length > 1 ? `Ảnh ${index + 1}` : "Đề bài"}</DialogTitle>
+                <SignedImage
+                  src={src}
+                  alt={entries.length > 1 ? `Ảnh ${index + 1}` : "Ảnh đề bài"}
+                  className="max-h-[75vh] w-full rounded-lg object-contain"
+                />
+              </DialogContent>
+            </Dialog>
+            {entries.length > 1 && (
+              <p className="text-center text-xs text-muted-foreground">Ảnh {index + 1}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 const SpeakingReviewPage = ({
   userId, examSetId, attemptCreatedAt, testTitle, partLabel, onExit, testResultId,
   questionIndex, onQuestionCount,
@@ -68,6 +119,7 @@ const SpeakingReviewPage = ({
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [promptCount, setPromptCount] = useState(1);
+  const [reviewImages, setReviewImages] = useState<ReviewImages>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -88,6 +140,39 @@ const SpeakingReviewPage = ({
         .from("exam_sets").select("part").eq("id", examSetId).maybeSingle();
       const pt = normalizePart((setRow?.part as string) || partLabel) as SpeakingPartType;
       const rows = await fetchExamQuestions(examSetId, { allowEmpty: true });
+      const firstQuestion = rows[0];
+      const extra = (firstQuestion?.extra_data || {}) as Record<string, unknown>;
+      let snapshotRaw: any = null;
+      if (testResultId) {
+        const { data: resultRow } = await supabase
+          .from("test_results")
+          .select("review_snapshot")
+          .eq("id", testResultId)
+          .maybeSingle();
+        snapshotRaw = (resultRow?.review_snapshot as any)?.raw ?? null;
+      }
+      const stringValue = (value: unknown): string => typeof value === "string" ? value.trim() : "";
+      const fallbackImage = stringValue(firstQuestion?.image_url);
+      if (pt === "part2") {
+        const image = stringValue(snapshotRaw?.part2Data?.imageUrl)
+          || stringValue(extra.imageUrl)
+          || fallbackImage;
+        setReviewImages(image ? { first: image } : null);
+      } else if (pt === "part3") {
+        const first = stringValue(snapshotRaw?.part3Data?.imageUrl1)
+          || stringValue(extra.imageUrl1)
+          || fallbackImage;
+        const second = stringValue(snapshotRaw?.part3Data?.imageUrl2)
+          || stringValue(extra.imageUrl2);
+        setReviewImages(first || second ? { first: first || second, second: first && second ? second : undefined } : null);
+      } else if (pt === "part4") {
+        const image = stringValue(snapshotRaw?.part4Data?.imageUrl)
+          || stringValue(extra.imageUrl)
+          || fallbackImage;
+        setReviewImages(image ? { first: image } : null);
+      } else {
+        setReviewImages(null);
+      }
       let promptCount = 0;
       if (pt === "part1") { const d = toSpeakingPart1(rows); setPart1Data(d); promptCount = d.questions.length; }
       else if (pt === "part2") { const d = toSpeakingPart2(rows); setPart2Data(d); promptCount = (d.questions || [d.prompt]).length; }
@@ -360,6 +445,7 @@ const SpeakingReviewPage = ({
       <div className="min-h-screen bg-muted flex flex-col">
         {skillHeader}
         <div className="flex-1 px-4 py-6 max-w-3xl mx-auto w-full">
+          <SpeakingReviewImages images={reviewImages} />
           <SpeakingProfileView
             bands={v2Part.bands || { tf: "", gra: "", vra: "", pro: "", fc: "" }}
             items={items}
@@ -386,6 +472,7 @@ const SpeakingReviewPage = ({
           skill="speaking"
           hasResult={!!v2Part || gradings.some(Boolean)}
         />
+        <SpeakingReviewImages images={reviewImages} />
         <SpeakingReviewView
           partType={partType}
           part1Data={part1Data}
