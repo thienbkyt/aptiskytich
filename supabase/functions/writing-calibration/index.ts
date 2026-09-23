@@ -163,10 +163,10 @@ async function lookupOldRaw(testResultId: string, partType: TaskType): Promise<n
 
   const { data: result } = await admin
     .from("test_results")
-    .select("score,total_questions")
+    .select("score,total")
     .eq("id", testResultId)
     .maybeSingle();
-  if (result && Number((result as any).total_questions) === 30) return Number((result as any).score);
+  if (result && Number((result as any).total) === 30) return Number((result as any).score);
   return null;
 }
 
