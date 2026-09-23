@@ -1556,6 +1556,31 @@ Formal email:
 ${partsIn.formalText ?? ""}`;
       }
 
+      // Experimental stricter rubric (v3) — internal calibration only. Never
+      // applied to a real student request (isInternal === false).
+      if (isInternal && String((body as any).rubricVersion || "") === "v3") {
+        const STRICT_V3 = `
+
+HIỆU CHỈNH CHẶT (v3) — ưu tiên cao hơn mọi hướng dẫn ở trên khi có mâu thuẫn:
+
+1. BÀI HỌC THUỘC / CÂU KHUÔN: câu chung chung có thể dùng cho bất kỳ đề nào (vd "this one brings more long-term benefits", "It is totally worth it", "Go for it!", "I hope these ideas will be useful", "It not only saves you a lot of energy but also brings many practical benefits") KHÔNG được tính là phát triển ý. Nếu từ một nửa nội dung trở lên là câu khuôn không bám chi tiết cụ thể của đề → TF tối đa 2, VRA tối đa 3.
+
+2. CHI TIẾT LỆCH ĐỀ / CHÉP BÀI: nhắc tình huống, đối tượng, sự việc không có trong đề (vd đề về câu lạc bộ mà viết về chính phủ phá nhà cũ), hoặc hai email ký hai tên khác nhau / tên không khớp người viết → coi là chép bài mẫu: TF của email/câu đó tối đa 1.
+
+3. NGỮ PHÁP — đếm lỗi ngữ pháp THẬT trên mỗi 100 từ: ≥5 lỗi → GRA tối đa 2; 3–4 lỗi → GRA tối đa 3. Lỗi cấu trúc câu lặp lại (hai động từ chính trong một mệnh đề như "the club should make a simple plan would be a good idea", mệnh đề đầy đủ sau giới từ như "about the club has the plan") → GRA tối đa 3. GRA 4 chỉ khi ≤2 lỗi/100 từ và có câu phức đúng; GRA 5 khi gần như không lỗi.
+
+4. MẶC ĐỊNH BAND 3: mỗi tiêu chí bắt đầu ở 3 (B1); chỉ nâng lên 4–5 khi có bằng chứng rõ trong bài (ý riêng, cụ thể theo đề, ví dụ/giải thích cụ thể, từ vựng chính xác theo ngữ cảnh). Bố cục đẹp và từ nối không đủ để lên 4.
+
+5. REG/CC không được bù cho TF: khung formal chuẩn nhưng nội dung lạc hoặc khuôn thì vẫn chấm TF theo quy tắc 1–2.
+
+6. TASK 1: correct chỉ khi câu trả lời thực sự trả lời đúng câu hỏi được hỏi (vd hỏi "What was your first school?" mà trả lời "It was great." → wrong_content).
+
+MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the club should make a simple plan would be a good idea", "about the club has the plan to adjust…" — người viết bài này thi thật Writing 26/50 → mức hợp lý TF 2, GRA 2, VRA 3, CC 3, REG 3.`;
+        systemPromptV2 = `${systemPromptV2}${STRICT_V3}`;
+      }
+
+
+
       // Build tool schema per part
       const bandProp = { type: "integer", minimum: 0, maximum: 5 };
       const errItem = {
