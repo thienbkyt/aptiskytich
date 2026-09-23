@@ -117,6 +117,16 @@ function barSm(id,rows,todayISO,color,unitLabel){
    scales:{y:{grid:{color:"#f1f5f9"},ticks:{precision:0,font:{size:11}}},
     x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});}
 
+function barHour(id,rows){
+ const peak=Math.max(...rows.map(x=>x.n));
+ mkChart(id,{type:"bar",
+  data:{labels:rows.map(x=>String(x.h).padStart(2,"0")+"h"),datasets:[{data:rows.map(x=>x.n),
+   backgroundColor:rows.map(x=>(peak>0&&x.n===peak)?"#0e7490":"#2f6ea5"),borderRadius:4,maxBarThickness:34}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+   tooltip:{callbacks:{label:c=>num(c.parsed.y)+" bill · "+vnd(rows[c.dataIndex].dt)}}},
+   scales:{y:{grid:{color:"#f1f5f9"},ticks:{precision:0,font:{size:11}}},
+    x:{grid:{display:false},ticks:{font:{size:10}}}}}});}
+
 function shell(){
  const today=D.today,m0=today.slice(0,8)+"01";
  if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=today;}
@@ -197,10 +207,13 @@ function calc(){
  const phutTb=pN?pSum/pN:null;
  const fdM=(D.funnel_daily||[]).filter(x=>mk(x.d)===curM);
  const linkTaoM=fdM.reduce((a,x)=>a+ +x.tao,0),linkTraM=fdM.reduce((a,x)=>a+ +x.tra,0);
+ const hourAgg=Array.from({length:24},(_,h)=>({h,n:0,dt:0}));
+ (D.hour_daily||[]).filter(x=>inRange(x.d)).forEach(x=>{const a=hourAgg[+x.h];a.n+=+x.n;a.dt+=+x.dt;});
+ const hourTop=hourAgg.filter(x=>x.n>0).slice().sort((a,b)=>b.dt-a.dt).slice(0,5);
  return {S,subs,fn,daily,today,curM,prevM,dayN,daysM,rev,ord,expPaid,expUnpaid,fund0,expAll,fundNow,fundAfter,
   pnl,arpu,dF,eF,revR,ordR,expR,arpuR,revPerDay,revM,ordM,projRev,revByM,ordByM,expByM,months,byCat,byGroup,
   planAgg,nuM,nuR,nuF,buyF,visF,linkTao,linkTra,boDo,doneRate,phutTb,linkTaoM,linkTraM,
-  unpaid:D.unpaid||[],byHour:(D.by_hour||[]).slice(0,5)};}
+  unpaid:D.unpaid||[],hourAgg,byHour:hourTop};}
 
 function tOverview(C){
  const show=C.dF.slice(-62);
@@ -291,6 +304,8 @@ function tRevenue(C){
  document.getElementById("body").innerHTML=`
  <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
  <div class="chart"><canvas id="c1"></canvas></div>
+ <div class="sec-h"><h2>Số bill theo giờ trong ngày</h2><span class="tag">${rangeLabel()} · Tổng <b>${num(C.ordR)}</b> bill · gộp theo giờ Việt Nam, cột đậm là giờ nhiều bill nhất</span></div>
+ <div class="chart"><canvas id="c_hour"></canvas></div>
  <div class="split s11" style="margin-top:16px">
   <div><div class="sec-h"><h2>Kết quả theo tháng</h2><span class="tag">toàn thời gian</span></div>
    <table><thead><tr><th>Tháng</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">Chi phí</th><th class="n">Lãi/lỗ</th></tr></thead><tbody>
@@ -304,7 +319,7 @@ function tRevenue(C){
     `<tr><td>${PLAN_LABEL[k]||k}</td><td class="n">${v.n}</td><td class="n">${vnd(v.dt)}</td><td class="n">${pct(v.dt/planRev)}</td><td class="n">${vnd(v.dt/v.n)}</td></tr>`).join("")
     ||'<tr><td colspan="5" class="muted">Không có đơn trong kỳ</td></tr>'}
    </tbody></table>
-   <div class="sec-h"><h2>Giờ bán chạy</h2><span class="tag">tháng ${C.curM}</span></div>
+   <div class="sec-h"><h2>Giờ bán chạy — top 5</h2><span class="tag">${rangeLabel()}</span></div>
    <table><thead><tr><th>Khung giờ</th><th class="n">Đơn</th><th class="n">Doanh thu</th></tr></thead><tbody>
    ${C.byHour.map(h=>`<tr><td>${String(h.h).padStart(2,"0")}:00 – ${String(h.h).padStart(2,"0")}:59</td><td class="n">${h.n}</td><td class="n">${vnd(+h.dt)}</td></tr>`).join("")||'<tr><td colspan="3" class="muted">Chưa có dữ liệu</td></tr>'}
    </tbody></table></div>
@@ -315,7 +330,8 @@ function tRevenue(C){
   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
    tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+" · "+show[c.dataIndex].n+" đơn"}}},
    scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
-    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});}
+    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});
+ barHour("c_hour",C.hourAgg);}
 
 function tCustomers(C){
  const s=C.subs;
