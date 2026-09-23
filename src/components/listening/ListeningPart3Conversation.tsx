@@ -155,6 +155,7 @@ const ListeningPart3Conversation = ({
             script={q.script}
             spans={q.statements.map((_, si) => highlights[l3Id(si)]).filter(Boolean) as string[]}
             loading={highlightLoading}
+            highlightSignals={reveal}
           />
         )}
       </div>
