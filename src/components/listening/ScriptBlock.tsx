@@ -160,7 +160,10 @@ const ScriptBlock = ({ script, spans = [], loading, highlightSignals }: Props) =
     segs.forEach((seg) => {
       if (seg.cat) {
         nodes.push(
-          <mark key={key++} className={`rounded px-0.5 ${SIGNAL_CLASS[seg.cat]}`}>
+          <mark
+            key={key++}
+            className={`rounded px-0.5 ${SIGNAL_CLASS[seg.cat]}${seg.underline ? " underline underline-offset-2" : ""}`}
+          >
             {seg.text}
           </mark>
         );
