@@ -18,6 +18,20 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 const BATCH = 6;
 const TIMEOUT_MS = 120_000;
 
+// Fetch once per run; grade-exam bills feature_usage against this user
+// (an admin) instead of the student, so students keep their quota.
+let cachedAdminUserId: string | null = null;
+async function getAdminUserId(): Promise<string | null> {
+  if (cachedAdminUserId) return cachedAdminUserId;
+  const { data } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin")
+    .limit(1);
+  cachedAdminUserId = (data?.[0] as any)?.user_id ?? null;
+  return cachedAdminUserId;
+}
+
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split(".");
   if (parts.length < 2) return null;
@@ -47,7 +61,7 @@ async function buildPayload(
 ): Promise<{ payload: Record<string, unknown>; userId: string | null; partType: TaskType } | null> {
   const { data: result } = await admin
     .from("test_results")
-    .select("id,user_id,score,total_questions,grade_payload,review_snapshot")
+    .select("id,user_id,score,total,grade_payload,review_snapshot")
     .eq("id", testResultId)
     .maybeSingle();
   if (!result) return null;
@@ -149,10 +163,10 @@ async function lookupOldRaw(testResultId: string, partType: TaskType): Promise<n
 
   const { data: result } = await admin
     .from("test_results")
-    .select("score,total_questions")
+    .select("score,total")
     .eq("id", testResultId)
     .maybeSingle();
-  if (result && Number((result as any).total_questions) === 30) return Number((result as any).score);
+  if (result && Number((result as any).total) === 30) return Number((result as any).score);
   return null;
 }
 
@@ -161,7 +175,10 @@ async function processRow(row: any) {
     const built = await buildPayload(row.test_result_id);
     if (!built) throw new Error("cannot rebuild writing payload for this attempt");
 
-    const { ok, status, body } = await callGradeExam(built.payload, built.userId ?? row.test_result_id);
+    // Header user id = admin's user_id (once per run) so grade-exam does not
+    // deduct the student's AI quota.
+    const adminId = (await getAdminUserId()) ?? built.userId ?? row.test_result_id;
+    const { ok, status, body } = await callGradeExam(built.payload, adminId);
     if (!ok || !body || body.error) {
       throw new Error(`grade-exam ${status}: ${body?.error ?? "unknown"}`);
     }
