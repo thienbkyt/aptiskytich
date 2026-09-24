@@ -52,6 +52,7 @@ const ShowcaseAdminManager = () => {
   const [band, setBand] = useState("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null);
 
   const load = async () => {
     setLoading(true);
