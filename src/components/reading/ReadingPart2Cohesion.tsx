@@ -325,7 +325,7 @@ const ReadingPart2Cohesion = ({
                 <div
                   key={pos}
                    data-slot-pos={pos}
-                  onClick={() => handleSlotTap(pos)}
+                   onClick={() => handleCardClick(() => handleSlotTap(pos))}
                   className={`relative min-h-[56px] border-2 border-dashed rounded-md px-4 py-3 text-sm flex items-center transition-colors ${slotCls} ${
                     placed ? "bg-background" : "bg-transparent"
                   } ${!reveal ? "cursor-pointer" : ""} ${
