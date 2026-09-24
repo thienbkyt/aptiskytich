@@ -115,6 +115,7 @@ const Reading = () => {
   /** exam_set_id -> position in the key, so a run follows the same order as the key list. */
   const [keyOrder, setKeyOrder] = useState<Map<string, number>>(new Map());
   const [retryFetchedSets, setRetryFetchedSets] = useState<Map<string, ExamSetRow>>(new Map());
+  const retryRequestedRef = useRef<Set<string>>(new Set());
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
@@ -292,12 +293,17 @@ const Reading = () => {
   useEffect(() => {
     const retryIds = marathon.retryWrongSetIds ?? [];
     if (!retryIds.length) {
-      setRetryFetchedSets(new Map());
+      retryRequestedRef.current.clear();
+      // Giữ nguyên reference khi đã rỗng để React bail-out, không tạo Map mới
+      setRetryFetchedSets((prev) => (prev.size === 0 ? prev : new Map()));
       return;
     }
     const knownIds = new Set(examSets.map((s) => s.id));
-    const missingIds = retryIds.filter((id) => !knownIds.has(id) && !retryFetchedSets.has(id));
+    const missingIds = retryIds.filter(
+      (id) => !knownIds.has(id) && !retryFetchedSets.has(id) && !retryRequestedRef.current.has(id),
+    );
     if (!missingIds.length) return;
+    missingIds.forEach((id) => retryRequestedRef.current.add(id));
     let cancelled = false;
     void (async () => {
       const { data } = await supabase
@@ -305,7 +311,11 @@ const Reading = () => {
         .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
         .in("id", missingIds)
         .eq("is_published", true);
-      if (cancelled || !data?.length) return;
+      if (cancelled) {
+        missingIds.forEach((id) => retryRequestedRef.current.delete(id));
+        return;
+      }
+      if (!data?.length) return;
       setRetryFetchedSets((prev) => {
         const next = new Map(prev);
         (data as ExamSetRow[]).forEach((set) => next.set(set.id, set));
