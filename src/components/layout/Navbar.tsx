@@ -861,6 +861,12 @@ const Navbar = () => {
                         Dashboard
                       </Button>
                     </Link>
+                    <Link to="/gioi-thieu">
+                      <Button variant="outline" className="w-full justify-center gap-2 text-sm">
+                        <Gift className="w-4 h-4 text-primary" />
+                        Giới thiệu bạn
+                      </Button>
+                    </Link>
                     {(isPro || isPremium) ? (
                       <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-extrabold">
                         <Crown className="w-3.5 h-3.5" />

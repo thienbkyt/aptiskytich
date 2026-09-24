@@ -99,6 +99,10 @@ export default function PricingPage() {
     },
   });
 
+  useEffect(() => {
+    if ((voucher as any)?.is_referral) setShortKey("week");
+  }, [voucher]);
+
   const { data: voucherStatus } = useQuery({
     queryKey: ["voucher-campaign-status", user?.id],
     enabled: !!user,
@@ -440,8 +444,14 @@ export default function PricingPage() {
                   className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
                 >
-                  {vPct > 0 && `-${vPct}% · `}
-                  +{voucher?.gift_days ?? 0} ngày · +{voucher?.gift_ai_credits ?? 0} lượt
+                  {(voucher as any)?.is_referral ? (
+                    `-${voucher?.discount_percent ?? 0}% từ bạn bè`
+                  ) : (
+                    <>
+                      {vPct > 0 && `-${vPct}% · `}
+                      +{voucher?.gift_days ?? 0} ngày · +{voucher?.gift_ai_credits ?? 0} lượt
+                    </>
+                  )}
                 </span>
               ) : (
                 <span className="text-[11px] text-muted-foreground">Mã không áp dụng</span>
@@ -690,7 +700,7 @@ export default function PricingPage() {
                     <Ticket className="w-4 h-4 text-primary" /> Có mã ưu đãi?
                   </p>
                   <p className="text-[12px] text-muted-foreground mt-0.5 mb-3">
-                    Nhập mã trước khi chọn gói để được cộng thêm ngày và lượt chấm AI.
+                    Nhập mã ưu đãi hoặc mã giới thiệu của bạn bè (KT-XXXXX) trước khi chọn gói.
                   </p>
                   <VoucherInput mode="preview" compact onApplied={applyVoucher} />
                 </div>
