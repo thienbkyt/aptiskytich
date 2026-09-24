@@ -75,6 +75,15 @@ tr.tot td{font-weight:750;border-top:2px solid var(--brand);background:var(--bra
  animation:sp .8s linear infinite;margin:0 auto 14px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .muted{color:#94a3b8;font-style:italic}
+.cat-row{cursor:pointer}
+.cat-row:hover{background:#eef4fa}
+.cat-row .ca{display:inline-block;width:13px;color:var(--brand);font-size:9px;vertical-align:1px}
+.cat-det{display:none}
+.cat-det>td{background:#f8fafc;padding:6px 10px 8px 26px;border-bottom:1px solid #e2e8f0}
+.det-r{display:grid;grid-template-columns:62px 1fr 122px;gap:8px;font-size:11.5px;padding:3px 0;border-bottom:1px dashed #e2e8f0}
+.det-r:last-child{border-bottom:none}
+.det-r .rt{text-align:right;font-variant-numeric:tabular-nums}
+.det-r em{color:var(--down);font-style:normal;font-size:10px;margin-left:4px}
 @media(max-width:900px){.split{grid-template-columns:1fr!important}.c4,.c5{grid-template-columns:repeat(2,1fr)}
  body{padding:12px 10px 40px}.sheet{padding:16px 14px 20px}}
 </style>
@@ -377,10 +386,11 @@ function tCosts(C){
  <div class="sec-h"><h2>Thu · chi · lãi lỗ theo tháng</h2><span class="tag">toàn thời gian · cột là thu/chi, đường là lãi lỗ</span></div>
  <div class="chart"><canvas id="c_pnl"></canvas></div>
  <div class="split s64" style="margin-top:18px">
-  <div><div class="sec-h"><h2>Chi theo danh mục</h2><span class="tag">${rangeLabel()} · ${vnd(C.expR)}</span></div>
+  <div><div class="sec-h"><h2>Chi theo danh mục</h2><span class="tag">${rangeLabel()} · ${vnd(C.expR)} · bấm vào một danh mục để xem từng khoản</span></div>
    <table><thead><tr><th>Danh mục</th><th class="n">Số tiền</th><th class="n">% kỳ</th></tr></thead><tbody>
-   ${cats.map(([k,v])=>
-    `<tr><td class="bar-cell"><div class="bg" style="width:${v/maxCat*100}%"></div><span>${k}</span></td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(C.expR||1))}</td></tr>`).join("")
+   ${cats.map(([k,v],ix)=>{const its=C.eF.filter(x=>x.c===k).sort((a,b)=>(+b.amt)-(+a.amt));
+    return `<tr class="cat-row" data-i="${ix}"><td class="bar-cell"><div class="bg" style="width:${v/maxCat*100}%"></div><span class="ca">▸</span><span>${k}</span></td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(C.expR||1))}</td></tr>
+    <tr class="cat-det" data-i="${ix}"><td colspan="3">${its.map(x=>`<div class="det-r"><span>${dm(x.d)}</span><span>${x.t||"—"}</span><span class="rt">${vnd(+x.amt)}${x.paid?"":"<em>chưa trả</em>"}</span></div>`).join("")||'<div class="muted">Không có khoản nào</div>'}</td></tr>`;}).join("")
     ||'<tr><td colspan="3" class="muted">Không có chi phí trong kỳ</td></tr>'}
    ${C.expR?`<tr class="tot"><td>Tổng</td><td class="n">${vnd(C.expR)}</td><td class="n">100%</td></tr>`:""}
    </tbody></table></div>
@@ -394,6 +404,11 @@ function tCosts(C){
  ${C.unpaid.slice().sort((a,b)=>(+b.amt)-(+a.amt)).map(u=>`<tr><td>${dm(u.d)}</td><td>${u.t}</td><td class="n neg">${vnd(+u.amt)}</td></tr>`).join("")}
  <tr class="tot"><td colspan="2">Tổng còn nợ</td><td class="n neg">${vnd(C.expUnpaid)}</td></tr>
  </tbody></table>`:""}`;
+ document.querySelectorAll(".cat-row").forEach(r=>{r.onclick=()=>{
+   const d=document.querySelector('.cat-det[data-i="'+r.dataset.i+'"]');
+   const mo=d.style.display==="table-row";
+   d.style.display=mo?"none":"table-row";
+   r.querySelector(".ca").textContent=mo?"▸":"▾";};});
  const ms=C.months;
  mkChart("c_pnl",{type:"bar",
   data:{labels:ms,datasets:[
