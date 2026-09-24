@@ -127,6 +127,13 @@
       "when": 1790159160181,
       "tag": "0017_writing_calibration",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790221117199,
+      "tag": "0018_rerecord_get_my_referral_code",
+      "breakpoints": true
     }
   ]
 }
