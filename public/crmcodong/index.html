@@ -382,7 +382,7 @@ function tCosts(C){
  <div class="row c4 hero">
   ${card("Doanh thu kỳ này",vnd(C.revR),`${num(C.ordR)} đơn · ARPU ${vnd(C.arpuR)}`)}
   ${card("Chi phí kỳ này",vnd(C.expR),`${C.eF.length} khoản chi`)}
-  ${card(lai?"Lãi kỳ này":"Lỗ kỳ này",vnd(Math.abs(pnlR)),`biên ${pct(bien)}`,lai?"pos":"neg")}
+  ${card("Lãi / lỗ kỳ này",vnd(pnlR),`biên ${pct(bien)}`,lai?"pos":"neg")}
   ${card("Đang nợ chưa trả",vnd(C.expUnpaid),`${C.unpaid.length} khoản`,C.expUnpaid?"neg":"")}
  </div>
  <div class="sec-h"><h2>Thu · chi · lãi lỗ theo tháng</h2><span class="tag">toàn thời gian · cột là thu/chi, đường là lãi lỗ</span></div>
