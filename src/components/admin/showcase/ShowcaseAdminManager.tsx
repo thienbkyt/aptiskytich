@@ -127,6 +127,39 @@ const ShowcaseAdminManager = () => {
     }
   };
 
+  const recheckAllTooShort = async () => {
+    const targets = rows.filter(
+      (r) =>
+        r.status === "rejected" &&
+        String(r.ai_check?.reason || "").startsWith("Bài quá ngắn"),
+    );
+    if (targets.length === 0) {
+      toast({ title: "Không có bài nào bị từ chối vì quá ngắn" });
+      return;
+    }
+    setBulk({ done: 0, total: targets.length });
+    let approved = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const r = targets[i];
+      try {
+        await (supabase as any)
+          .from("showcase_entries")
+          .update({ status: "checking", ai_check: null, approved_at: null })
+          .eq("id", r.id);
+        const { data } = await supabase.functions.invoke("showcase-review", {
+          body: { entry_id: r.id },
+        });
+        if (String((data as any)?.status) === "approved") approved++;
+      } catch {
+        /* bỏ qua lỗi từng dòng, tiếp tục dòng sau */
+      }
+      setBulk({ done: i + 1, total: targets.length });
+    }
+    setBulk(null);
+    toast({ title: "Đã duyệt lại xong", description: `${approved}/${targets.length} bài được duyệt.` });
+    void load();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
