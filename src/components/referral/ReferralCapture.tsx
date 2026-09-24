@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const CODE_RE = /^KT-[A-Z0-9]{5}$/;
@@ -17,7 +18,10 @@ export default function ReferralCapture() {
       const code = raw.trim().toUpperCase();
       if (CODE_RE.test(code)) {
         const existing = (localStorage.getItem("voucher_code") || "").trim();
-        if (!existing) localStorage.setItem("voucher_code", code);
+        if (!existing) {
+          localStorage.setItem("voucher_code", code);
+          toast.success(`Đã lưu mã giới thiệu ${code} — bạn được giảm khi mua gói`, { duration: 5000 });
+        }
 
         if (!sessionStorage.getItem("kt-ref-logged")) {
           sessionStorage.setItem("kt-ref-logged", "1");

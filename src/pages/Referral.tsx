@@ -30,7 +30,15 @@ type ReferralCode = {
   pending_vnd?: number;
   available_vnd?: number;
   paid_vnd?: number;
+  requested_vnd?: number;
   next_tier_at?: number | null;
+};
+
+const PLAN_LABEL: Record<string, string> = {
+  week: "1 tuần",
+  month: "1 tháng",
+  quarter: "3 tháng",
+  half_year: "6 tháng",
 };
 
 type HistoryRow = {
@@ -306,6 +314,11 @@ export default function Referral() {
               </div>
             ))}
           </div>
+          {Number(info?.requested_vnd ?? 0) > 0 && (
+            <p className="text-[13px] font-medium text-foreground">
+              Đang chờ admin chuyển: {vnd(info?.requested_vnd)}
+            </p>
+          )}
           {nextTierAt != null && nextTierPct != null && (
             <p className="text-[12px] text-muted-foreground">
               Còn {Math.max(0, nextTierAt - referred)} bạn nữa để lên mức {nextTierPct}%
@@ -367,7 +380,7 @@ export default function Referral() {
                         <tr key={`${r.created_at}-${i}`} className="border-b border-border/60 last:border-0">
                           <td className="py-2.5 pr-3 whitespace-nowrap">{vnDate(r.created_at)}</td>
                           <td className="py-2.5 pr-3">{r.referred_name || "Học viên"}</td>
-                          <td className="py-2.5 pr-3">{r.plan_key || "—"}</td>
+                          <td className="py-2.5 pr-3">{(r.plan_key && PLAN_LABEL[r.plan_key]) || "—"}</td>
                           <td className="py-2.5 pr-3 whitespace-nowrap font-semibold text-foreground">
                             {vnd(r.commission_vnd)} · {r.commission_percent}%
                           </td>
