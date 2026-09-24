@@ -75,6 +75,14 @@ tr.tot td{font-weight:750;border-top:2px solid var(--brand);background:var(--bra
  animation:sp .8s linear infinite;margin:0 auto 14px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .muted{color:#94a3b8;font-style:italic}
+.nl{display:flex;flex-direction:column;gap:7px}
+.nl-i{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;font-size:12.5px;line-height:1.55;
+ padding:9px 12px;border:1px solid var(--line);border-left-width:3px;border-radius:8px;background:#fff}
+.nl-i .nl-ic{font-weight:800;text-align:center;font-size:12px;line-height:1.5}
+.nl-i.x{border-left-color:var(--up)}.nl-i.x .nl-ic{color:var(--up)}
+.nl-i.y{border-left-color:#d97706;background:var(--warn-bg)}.nl-i.y .nl-ic{color:#b45309}
+.nl-i.d{border-left-color:var(--down);background:#fef2f2}.nl-i.d .nl-ic{color:var(--down)}
+.nl-i.i{border-left-color:#94a3b8}.nl-i.i .nl-ic{color:#94a3b8}
 .cat-row{cursor:pointer}
 .cat-row:hover{background:#eef4fa}
 .cat-row .ca{display:inline-block;width:13px;color:var(--brand);font-size:9px;vertical-align:1px}
@@ -141,7 +149,7 @@ function barHour(id,rows){
 function shell(){
  const today=D.today,m0=today.slice(0,8)+"01";
  if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=eom(today);}
- const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Thu & Chi"]];
+ const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Thu & Chi"],["review","Đánh giá"]];
  return `<div class="sheet">
   <h1>Báo cáo tài chính — Aptis Kỳ Tích</h1>
   <div class="sub">Số liệu trực tiếp từ hệ thống, cập nhật lúc mở trang · Đơn vị VND · Mọi mốc ngày theo giờ Việt Nam
@@ -382,7 +390,7 @@ function tCosts(C){
  <div class="row c4 hero">
   ${card("Doanh thu kỳ này",vnd(C.revR),`${num(C.ordR)} đơn · ARPU ${vnd(C.arpuR)}`)}
   ${card("Chi phí kỳ này",vnd(C.expR),`${C.eF.length} khoản chi`)}
-  ${card("Lãi / lỗ kỳ này",vnd(pnlR),`biên ${pct(bien)}`,lai?"pos":"neg")}
+  ${card(lai?"Lãi kỳ này":"Lỗ kỳ này",vnd(Math.abs(pnlR)),`biên ${pct(bien)}`,lai?"pos":"neg")}
   ${card("Đang nợ chưa trả",vnd(C.expUnpaid),`${C.unpaid.length} khoản`,C.expUnpaid?"neg":"")}
  </div>
  <div class="sec-h"><h2>Thu · chi · lãi lỗ theo tháng</h2><span class="tag">toàn thời gian · cột là thu/chi, đường là lãi lỗ</span></div>
@@ -444,12 +452,91 @@ function tCosts(C){
     x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});
 }
 
+function tReview(C){
+ const KPI=+(C.S["kpi_"+C.curM.replace("-","")]||0);
+ const rOf=d=>{const x=C.daily.find(y=>y.d===d);return x?+x.dt:0;};
+ const nOf=d=>{const x=C.daily.find(y=>y.d===d);return x?x.n:0;};
+ const seq=(k,off)=>[...Array(k)].map((_,i)=>addDays(C.today,-(i+off)));
+ const avg=a=>a.length?a.reduce((s,d)=>s+rOf(d),0)/a.length:0;
+ const a7=avg(seq(7,1)), p7=avg(seq(7,8)), xu=p7?(a7-p7)/p7:null;
+ const hnay=rOf(C.today), hqua=rOf(addDays(C.today,-1));
+ const daysLeft=Math.max(C.daysM-C.dayN,0);
+ const projA7=C.revM+a7*daysLeft;
+ const thieu=Math.max(KPI-C.revM,0), canNgay=daysLeft?thieu/daysLeft:0;
+ const mult=a7?canNgay/a7:null;
+ const cm={},pm={};
+ (D.exp_items||[]).forEach(x=>{const m=mk(x.d);
+   if(m===C.curM) cm[x.c]=(cm[x.c]||0)+ +x.amt;
+   if(m===C.prevM) pm[x.c]=(pm[x.c]||0)+ +x.amt;});
+ const expM=Object.values(cm).reduce((a,b)=>a+b,0);
+ const tangs=Object.entries(cm).map(([k,v])=>({k,v,p:pm[k]||0,d:v-(pm[k]||0)}))
+   .filter(x=>x.d>0).sort((a,b)=>b.d-a.d).slice(0,3);
+ const topCat=Object.entries(cm).sort((a,b)=>b[1]-a[1])[0];
+ const tyle=C.revM?expM/C.revM:0;
+ const arpuM=C.ordM?C.revM/C.ordM:0;
+ const fdM=(D.funnel_daily||[]).filter(x=>mk(x.d)===C.curM);
+ const tao=fdM.reduce((a,x)=>a+ +x.tao,0), tra=fdM.reduce((a,x)=>a+ +x.tra,0);
+ const hoanTat=tao?tra/tao:0, boDo=tao-tra;
+ const hAgg=Array.from({length:24},(_,h)=>({h,n:0,dt:0}));
+ (D.hour_daily||[]).filter(x=>mk(x.d)===C.curM).forEach(x=>{const a=hAgg[+x.h];a.n+=+x.n;a.dt+=+x.dt;});
+ const hTop=hAgg.slice().sort((a,b)=>b.dt-a.dt).slice(0,3);
+ const hSum=hAgg.reduce((s,x)=>s+x.dt,0)||1;
+ const pAgg={}; (D.plan_monthly||[]).filter(p=>p.m===C.curM).forEach(p=>{pAgg[p.k]=(pAgg[p.k]||0)+ +p.dt;});
+ const pTop=Object.entries(pAgg).sort((a,b)=>b[1]-a[1])[0];
+ const pSum=Object.values(pAgg).reduce((a,b)=>a+b,0)||1;
+ const s=C.subs, muaLai=s.da_mua?s.mua_lai/s.da_mua:0;
+ const tiemNang=(s.het_han_30d||0)*muaLai*arpuM;
+ const nx=[], add=(l,t)=>nx.push({l,t});
+ if(KPI){
+  if(mult==null) add("y","Chưa đủ dữ liệu nhịp để đánh giá khả năng đạt KPI.");
+  else if(mult<=1) add("x",`Đang <b>trước nhịp</b>: giữ tốc độ 7 ngày gần nhất (${vnd(a7)}/ngày) là đủ chạm KPI ${vnd(KPI)}.`);
+  else if(mult<=1.3) add("y",`Cần <b>${vnd(canNgay)}/ngày</b> trong ${daysLeft} ngày còn lại, nhanh hơn nhịp hiện tại ${pct(mult-1)}. Trong tầm với nếu không tụt.`);
+  else add("d",`Cần <b>${vnd(canNgay)}/ngày</b> mà nhịp đang ${vnd(a7)}/ngày — phải gấp <b>${mult.toFixed(1)} lần</b>. Khó đạt nếu không có kênh mới.`);
+  add("i",`Đã đạt <b>${pct(C.revM/KPI)}</b> KPI sau ${C.dayN}/${C.daysM} ngày. Theo nhịp 7 ngày, cả tháng về đích khoảng <b>${vnd(projA7)}</b> (${pct(projA7/KPI)} KPI).`);
+ }
+ if(xu!=null) add(xu>=0?"x":"y",`Nhịp 7 ngày gần nhất ${vnd(a7)}/ngày, ${xu>=0?"tăng":"giảm"} <b>${pct(Math.abs(xu))}</b> so 7 ngày liền trước (${vnd(p7)}/ngày).`);
+ add("i",`Hôm nay ${vnd(hnay)} · hôm qua ${vnd(hqua)}${hqua?` (${hnay>=hqua?"+":""}${pct((hnay-hqua)/hqua)})`:""}.`);
+ if(tyle>1) add("d",`Chi phí tháng này <b>${vnd(expM)}</b> đang <b>vượt</b> doanh thu ${vnd(C.revM)} — tỷ lệ chi/thu ${pct(tyle)}.`);
+ else if(tyle>0.8) add("y",`Chi phí bằng <b>${pct(tyle)}</b> doanh thu tháng này, biên còn mỏng.`);
+ else if(expM) add("x",`Chi phí bằng ${pct(tyle)} doanh thu, biên lợi nhuận ${pct(1-tyle)}.`);
+ tangs.forEach(t=>add(t.d>5000000?"d":"y",`<b>${t.k}</b> tháng này ${vnd(t.v)}, tăng ${vnd(t.d)} so tháng ${C.prevM.slice(5)}${t.p?` (${pct(t.d/t.p)})`:" (tháng trước không có)"}.`));
+ if(C.expUnpaid) add("y",`Còn <b>${vnd(C.expUnpaid)}</b> chưa thanh toán ở ${C.unpaid.length} khoản — nhớ chừa dòng tiền.`);
+ const gtDt=[];
+ if(tao) gtDt.push(`Tháng này có <b>${num(boDo)} lượt bấm mua rồi bỏ</b> (hoàn tất chỉ ${pct(hoanTat)}). Kéo thêm 5 điểm phần trăm ≈ <b>${vnd(tao*0.05*arpuM)}</b>.`);
+ if(hTop[0]) gtDt.push(`Ba khung giờ ${hTop.map(x=>String(x.h).padStart(2,"0")+"h").join(" · ")} gánh <b>${pct(hTop.reduce((a,x)=>a+x.dt,0)/hSum)}</b> doanh thu — dồn seeding và ads vào 1–2 tiếng trước các khung này.`);
+ if(pTop) gtDt.push(`Gói <b>${PLAN_LABEL[pTop[0]]||pTop[0]}</b> chiếm ${pct(pTop[1]/pSum)} doanh thu tháng. Upsell từ gói ngắn lên gói này là đường tăng ARPU nhanh nhất (ARPU đang ${vnd(arpuM)}).`);
+ if(s.het_han_30d) gtDt.push(`<b>${num(s.het_han_30d)}</b> tài khoản hết hạn trong 30 ngày tới, tỉ lệ mua lại ${pct(muaLai)} → tiềm năng <b>${vnd(tiemNang)}</b> nếu chăm gia hạn đủ.`);
+ const gtCp=[];
+ if(topCat) gtCp.push(`Danh mục lớn nhất tháng này là <b>${topCat[0]}</b> ${vnd(topCat[1])} (${pct(topCat[1]/(expM||1))} tổng chi). Soi kỹ chỗ này trước khi cắt chỗ khác.`);
+ if(tangs[0]) gtCp.push(`Khoản phình nhanh nhất là <b>${tangs[0].k}</b>, +${vnd(tangs[0].d)} so tháng trước — xem là chi một lần hay sẽ lặp hằng tháng.`);
+ const cd=["Lương nhân sự","Thuê văn phòng & cọc","Mạng internet"].reduce((a,k)=>a+(cm[k]||0),0);
+ if(cd) gtCp.push(`Chi phí cố định (lương, văn phòng, mạng) <b>${vnd(cd)}</b> — ${pct(cd/(expM||1))} tổng chi, tức mỗi ngày phải bán ${vnd(cd/C.daysM)} chỉ để hoà phần cứng này.`);
+ if(expM) gtCp.push(`Điểm hoà vốn tháng: cần doanh thu <b>${vnd(expM)}</b>, hiện đạt ${pct(C.revM/expM)}${C.revM>=expM?" — đã qua điểm hoà vốn":""}.`);
+ const ico={x:"✓",y:"!",d:"✕",i:"•"};
+ document.getElementById("body").innerHTML=`
+ <div class="insight">Đánh giá tự động lúc ${D.as_of} · so nhịp 7 ngày, tiến độ KPI, cơ cấu chi phí và phễu bán hàng tháng ${C.curM}.</div>
+ <div class="row c4 hero">
+  ${card("Doanh thu hôm nay",vnd(hnay),`${nOf(C.today)} đơn`)}
+  ${card("Nhịp 7 ngày gần nhất",vnd(a7)+"/ngày",xu==null?"":`${xu>=0?"tăng":"giảm"} ${pct(Math.abs(xu))} so 7 ngày trước`,xu>=0?"pos":"neg")}
+  ${card("Luỹ kế tháng "+C.curM,vnd(C.revM),KPI?`${pct(C.revM/KPI)} KPI ${vnd(KPI)}`:"")}
+  ${card("Dự kiến cả tháng",vnd(projA7),`theo nhịp 7 ngày · còn ${daysLeft} ngày`)}
+ </div>
+ <div class="sec-h"><h2>Nhận định</h2><span class="tag">tự sinh từ số liệu</span></div>
+ <div class="nl">${nx.map(x=>`<div class="nl-i ${x.l}"><span class="nl-ic">${ico[x.l]}</span><span>${x.t}</span></div>`).join("")}</div>
+ <div class="split s11" style="margin-top:18px">
+  <div><div class="sec-h"><h2>Gợi ý tăng doanh thu</h2></div>
+   <div class="nl">${gtDt.map(t=>`<div class="nl-i x"><span class="nl-ic">↑</span><span>${t}</span></div>`).join("")||'<div class="muted">Chưa đủ dữ liệu</div>'}</div></div>
+  <div><div class="sec-h"><h2>Gợi ý tối ưu chi phí</h2></div>
+   <div class="nl">${gtCp.map(t=>`<div class="nl-i y"><span class="nl-ic">↓</span><span>${t}</span></div>`).join("")||'<div class="muted">Chưa đủ dữ liệu</div>'}</div></div>
+ </div>`;
+}
+
 function render(){
  charts.forEach(c=>c.destroy());charts=[];
  document.getElementById("root").innerHTML=shell();
  wire();
  const C=calc();
- ({overview:tOverview,kpi:tKPI,revenue:tRevenue,customers:tCustomers,costs:tCosts}[TAB]||tOverview)(C);}
+ ({overview:tOverview,kpi:tKPI,revenue:tRevenue,customers:tCustomers,costs:tCosts,review:tReview}[TAB]||tOverview)(C);}
 
 async function load(){
  const t=new URLSearchParams(location.search).get("t");
