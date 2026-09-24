@@ -113,6 +113,8 @@ function rangeLabel(){
  if(RANGE.mode==="month")return "tháng "+RANGE.from.slice(0,7);
  if(RANGE.mode==="30d")return "30 ngày gần nhất";
  return dm(RANGE.from)+" → "+dm(RANGE.to);}
+function eom(s){const y=+s.slice(0,4),m=+s.slice(5,7);const last=new Date(Date.UTC(y,m,0)).getUTCDate();
+ return s.slice(0,8)+String(last).padStart(2,"0");}
 function addDays(s,k){const p=s.split("-").map(Number);const dt=new Date(Date.UTC(p[0],p[1]-1,p[2]));
  dt.setUTCDate(dt.getUTCDate()+k);return dt.toISOString().slice(0,10);}
 function mkChart(id,cfg){const el=document.getElementById(id);if(el)charts.push(new Chart(el,cfg));}
@@ -138,7 +140,7 @@ function barHour(id,rows){
 
 function shell(){
  const today=D.today,m0=today.slice(0,8)+"01";
- if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=today;}
+ if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=eom(today);}
  const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Thu & Chi"]];
  return `<div class="sheet">
   <h1>Báo cáo tài chính — Aptis Kỳ Tích</h1>
@@ -151,8 +153,8 @@ function shell(){
    <button data-m="30d">30 ngày</button>
    <button data-m="all">Toàn thời gian</button>
    <span class="sep"></span>
-   <label>Từ</label><input type="date" id="f" value="${RANGE.from||m0}" min="2026-03-01" max="${today}">
-   <label>đến</label><input type="date" id="t" value="${RANGE.to||today}" min="2026-03-01" max="${today}">
+   <label>Từ</label><input type="date" id="f" value="${RANGE.from||m0}" min="2026-03-01" max="${eom(today)}">
+   <label>đến</label><input type="date" id="t" value="${RANGE.to||eom(today)}" min="2026-03-01" max="${eom(today)}">
    <button id="go">Áp dụng</button>
   </div>
   <div id="tabs">${tabs.map(([k,l])=>`<button data-t="${k}" class="${k===TAB?"on":""}">${l}</button>`).join("")}</div>
@@ -168,7 +170,7 @@ function wire(){
   if(b.dataset.m===RANGE.mode)b.classList.add("on");
   b.onclick=()=>{const m=b.dataset.m;
    if(m==="all")RANGE={mode:"all",from:null,to:null};
-   if(m==="month")RANGE={mode:"month",from:m0,to:today};
+   if(m==="month")RANGE={mode:"month",from:m0,to:eom(today)};
    if(m==="30d")RANGE={mode:"30d",from:d30,to:today};
    render();};});
  document.getElementById("go").onclick=()=>{
