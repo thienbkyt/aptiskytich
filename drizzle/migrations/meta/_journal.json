@@ -134,6 +134,13 @@
       "when": 1790221117199,
       "tag": "0018_rerecord_get_my_referral_code",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790224730973,
+      "tag": "0019_showcase_source_pg_trgm",
+      "breakpoints": true
     }
   ]
 }

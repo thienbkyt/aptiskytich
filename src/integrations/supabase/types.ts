@@ -2817,6 +2817,66 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_showcase_before_backfill_20260924: {
+        Row: {
+          ai_check: Json | null
+          approved_at: string | null
+          band: string | null
+          content_text: string | null
+          created_at: string | null
+          display_name: string | null
+          exam_set_id: string | null
+          extraction: Json | null
+          id: string | null
+          part_type: string | null
+          question_texts: Json | null
+          raw_part: number | null
+          skill: string | null
+          source: string | null
+          status: string | null
+          test_result_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_check?: Json | null
+          approved_at?: string | null
+          band?: string | null
+          content_text?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          exam_set_id?: string | null
+          extraction?: Json | null
+          id?: string | null
+          part_type?: string | null
+          question_texts?: Json | null
+          raw_part?: number | null
+          skill?: string | null
+          source?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_check?: Json | null
+          approved_at?: string | null
+          band?: string | null
+          content_text?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          exam_set_id?: string | null
+          extraction?: Json | null
+          id?: string | null
+          part_type?: string | null
+          question_texts?: Json | null
+          raw_part?: number | null
+          skill?: string | null
+          source?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_sp_anh_20260905: {
         Row: {
           extra_data: Json | null
@@ -5640,6 +5700,7 @@ export type Database = {
           question_texts: Json | null
           raw_part: number
           skill: string
+          source: string
           status: string
           test_result_id: string
           user_id: string
@@ -5658,6 +5719,7 @@ export type Database = {
           question_texts?: Json | null
           raw_part: number
           skill: string
+          source?: string
           status?: string
           test_result_id: string
           user_id: string
@@ -5676,6 +5738,7 @@ export type Database = {
           question_texts?: Json | null
           raw_part?: number
           skill?: string
+          source?: string
           status?: string
           test_result_id?: string
           user_id?: string
