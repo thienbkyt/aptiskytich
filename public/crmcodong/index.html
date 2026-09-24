@@ -130,7 +130,7 @@ function barHour(id,rows){
 function shell(){
  const today=D.today,m0=today.slice(0,8)+"01";
  if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=today;}
- const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Chi phí"]];
+ const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Thu & Chi"]];
  return `<div class="sheet">
   <h1>Báo cáo tài chính — Aptis Kỳ Tích</h1>
   <div class="sub">Số liệu trực tiếp từ hệ thống, cập nhật lúc mở trang · Đơn vị VND · Mọi mốc ngày theo giờ Việt Nam
@@ -360,27 +360,72 @@ function tCustomers(C){
 
 function tCosts(C){
  const maxCat=Math.max(...Object.values(C.byCat),1);
+ const pnlR=C.revR-C.expR, bien=C.revR?pnlR/C.revR:0;
+ const cats=Object.entries(C.byCat).sort((a,b)=>b[1]-a[1]);
+ const grps=Object.entries(C.byGroup).sort((a,b)=>b[1]-a[1]);
+ const lai=pnlR>=0;
  document.getElementById("body").innerHTML=`
- <div class="split s11">
-  <div><div class="sec-h"><h2>Theo danh mục</h2><span class="tag">${rangeLabel()} · ${vnd(C.expR)}</span></div>
+ <div class="insight">Kỳ ${rangeLabel()}: thu <b>${vnd(C.revR)}</b> · chi <b>${vnd(C.expR)}</b> →
+  ${lai?"lãi":"lỗ"} <b class="${lai?"pos":"neg"}">${vnd(Math.abs(pnlR))}</b>, biên lợi nhuận <b>${pct(bien)}</b>.
+  ${C.expUnpaid?`Ngoài ra đang treo <b class="neg">${vnd(C.expUnpaid)}</b> chưa thanh toán (đã tính vào chi phí).`:"Không còn khoản nào chưa thanh toán."}</div>
+ <div class="row c4 hero">
+  ${card("Doanh thu kỳ này",vnd(C.revR),`${num(C.ordR)} đơn · ARPU ${vnd(C.arpuR)}`)}
+  ${card("Chi phí kỳ này",vnd(C.expR),`${C.eF.length} khoản chi`)}
+  ${card(lai?"Lãi kỳ này":"Lỗ kỳ này",vnd(Math.abs(pnlR)),`biên ${pct(bien)}`,lai?"pos":"neg")}
+  ${card("Đang nợ chưa trả",vnd(C.expUnpaid),`${C.unpaid.length} khoản`,C.expUnpaid?"neg":"")}
+ </div>
+ <div class="sec-h"><h2>Thu · chi · lãi lỗ theo tháng</h2><span class="tag">toàn thời gian · cột là thu/chi, đường là lãi lỗ</span></div>
+ <div class="chart"><canvas id="c_pnl"></canvas></div>
+ <div class="split s64" style="margin-top:18px">
+  <div><div class="sec-h"><h2>Chi theo danh mục</h2><span class="tag">${rangeLabel()} · ${vnd(C.expR)}</span></div>
    <table><thead><tr><th>Danh mục</th><th class="n">Số tiền</th><th class="n">% kỳ</th></tr></thead><tbody>
-   ${Object.entries(C.byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+   ${cats.map(([k,v])=>
     `<tr><td class="bar-cell"><div class="bg" style="width:${v/maxCat*100}%"></div><span>${k}</span></td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(C.expR||1))}</td></tr>`).join("")
     ||'<tr><td colspan="3" class="muted">Không có chi phí trong kỳ</td></tr>'}
    ${C.expR?`<tr class="tot"><td>Tổng</td><td class="n">${vnd(C.expR)}</td><td class="n">100%</td></tr>`:""}
    </tbody></table></div>
-  <div><div class="sec-h"><h2>Theo nhóm</h2><span class="tag">${rangeLabel()}</span></div>
-   <table><thead><tr><th>Nhóm</th><th class="n">Số tiền</th><th class="n">%</th></tr></thead><tbody>
-   ${Object.entries(C.byGroup).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
-    `<tr><td>${k}</td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(C.expR||1))}</td></tr>`).join("")
-    ||'<tr><td colspan="3" class="muted">Không có chi phí</td></tr>'}
-   </tbody></table>
-   ${C.unpaid.length?`<div class="sec-h"><h2>Chưa thanh toán</h2><span class="tag">${vnd(C.expUnpaid)}</span></div>
-   <table><thead><tr><th>Ngày</th><th>Khoản</th><th class="n">Số tiền</th></tr></thead><tbody>
-   ${C.unpaid.map(u=>`<tr><td>${dm(u.d)}</td><td>${u.t}</td><td class="n neg">${vnd(+u.amt)}</td></tr>`).join("")}
-   </tbody></table>`:""}
-  </div>
- </div>`;}
+  <div><div class="sec-h"><h2>Cơ cấu theo nhóm</h2><span class="tag">${rangeLabel()}</span></div>
+   <div class="chart" style="height:236px"><canvas id="c_grp"></canvas></div></div>
+ </div>
+ <div class="sec-h"><h2>Thu và chi theo ngày</h2><span class="tag">${rangeLabel()} · xem ngày nào tiêu mạnh so với ngày bán được</span></div>
+ <div class="chart"><canvas id="c_day"></canvas></div>
+ ${C.unpaid.length?`<div class="sec-h"><h2>Các khoản chưa thanh toán</h2><span class="tag">${C.unpaid.length} khoản · tổng ${vnd(C.expUnpaid)}</span></div>
+ <table><thead><tr><th>Ngày</th><th>Khoản</th><th class="n">Số tiền</th></tr></thead><tbody>
+ ${C.unpaid.slice().sort((a,b)=>(+b.amt)-(+a.amt)).map(u=>`<tr><td>${dm(u.d)}</td><td>${u.t}</td><td class="n neg">${vnd(+u.amt)}</td></tr>`).join("")}
+ <tr class="tot"><td colspan="2">Tổng còn nợ</td><td class="n neg">${vnd(C.expUnpaid)}</td></tr>
+ </tbody></table>`:""}`;
+ const ms=C.months;
+ mkChart("c_pnl",{type:"bar",
+  data:{labels:ms,datasets:[
+   {label:"Doanh thu",data:ms.map(m=>C.revByM[m]||0),backgroundColor:"#1f4e79",borderRadius:4,maxBarThickness:46,order:2},
+   {label:"Chi phí",data:ms.map(m=>C.expByM[m]||0),backgroundColor:"#d97757",borderRadius:4,maxBarThickness:46,order:2},
+   {label:"Lãi / lỗ",data:ms.map(m=>(C.revByM[m]||0)-(C.expByM[m]||0)),type:"line",borderColor:"#047857",
+    backgroundColor:"#047857",borderWidth:2.5,pointRadius:4,tension:.25,order:1}]},
+  options:{responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>c.dataset.label+": "+vnd(c.parsed.y)}}},
+   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(0)+"tr",font:{size:11}}},
+    x:{grid:{display:false},ticks:{font:{size:11}}}}}});
+ mkChart("c_grp",{type:"doughnut",
+  data:{labels:grps.map(g=>g[0]),datasets:[{data:grps.map(g=>g[1]),
+   backgroundColor:["#1f4e79","#d97757","#0e7490","#94a3b8"],borderWidth:2,borderColor:"#fff"}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:"58%",
+   plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>c.label+": "+vnd(c.parsed)+" ("+pct(c.parsed/(C.expR||1))+")"}}}}});
+ const byDay={};
+ C.dF.forEach(x=>{(byDay[x.d]=byDay[x.d]||{r:0,e:0}).r+= +x.dt;});
+ C.eF.forEach(x=>{(byDay[x.d]=byDay[x.d]||{r:0,e:0}).e+= +x.amt;});
+ const days=Object.keys(byDay).sort().slice(-62);
+ mkChart("c_day",{type:"bar",
+  data:{labels:days.map(d=>dm(d).slice(0,5)),datasets:[
+   {label:"Doanh thu",data:days.map(d=>byDay[d].r),backgroundColor:"#1f4e79",borderRadius:3,maxBarThickness:22},
+   {label:"Chi phí",data:days.map(d=>-byDay[d].e),backgroundColor:"#d97757",borderRadius:3,maxBarThickness:22}]},
+  options:{responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:12,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>c.dataset.label+": "+vnd(Math.abs(c.parsed.y))}}},
+   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(Math.abs(v)/1e6).toFixed(1)+"tr",font:{size:11}}},
+    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});
+}
 
 function render(){
  charts.forEach(c=>c.destroy());charts=[];
