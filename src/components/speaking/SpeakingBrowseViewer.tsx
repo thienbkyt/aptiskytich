@@ -8,6 +8,7 @@ import { fetchExamQuestions, type ExamSetRow, type ExamQuestionRow } from "@/hoo
 import type { SpeakingPartType } from "@/data/speakingQuestions";
 import { examLoadReason } from "@/lib/examLoadError";
 import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
+import ShowcaseInExam from "@/components/showcase/ShowcaseInExam";
 
 interface Props {
   sets: ExamSetRow[];
