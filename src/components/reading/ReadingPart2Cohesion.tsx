@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, memo } from "react";
+import { useMemo, useState, useEffect, useRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, GripVertical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,26 @@ const ReadingPart2Cohesion = ({
     if (onSectionChange) onSectionChange(next);
     else setCurrentSectionLocal(next);
   };
-  const [dragging, setDragging] = useState<string | null>(null);
+  const [drag, setDrag] = useState<{
+    text: string;
+    x: number;
+    y: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
+  const [hoverTarget, setHoverTarget] = useState<string | null>(null);
+  const pendingDragRef = useRef<{
+    pointerId: number;
+    text: string;
+    startX: number;
+    startY: number;
+    offsetX: number;
+    offsetY: number;
+    width: number;
+  } | null>(null);
+  const dragWidthRef = useRef(0);
+  const didDragRef = useRef(false);
+  const suppressClickRef = useRef(false);
   const [selectedText, setSelectedText] = useState<string | null>(null);
   const reveal = globallyRevealed || (lockedSections?.has(currentSection) ?? false);
 
@@ -127,38 +146,84 @@ const ReadingPart2Cohesion = ({
   const correctTextForPosition = (pos: number) =>
     section.sentences.find((s) => s.correctPosition === pos)?.text;
 
-  const handleDragStart = (text: string) => setDragging(text);
-  const handleDragEnd = () => setDragging(null);
-
-  const handleDropOnSlot = (pos: number, e: React.DragEvent) => {
-    e.preventDefault();
-    if (reveal) return;
-    const text = e.dataTransfer.getData("text/plain") || dragging;
-    if (!text) return;
-    const next: Record<number, string> = { ...current };
-    // Remove text from any other slot first
-    for (const k of Object.keys(next)) {
-      if (next[Number(k)] === text) delete next[Number(k)];
-    }
-    next[pos] = text;
-    onPlacementsChange(currentSection, next);
-    setDragging(null);
+  const targetAtPoint = (x: number, y: number) => {
+    const target = document.elementFromPoint(x, y);
+    const slot = target?.closest<HTMLElement>("[data-slot-pos]");
+    if (slot?.dataset.slotPos) return `slot:${slot.dataset.slotPos}`;
+    if (target?.closest("[data-pool]")) return "pool";
+    return null;
   };
 
-  const handleDropOnPool = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (reveal) return;
-    const text = e.dataTransfer.getData("text/plain") || dragging;
-    if (!text) return;
-    const next: Record<number, string> = { ...current };
-    for (const k of Object.keys(next)) {
-      if (next[Number(k)] === text) delete next[Number(k)];
-    }
-    onPlacementsChange(currentSection, next);
-    setDragging(null);
+  const handlePointerDown = (text: string, e: React.PointerEvent<HTMLDivElement>) => {
+    if (reveal || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    pendingDragRef.current = {
+      pointerId: e.pointerId,
+      text,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      width: rect.width,
+    };
+    didDragRef.current = false;
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  const allowDrop = (e: React.DragEvent) => e.preventDefault();
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const pending = pendingDragRef.current;
+    if (!pending || pending.pointerId !== e.pointerId) return;
+    const distance = Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY);
+    if (!didDragRef.current && distance <= 6) return;
+    if (!didDragRef.current) {
+      didDragRef.current = true;
+      dragWidthRef.current = pending.width;
+    }
+    e.preventDefault();
+    setDrag({
+      text: pending.text,
+      x: e.clientX,
+      y: e.clientY,
+      offsetX: pending.offsetX,
+      offsetY: pending.offsetY,
+    });
+    setHoverTarget(targetAtPoint(e.clientX, e.clientY));
+  };
+
+  const clearPointerDrag = () => {
+    pendingDragRef.current = null;
+    setDrag(null);
+    setHoverTarget(null);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const pending = pendingDragRef.current;
+    if (!pending || pending.pointerId !== e.pointerId) return;
+    if (didDragRef.current) {
+      suppressClickRef.current = true;
+      const target = targetAtPoint(e.clientX, e.clientY);
+      if (target?.startsWith("slot:")) {
+        const pos = Number(target.slice(5));
+        if (Number.isInteger(pos)) placeTextAt(pos, pending.text);
+      } else if (target === "pool") {
+        removeText(pending.text);
+      }
+    }
+    clearPointerDrag();
+  };
+
+  const handlePointerCancel = () => {
+    didDragRef.current = false;
+    clearPointerDrag();
+  };
+
+  const handleCardClick = (action: () => void) => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    action();
+  };
 
   const goPrevSection = () => setCurrentSection((p) => Math.max(0, p - 1));
   const goNextSection = () => setCurrentSection((p) => Math.min(totalSections - 1, p + 1));
@@ -167,7 +232,7 @@ const ReadingPart2Cohesion = ({
   const isLast = currentSection === totalSections - 1;
 
   return (
-    <div className="min-h-[70vh] flex flex-col pb-28 sm:pb-24">
+    <div className={`min-h-[70vh] flex flex-col pb-28 sm:pb-24 ${drag ? "select-none" : ""}`}>
       {!submitted && (
         <AdminExamControls
           label={`Reading Part 2 · Câu ${currentSection + 1}/${totalSections}`}
@@ -259,13 +324,13 @@ const ReadingPart2Cohesion = ({
               return (
                 <div
                   key={pos}
-                  onDragOver={allowDrop}
-                  onDrop={(e) => handleDropOnSlot(pos, e)}
-                  onClick={() => handleSlotTap(pos)}
+                   data-slot-pos={pos}
+                   onClick={() => handleCardClick(() => handleSlotTap(pos))}
                   className={`relative min-h-[56px] border-2 border-dashed rounded-md px-4 py-3 text-sm flex items-center transition-colors ${slotCls} ${
                     placed ? "bg-background" : "bg-transparent"
                   } ${!reveal ? "cursor-pointer" : ""} ${
                     !reveal && placed && selectedText === placed ? "ring-2 ring-primary" : ""
+                   } ${hoverTarget === `slot:${pos}` ? "ring-2 ring-primary" : ""
                   }`}
                 >
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground select-none">
@@ -273,13 +338,13 @@ const ReadingPart2Cohesion = ({
                   </span>
                   {placed ? (
                     <div
-                      draggable={!reveal}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", placed);
-                        handleDragStart(placed);
-                      }}
-                      onDragEnd={handleDragEnd}
-                      className="pl-6 flex items-start gap-2 w-full cursor-grab active:cursor-grabbing"
+                     onPointerDown={(e) => handlePointerDown(placed, e)}
+                     onPointerMove={handlePointerMove}
+                     onPointerUp={handlePointerUp}
+                     onPointerCancel={handlePointerCancel}
+                     className={`pl-6 flex items-start gap-2 w-full cursor-grab active:cursor-grabbing touch-none ${
+                       drag?.text === placed ? "opacity-40" : ""
+                     }`}
                     >
                       <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                       <span className="text-foreground">{placed}</span>
@@ -342,9 +407,10 @@ const ReadingPart2Cohesion = ({
             </div>
           ) : (
             <div
-              onDragOver={allowDrop}
-              onDrop={handleDropOnPool}
-              className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full max-md:landscape:max-h-[52vh] max-md:landscape:overflow-y-auto"
+               data-pool
+               className={`space-y-3 bg-muted/30 rounded-md p-3 min-h-full max-md:landscape:max-h-[52vh] max-md:landscape:overflow-y-auto ${
+                 hoverTarget === "pool" ? "ring-2 ring-primary" : ""
+               }`}
             >
               {unplaced.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4">
@@ -356,15 +422,14 @@ const ReadingPart2Cohesion = ({
                 return (
                   <div
                     key={s.text}
-                    draggable={!reveal}
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", s.text);
-                      handleDragStart(s.text);
-                    }}
-                    onDragEnd={handleDragEnd}
-                    onClick={() => handlePoolTap(s.text)}
+                     onPointerDown={(e) => handlePointerDown(s.text, e)}
+                     onPointerMove={handlePointerMove}
+                     onPointerUp={handlePointerUp}
+                     onPointerCancel={handlePointerCancel}
+                     onClick={() => handleCardClick(() => handlePoolTap(s.text))}
                     className={`bg-background border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2 transition-colors ${
                       isSelected ? "border-primary ring-2 ring-primary" : "border-border"
+                     } ${drag?.text === s.text ? "opacity-40" : ""
                     }`}
                   >
                     <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -376,6 +441,20 @@ const ReadingPart2Cohesion = ({
           )}
         </motion.div>
       </AnimatePresence>
+
+      {drag && (
+        <div
+          className="fixed pointer-events-none z-50 bg-background border border-border rounded-md px-3 py-3 text-sm text-foreground opacity-90 flex items-start gap-2 shadow-lg"
+          style={{
+            left: drag.x - drag.offsetX,
+            top: drag.y - drag.offsetY,
+            width: dragWidthRef.current,
+          }}
+        >
+          <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+          <span>{drag.text}</span>
+        </div>
+      )}
 
       {!hideBottomNav && (
         <BottomNavBar
