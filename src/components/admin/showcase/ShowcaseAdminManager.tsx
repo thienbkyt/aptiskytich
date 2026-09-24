@@ -194,6 +194,16 @@ const ShowcaseAdminManager = () => {
             <SelectItem value="B1">B1</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          disabled={bulk !== null}
+          onClick={() => void recheckAllTooShort()}
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${bulk ? "animate-spin" : ""}`} />
+          {bulk ? `Đang duyệt ${bulk.done}/${bulk.total}` : "Duyệt lại tất cả bài bị từ chối vì quá ngắn"}
+        </Button>
         <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void load()}>
           <RefreshCw className="w-3.5 h-3.5" /> Tải lại
         </Button>
