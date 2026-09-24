@@ -33,7 +33,7 @@ const WritingPart3Questions = ({
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
   hideBottomNav = false, hideTimer = false, afterSample,
 }: Props) => {
-  const showSample = !!revealAnswers && !submitted;
+  const showSample = !!revealAnswers && (!submitted || !!reviewMode);
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">

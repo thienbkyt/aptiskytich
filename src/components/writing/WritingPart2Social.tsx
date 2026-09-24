@@ -31,7 +31,7 @@ const WritingPart2Social = ({
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
   hideBottomNav = false, hideTimer = false, afterSample,
 }: Props) => {
-  const showSample = !!revealAnswers && !submitted;
+  const showSample = !!revealAnswers && (!submitted || !!reviewMode);
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
 
   return (

@@ -8,6 +8,7 @@ import { fetchExamQuestions, type ExamSetRow, type ExamQuestionRow } from "@/hoo
 import type { SpeakingPartType } from "@/data/speakingQuestions";
 import { examLoadReason } from "@/lib/examLoadError";
 import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
+import ShowcaseInExam from "@/components/showcase/ShowcaseInExam";
 
 interface Props {
   sets: ExamSetRow[];
@@ -299,6 +300,13 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                   </div>
                 );
               })()}
+
+              {/* Bảng Kỳ Tích của đề này */}
+              {showSamples && partType !== "part1" && (
+                <div className="mt-2">
+                  <ShowcaseInExam examSetId={currentSet.id} skill="speaking" partType={partType} />
+                </div>
+              )}
 
               {/* Reveal sample answers */}
               <div className="flex justify-start">
