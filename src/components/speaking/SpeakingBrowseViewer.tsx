@@ -301,6 +301,13 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                 );
               })()}
 
+              {/* Bảng Kỳ Tích của đề này */}
+              {showSamples && partType !== "part1" && (
+                <div className="mt-2">
+                  <ShowcaseInExam examSetId={currentSet.id} skill="speaking" partType={partType} />
+                </div>
+              )}
+
               {/* Reveal sample answers */}
               <div className="flex justify-start">
                 <Button
