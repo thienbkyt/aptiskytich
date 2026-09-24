@@ -16,10 +16,10 @@ const json = (body: unknown, status = 200) =>
 
 const MODEL = "openai/gpt-6-astra";
 
-const WRITING_WORD_LIMITS: Record<string, number> = {
-  task2: 45,
-  task3: 60,
-  task4: 225,
+const SHOWCASE_MIN_WORDS: Record<string, number> = {
+  task2: 16,
+  task3: 72,
+  task4: 128,
 };
 
 function countWords(t: string) {
@@ -60,8 +60,8 @@ serve(async (req) => {
     /* ---------- code-side length gate ---------- */
     const words = countWords(entry.content_text || "");
     if (entry.skill === "writing") {
-      const limit = WRITING_WORD_LIMITS[entry.part_type] ?? 45;
-      if (words < Math.floor(limit * 0.8)) {
+      const limit = SHOWCASE_MIN_WORDS[entry.part_type] ?? 16;
+      if (words < limit) {
         await admin
           .from("showcase_entries")
           .update({
