@@ -191,6 +191,7 @@ export default function Referral() {
   const available = Number(info?.available_vnd ?? 0);
   const referred = Number(info?.referred_count ?? 0);
   const tierKey = discount < 10 ? "free" : referred < 5 ? "t1" : referred < 20 ? "t2" : "t3";
+  const tierIdx = TIERS.findIndex((t) => t.key === tierKey);
 
   const stats = useMemo(
     () => [
