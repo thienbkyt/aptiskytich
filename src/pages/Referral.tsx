@@ -325,10 +325,88 @@ export default function Referral() {
               Đang chờ admin chuyển: {vnd(info?.requested_vnd)}
             </p>
           )}
-          {nextTierAt != null && nextTierPct != null && (
-            <p className="text-[12px] text-muted-foreground">
-              Còn {Math.max(0, nextTierAt - referred)} bạn nữa để lên mức {nextTierPct}%
-            </p>
+          {/* Mức hoa hồng */}
+          {isLoading ? (
+            <Skeleton className="h-28 w-full rounded-2xl" />
+          ) : (
+            <div className="rounded-2xl border border-border bg-card p-5 md:p-6">
+              <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" /> Mức hoa hồng
+              </h2>
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                {TIERS.map((t, tIdx) => {
+                  const isCurrent = t.key === tierKey;
+                  const isLower = tIdx < tierIdx;
+                  return (
+                    <div
+                      key={t.key}
+                      className={`relative rounded-xl p-3 border ${
+                        isCurrent ? "border-primary bg-primary/5" : "border-border"
+                      } ${isLower ? "opacity-60" : ""}`}
+                    >
+                      <div className="flex items-start justify-between gap-1.5">
+                        <p className="text-[12px] font-semibold text-foreground">{t.label}</p>
+                        {isCurrent && (
+                          <span className="shrink-0 rounded-full bg-primary text-primary-foreground text-[10px] px-2 py-0.5 whitespace-nowrap">
+                            Bạn đang ở đây
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xl font-extrabold text-foreground">{t.pct}%</p>
+                      <p className="text-[11px] text-muted-foreground">{t.cond}</p>
+                      <p className="text-[11px] text-muted-foreground">Bạn bè giảm {t.friend}%</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4">
+                {tierKey === "free" && (
+                  <p className="text-[13px] text-muted-foreground">
+                    <Link
+                      to="/pricing"
+                      className="text-primary font-semibold underline underline-offset-2"
+                    >
+                      Mua gói bất kỳ
+                    </Link>{" "}
+                    để lên 10% hoa hồng và bạn bè được giảm 10%.
+                  </p>
+                )}
+                {tierKey === "t1" && (
+                  <>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${Math.min(100, (referred / 5) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[12px] text-muted-foreground">
+                      Còn {Math.max(0, 5 - referred)} bạn nữa để lên 12%
+                    </p>
+                  </>
+                )}
+                {tierKey === "t2" && (
+                  <>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${Math.min(100, ((referred - 5) / 15) * 100)}%` }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[12px] text-muted-foreground">
+                      Còn {Math.max(0, 20 - referred)} bạn nữa để lên 15%
+                    </p>
+                  </>
+                )}
+                {tierKey === "t3" && (
+                  <p className="text-[13px] text-muted-foreground">
+                    Bạn đang ở mức cao nhất 🎉
+                  </p>
+                )}
+              </div>
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Mức % áp dụng cho đơn mới tại thời điểm bạn của bạn thanh toán. Chỉ tính bạn mua gói từ 1 tuần trở lên.
+              </p>
+            </div>
           )}
 
           {/* Payout */}
