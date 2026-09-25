@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Gift, Copy, Share2, Loader2, Wallet, MousePointerClick,
-  Users, Clock, BadgeCheck,
+  Users, Clock, BadgeCheck, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +40,13 @@ const PLAN_LABEL: Record<string, string> = {
   quarter: "3 tháng",
   half_year: "6 tháng",
 };
+
+const TIERS = [
+  { key: "free", label: "Chưa mua gói", cond: "Tài khoản chưa từng mua gói", pct: 5, friend: 5 },
+  { key: "t1", label: "Bậc 1", cond: "0–4 bạn đã mua", pct: 10, friend: 10 },
+  { key: "t2", label: "Bậc 2", cond: "5–19 bạn đã mua", pct: 12, friend: 10 },
+  { key: "t3", label: "Bậc 3", cond: "Từ 20 bạn đã mua", pct: 15, friend: 10 },
+];
 
 type HistoryRow = {
   created_at: string;
@@ -183,8 +190,7 @@ export default function Referral() {
   const referrerPct = Number(info?.referrer_percent ?? 0);
   const available = Number(info?.available_vnd ?? 0);
   const referred = Number(info?.referred_count ?? 0);
-  const nextTierAt = info?.next_tier_at ?? null;
-  const nextTierPct = nextTierAt === 5 ? 12 : nextTierAt === 20 ? 15 : null;
+  const tierKey = discount < 10 ? "free" : referred < 5 ? "t1" : referred < 20 ? "t2" : "t3";
 
   const stats = useMemo(
     () => [
