@@ -318,8 +318,8 @@ export default function Referral() {
                   const isCurrent = t.key === tierKey;
                   const isLower = tIdx < tierIdx;
                   return (
-                    <div key={t.key} className="relative z-10 flex min-w-0 flex-col items-center px-1 text-center">
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-full border-[3px] text-sm font-extrabold ${
+                    <div key={t.key} className="relative z-10 flex min-w-0 flex-col items-center px-2 text-center">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[3px] text-sm font-extrabold ${
                         isCurrent
                           ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/15"
                           : isLower
@@ -327,8 +327,8 @@ export default function Referral() {
                             : "border-muted bg-card text-muted-foreground"
                       }`}>{t.pct}%</div>
                       <p className={`mt-2 text-xs font-bold ${isCurrent ? "text-primary" : "text-foreground"}`}>{t.label}</p>
-                      <p className="mt-0.5 hidden text-[11px] text-muted-foreground sm:block">{t.cond} · bạn bè giảm {t.friend}%</p>
-                      {isCurrent && <span className="mt-1.5 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">Bạn đang ở đây</span>}
+                      <p className="mt-1 max-w-[180px] text-[11px] leading-snug text-muted-foreground">{t.cond} · bạn bè giảm {t.friend}%</p>
+                      {isCurrent && <span className="mt-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">Bạn đang ở đây</span>}
                     </div>
                   );
                 })}
