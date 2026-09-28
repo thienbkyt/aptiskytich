@@ -226,7 +226,7 @@ export default function Referral() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
-        <div className="mx-auto w-full max-w-3xl px-4 space-y-5">
+        <div className="mx-auto w-full max-w-5xl px-4 space-y-5">
           <section
             className="relative overflow-hidden rounded-3xl p-6 text-primary-foreground shadow-[0_20px_50px_-20px_rgba(204,28,1,0.55)] md:p-8"
             style={{ background: "radial-gradient(120% 140% at 100% 0%, #FF8A3D 0%, #E2451A 38%, #B81600 72%, #8A1000 100%)" }}
@@ -281,23 +281,28 @@ export default function Referral() {
             </div>
           </section>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-1 rounded-2xl border border-border bg-card p-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="rounded-2xl border border-border bg-card p-4">
               <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">👥</span> Bạn đã mua</p>
               <p className="mt-1.5 text-2xl font-extrabold text-foreground">{referred}</p>
               <p className="text-[11px] text-muted-foreground">tính vào bậc hoa hồng</p>
             </div>
-            <div className="col-span-1 rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-card p-4 dark:border-emerald-900 dark:from-emerald-950/30">
+            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-card p-4 dark:border-emerald-900 dark:from-emerald-950/30">
               <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">💰</span> Rút được</p>
               <p className="mt-1.5 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{vnd(available)}</p>
               <p className="text-[11px] text-muted-foreground">tối thiểu 50.000đ</p>
             </div>
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">🏦</span> Đã rút</p>
+              <p className="mt-1.5 text-2xl font-extrabold text-foreground">{vnd(info?.paid_vnd)}</p>
+              <p className="text-[11px] text-muted-foreground">admin đã chuyển</p>
+            </div>
+            <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 to-card p-4 dark:border-amber-900 dark:from-amber-950/30">
+              <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">⏳</span> Đang chờ</p>
+              <p className="mt-1.5 text-2xl font-extrabold text-amber-600 dark:text-amber-400">{vnd(info?.requested_vnd)}</p>
+              <p className="text-[11px] text-muted-foreground">admin sẽ chuyển trong 3 ngày</p>
+            </div>
           </div>
-          {Number(info?.requested_vnd ?? 0) > 0 && (
-            <p className="text-[13px] font-medium text-foreground">
-              Đang chờ admin chuyển: {vnd(info?.requested_vnd)}
-            </p>
-          )}
 
           {isLoading ? (
             <Skeleton className="h-28 w-full rounded-3xl" />
