@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_report_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          is_active: boolean
+          last_viewed_at: string | null
+          token: string
+          view_count: number
+          viewer_name: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          is_active?: boolean
+          last_viewed_at?: string | null
+          token?: string
+          view_count?: number
+          viewer_name: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          is_active?: boolean
+          last_viewed_at?: string | null
+          token?: string
+          view_count?: number
+          viewer_name?: string
+        }
+        Relationships: []
+      }
       ai_credit_grants: {
         Row: {
           amount: number
@@ -5940,6 +5970,39 @@ export type Database = {
           },
         ]
       }
+      referral_partners: {
+        Row: {
+          booked_on: string | null
+          booking_fee_vnd: number
+          channel_url: string | null
+          created_at: string
+          label: string
+          note: string | null
+          partner_type: string
+          user_id: string
+        }
+        Insert: {
+          booked_on?: string | null
+          booking_fee_vnd?: number
+          channel_url?: string | null
+          created_at?: string
+          label: string
+          note?: string | null
+          partner_type?: string
+          user_id: string
+        }
+        Update: {
+          booked_on?: string | null
+          booking_fee_vnd?: number
+          channel_url?: string | null
+          created_at?: string
+          label?: string
+          note?: string | null
+          partner_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       referral_payouts: {
         Row: {
           account_holder: string | null
@@ -7425,6 +7488,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      affiliate_report: { Args: { p_token: string }; Returns: Json }
       bump_learning_streak: { Args: never; Returns: undefined }
       can_sign_audio: { Args: { p_name: string }; Returns: boolean }
       check_feature_access: {

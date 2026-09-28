@@ -1208,11 +1208,20 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
     // ============================================================
     // WRITING FINALIZE (analytic rubric)
     // raw_total = raw_P1*0.5 + raw_P2 + raw_P3 + raw_P4*1.5   (max 120)
-    // scale50   = clamp(round(raw_total / 120 * 50) * 1.1, 0, 50)
+    // scale50   = clamp(round(raw_total / 120 * 50), 0, 50)   (no leniency multiplier)
     // CUTS      = { C1:48, B2:40, B1:26, A2:18, A1:6, A0:0 }
     // Grey zone: within 2 pts below a cut → bump if coreGV band >= that band
     // Appropriacy cap: forcedComplexity && cefr === 'C1' → cefr=B2, scale50<=45
     // ============================================================
+    const WRITING_SCORING_VERSION = "writing-strict-2026-09";
+    // Part 1 guard: AI marked grammar/spelling wrong but listed no errors → flip to correct.
+    const countP1GuardFlips = (parsed: any): number => {
+      const gr = Array.isArray(parsed?.grammarErrors) ? parsed.grammarErrors : [];
+      const sp = Array.isArray(parsed?.spellingErrors) ? parsed.spellingErrors : [];
+      if (gr.length || sp.length) return 0;
+      const items = Array.isArray(parsed?.items) ? parsed.items.slice(0, 5) : [];
+      return items.filter((it: any) => !it?.correct && (it?.reasonCode === "grammar" || it?.reasonCode === "spelling")).length;
+    };
     if ((type as string) === "writing_finalize") {
       const rp = (body as any).rawParts || {};
       const p1 = Number(rp.task1 ?? 0);
@@ -1220,9 +1229,7 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
       const p3 = Number(rp.task3 ?? 0);
       const p4 = Number(rp.task4 ?? 0);
       const raw_total = p1 * 0.5 + p2 + p3 + p4 * 1.5;
-      const scale50Base = Math.round((raw_total / 120) * 50);
-      // LENIENCY: apply +10% scaling for user-facing score (same as Speaking).
-      let scale50 = Math.max(0, Math.min(50, Math.round(scale50Base * 1.1)));
+      let scale50 = Math.max(0, Math.min(50, Math.round((raw_total / 120) * 50)));
       const CUTS: Array<{ band: string; cut: number }> = [
         { band: "C1", cut: 48 },
         { band: "B2", cut: 40 },
@@ -1269,6 +1276,7 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
         cefr,
         greyZone,
         flagReview,
+        scoringVersion: WRITING_SCORING_VERSION,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -1786,6 +1794,10 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
 
         const rawData = await resp.json();
         const choice = rawData.choices?.[0];
+        let p1GuardFlipsLog: number | undefined;
+        if (pt === "task1") {
+          try { p1GuardFlipsLog = countP1GuardFlips(JSON.parse(choice?.message?.tool_calls?.[0]?.function?.arguments ?? "")); } catch { /* ignore */ }
+        }
         logAIUsage({
           model,
           usage: rawData.usage,
@@ -1793,7 +1805,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           finishReason: choice?.finish_reason ?? null,
           attempt,
           gradingSessionId,
-          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}), durationMs: writeDurationMs, gatewayAttempts: writeGatewayAttempts },
+          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}), durationMs: writeDurationMs, gatewayAttempts: writeGatewayAttempts, ...(p1GuardFlipsLog != null ? { p1GuardFlips: p1GuardFlipsLog } : {}) },
         }).catch(() => {});
 
         const finishReason = String(choice?.finish_reason ?? "");
@@ -1869,6 +1881,11 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
       let perItem: any[] = [];
       let analysis = "";
       let feedbackOut = feedback;
+      let p1GuardFlips = 0;
+      // Off-topic caps (writing-strict-2026-09): TF = content score before word cap.
+      const offTopicCapFor = (tf: number): 1 | 2 | null => (tf <= 0 ? 1 : tf <= 1 ? 2 : null);
+      const offTopicNote = (c: 1 | 2) =>
+        `GRA/VRA/CC/REG giới hạn tối đa ${c} do lạc đề (TF ${c === 1 ? "= 0" : "≤ 1"})`;
 
 
       if (pt === "task1") {
@@ -1878,6 +1895,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
         const noErrorsListed = grammarErrors.length === 0 && spellingErrors.length === 0;
         if (noErrorsListed) {
           for (const it of items) {
+            if ((it?.reasonCode === "grammar" || it?.reasonCode === "spelling") && !it.correct) p1GuardFlips++;
             if (it?.reasonCode === "grammar" || it?.reasonCode === "spelling") it.correct = true;
           }
         }
@@ -1902,6 +1920,10 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
         const { cap, flagOver } = capFromRatio(words, 20, 30);
         const tfTask = Math.min(tfContent, cap);
         bands = { tf: tfTask, gra: bandNum(b.gra), vra: bandNum(b.vra), cc: bandNum(b.cc), reg: bandNum(b.reg) };
+        const otc2 = words > 0 ? offTopicCapFor(tfContent) : null;
+        if (otc2 != null) {
+          for (const k of ["gra", "vra", "cc", "reg"]) bands[k] = Math.min(bands[k], otc2);
+        }
         rawPart = bands.tf * 2 + bands.gra + bands.vra + bands.cc + bands.reg; // 0..30
         criteriaAnalysis = parsed.criteriaAnalysis || criteriaAnalysis;
         perItem = [{
@@ -1909,8 +1931,10 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           userAnswer: studentText,
           wordCount: words, minReq: 20, maxReq: 30,
           tfCap: cap, tfContent, tfTask, flagOver,
+          ...(otc2 != null ? { offTopicCap: otc2 } : {}),
         }];
         analysis = `Words: ${words}/20-30. TF nội dung ${tfContent} → sau word-cap = ${tfTask}.`;
+        if (otc2 != null) analysis += `\n${offTopicNote(otc2)}`;
       } else if (pt === "task3") {
         const b = parsed.bands || {};
         const items: any[] = Array.isArray(parsed.items) ? parsed.items.slice(0, 3) : [];
@@ -1932,9 +1956,17 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
         });
         const tfAvg = Math.round((perTF.reduce((s, n) => s + n, 0) / 3) * 100) / 100; // keep 2dp
         bands = { tf: tfAvg, gra: bandNum(b.gra), vra: bandNum(b.vra), cc: bandNum(b.cc), reg: bandNum(b.reg) };
+        const tfContentMean = perItem.reduce((s: number, p: any) => s + Number(p.tfContent || 0), 0) / 3;
+        const anyWords3 = perItem.some((p: any) => Number(p.wordCount || 0) > 0);
+        const otc3 = anyWords3 ? offTopicCapFor(tfContentMean) : null;
+        if (otc3 != null) {
+          for (const k of ["gra", "vra", "cc", "reg"]) bands[k] = Math.min(bands[k], otc3);
+          for (const p of perItem) p.offTopicCap = otc3;
+        }
         rawPart = tfAvg * 2 + bands.gra + bands.vra + bands.cc + bands.reg;
         criteriaAnalysis = parsed.criteriaAnalysis || criteriaAnalysis;
         analysis = perItem.map((p: any, i: number) => `Câu ${i + 1}: ${p.wordCount} từ, TF ${p.tfContent}→${p.tfTask}`).join("\n");
+        if (otc3 != null) analysis += `\n${offTopicNote(otc3)}`;
       } else {
         // task4
         const emails: any[] = Array.isArray(parsed.emails) ? parsed.emails.slice(0, 2) : [];
@@ -1950,11 +1982,17 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           { minReq: 120, maxReq: 150, words: formalWc, capInfo: formalCap, text: formalText, label: "Formal" },
         ];
         const rawPerEmail: number[] = [];
+        const offTopicNotes4: string[] = [];
         emails.forEach((em: any, i: number) => {
           const b = em.bands || {};
           const tfContent = bandNum(b.tf);
           const tfTask = Math.min(tfContent, emailReqs[i].capInfo.cap);
-          const gra = bandNum(b.gra), vra = bandNum(b.vra), cc = bandNum(b.cc), reg = bandNum(b.reg);
+          let gra = bandNum(b.gra), vra = bandNum(b.vra), cc = bandNum(b.cc), reg = bandNum(b.reg);
+          const otc4 = emailReqs[i].words > 0 ? offTopicCapFor(tfContent) : null;
+          if (otc4 != null) {
+            gra = Math.min(gra, otc4); vra = Math.min(vra, otc4); cc = Math.min(cc, otc4); reg = Math.min(reg, otc4);
+            offTopicNotes4.push(`${emailReqs[i].label}: ${offTopicNote(otc4)}`);
+          }
           const rawE = tfTask * 2 + gra + vra + cc + reg; // 0..30
           rawPerEmail.push(rawE);
           perItem.push({
@@ -1967,6 +2005,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
             tfContent, tfTask, flagOver: emailReqs[i].capInfo.flagOver,
             bands: { tf: tfTask, gra, vra, cc, reg },
             criteriaAnalysis: em.criteriaAnalysis || {},
+            ...(otc4 != null ? { offTopicCap: otc4 } : {}),
           });
         });
         // rawPart = informal*0.4 + formal*0.6  (then finalize multiplies by 1.5)
@@ -1979,6 +2018,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
         };
         bands = { tf: wBand("tf"), gra: wBand("gra"), vra: wBand("vra"), cc: wBand("cc"), reg: wBand("reg") };
         analysis = `Informal ${infoWc}/40-50 · Formal ${formalWc}/120-150. Raw informal=${rawPerEmail[0]}, formal=${rawPerEmail[1]}, weighted=${rawPart}.`;
+        if (offTopicNotes4.length) analysis += `\n${offTopicNotes4.join("\n")}`;
       }
 
       return {
@@ -1993,6 +2033,8 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
         feedback: feedbackOut,
         improvedVersion,
         forcedComplexity,
+        scoringVersion: WRITING_SCORING_VERSION,
+        ...(pt === "task1" ? { p1GuardFlips } : {}),
       };
       };
 
