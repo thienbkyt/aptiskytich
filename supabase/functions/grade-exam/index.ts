@@ -1214,10 +1214,17 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
     // Appropriacy cap: forcedComplexity && cefr === 'C1' → cefr=B2, scale50<=45
     // ============================================================
     const WRITING_SCORING_VERSION = "writing-strict-2026-09";
+    // Shared error-list filters — used by countP1GuardFlips (logging) and by
+    // deriveV2 (grading) so the logged p1GuardFlips always matches the value
+    // computed in the graded response.
+    const WRITING_STYLE_RE = /(không\s*(hoàn toàn\s*)?sai|không phải là\s*(hoàn toàn\s*)?sai|vẫn\s*(là\s*)?đúng|đúng ngữ pháp nhưng|chỉ là\s|nghe\s*(sẽ\s*)?tự nhiên hơn|phù hợp hơn|hay hơn|trang trọng hơn|có thể dùng|nên dùng.*sẽ.*hơn|not wrong|still correct)/i;
+    const WRITING_SPELL_RE = /^\s*(\*\*)?\s*(lỗi\s*)?(chính\s*tả|sai\s*chính\s*tả|spelling)/i;
+    const filterStyleNotes = (arr: any) =>
+      (Array.isArray(arr) ? arr : []).filter((e: any) => !WRITING_STYLE_RE.test(String(e?.explanation ?? "")));
     // Part 1 guard: AI marked grammar/spelling wrong but listed no errors → flip to correct.
     const countP1GuardFlips = (parsed: any): number => {
-      const gr = Array.isArray(parsed?.grammarErrors) ? parsed.grammarErrors : [];
-      const sp = Array.isArray(parsed?.spellingErrors) ? parsed.spellingErrors : [];
+      const gr = filterStyleNotes(parsed?.grammarErrors);
+      const sp = filterStyleNotes(parsed?.spellingErrors);
       if (gr.length || sp.length) return 0;
       const items = Array.isArray(parsed?.items) ? parsed.items.slice(0, 5) : [];
       return items.filter((it: any) => !it?.correct && (it?.reasonCode === "grammar" || it?.reasonCode === "spelling")).length;
@@ -1860,14 +1867,12 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
       // repair retry can be re-derived without duplicating the rubric maths.
       const deriveV2 = (parsed: any) => {
       // --- Sanitize error lists ---
-      // 1) Drop "style suggestion" items the AI mislabelled as errors.
+      // 1) Drop "style suggestion" items the AI mislabelled as errors (shared
+      //    filterStyleNotes helper, same one used by countP1GuardFlips).
       // 2) Move pure spelling items out of grammarErrors into spellingErrors.
-      const STYLE_RE = /(không\s*(hoàn toàn\s*)?sai|không phải là\s*(hoàn toàn\s*)?sai|vẫn\s*(là\s*)?đúng|đúng ngữ pháp nhưng|chỉ là\s|nghe\s*(sẽ\s*)?tự nhiên hơn|phù hợp hơn|hay hơn|trang trọng hơn|có thể dùng|nên dùng.*sẽ.*hơn|not wrong|still correct)/i;
-      const SPELL_RE = /^\s*(\*\*)?\s*(lỗi\s*)?(chính\s*tả|sai\s*chính\s*tả|spelling)/i;
-      const isStyleNote = (e: any) => STYLE_RE.test(String(e?.explanation ?? ""));
-      const isSpellingNote = (e: any) => SPELL_RE.test(String(e?.explanation ?? ""));
-      const rawGrammar = (Array.isArray(parsed.grammarErrors) ? parsed.grammarErrors : []).filter((e: any) => !isStyleNote(e));
-      const rawSpelling = (Array.isArray(parsed.spellingErrors) ? parsed.spellingErrors : []).filter((e: any) => !isStyleNote(e));
+      const isSpellingNote = (e: any) => WRITING_SPELL_RE.test(String(e?.explanation ?? ""));
+      const rawGrammar = filterStyleNotes(parsed.grammarErrors);
+      const rawSpelling = filterStyleNotes(parsed.spellingErrors);
       const grammarErrors = rawGrammar.filter((e: any) => !isSpellingNote(e));
       const spellingErrors = [...rawSpelling, ...rawGrammar.filter((e: any) => isSpellingNote(e))];
 
@@ -1956,9 +1961,11 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
         });
         const tfAvg = Math.round((perTF.reduce((s, n) => s + n, 0) / 3) * 100) / 100; // keep 2dp
         bands = { tf: tfAvg, gra: bandNum(b.gra), vra: bandNum(b.vra), cc: bandNum(b.cc), reg: bandNum(b.reg) };
-        const tfContentMean = perItem.reduce((s: number, p: any) => s + Number(p.tfContent || 0), 0) / 3;
-        const anyWords3 = perItem.some((p: any) => Number(p.wordCount || 0) > 0);
-        const otc3 = anyWords3 ? offTopicCapFor(tfContentMean) : null;
+        // Mean content-TF over ANSWERED items only — blank answers must not
+        // drag the mean down (their bands are already 0, no cap needed).
+        const answered3 = perItem.filter((p: any) => (p.wordCount ?? 0) > 0);
+        const tfContentMean = answered3.length ? answered3.reduce((s: number, p: any) => s + Number(p.tfContent || 0), 0) / answered3.length : 0;
+        const otc3 = answered3.length ? offTopicCapFor(tfContentMean) : null;
         if (otc3 != null) {
           for (const k of ["gra", "vra", "cc", "reg"]) bands[k] = Math.min(bands[k], otc3);
           for (const p of perItem) p.offTopicCap = otc3;
