@@ -1,10 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Gift, Copy, Share2, Loader2, Wallet, MousePointerClick,
-  Users, Clock, BadgeCheck, TrendingUp,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import Navbar from "@/components/layout/Navbar";
@@ -16,6 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,12 +96,6 @@ const TERMS = [
   "Hoa hồng là thu nhập cá nhân, người nhận tự kê khai thuế nếu thuộc diện.",
 ];
 
-const STEPS = [
-  { title: "1. Lấy mã hoặc link", desc: "Sao chép mã giới thiệu của bạn ở khối phía trên." },
-  { title: "2. Bạn bè mua gói", desc: "Bạn bè bấm link hoặc nhập mã khi thanh toán để được giảm giá." },
-  { title: "3. Nhận hoa hồng", desc: "Sau 7 ngày chờ, hoa hồng chuyển sang 'Rút được' — rút từ 50.000đ." },
-];
-
 export default function Referral() {
   usePageMeta({
     title: "Giới thiệu bạn — Aptis Kỳ Tích",
@@ -117,6 +111,7 @@ export default function Referral() {
   const [bankAccount, setBankAccount] = useState("");
   const [holder, setHolder] = useState("");
   const [payoutMsg, setPayoutMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth", { replace: true });
@@ -193,16 +188,6 @@ export default function Referral() {
   const tierKey = discount < 10 ? "free" : referred < 5 ? "t1" : referred < 20 ? "t2" : "t3";
   const tierIdx = TIERS.findIndex((t) => t.key === tierKey);
 
-  const stats = useMemo(
-    () => [
-      { icon: MousePointerClick, label: "Lượt bấm link", value: String(info?.clicks ?? 0) },
-      { icon: Users, label: "Bạn đã mua", value: String(referred) },
-      { icon: Clock, label: "Đang chờ", value: vnd(info?.pending_vnd) },
-      { icon: Wallet, label: "Rút được", value: vnd(available) },
-    ],
-    [info, referred, available],
-  );
-
   const copy = async (text: string, what: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -210,22 +195,6 @@ export default function Referral() {
     } catch {
       toast.error("Không sao chép được, bạn chọn và copy tay nhé.");
     }
-  };
-
-  const share = async () => {
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
-      try {
-        await (navigator as any).share({
-          title: "Aptis Kỳ Tích",
-          text: `Ôn Aptis cùng mình nhé, dùng mã ${code} để được giảm giá.`,
-          url: link,
-        });
-        return;
-      } catch {
-        /* user cancelled */
-      }
-    }
-    void copy(link, "link giới thiệu");
   };
 
   const payout = useMutation({
@@ -257,181 +226,164 @@ export default function Referral() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
-        <div className="mx-auto w-full max-w-3xl px-4 space-y-6">
-          {/* Hero */}
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 text-primary mb-3">
-              <Gift className="w-6 h-6" />
-            </div>
-            <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-foreground">
-              Rủ bạn ôn Aptis cùng
-            </h1>
-            {isLoading ? (
-              <Skeleton className="h-5 w-72 mx-auto mt-2" />
-            ) : discount >= 10 ? (
-              <p className="mt-2 text-sm md:text-base text-muted-foreground">
-                Bạn của bạn giảm 10%, bạn nhận {referrerPct}% hoa hồng
-              </p>
-            ) : (
-              <p className="mt-2 text-sm md:text-base text-muted-foreground">
-                Bạn của bạn giảm 5%, bạn nhận 5% —{" "}
-                <Link to="/pricing" className="text-primary font-semibold underline underline-offset-2">
-                  mua gói bất kỳ
-                </Link>{" "}
-                để nâng lên 10%/10%
-              </p>
-            )}
-          </div>
-
-          {/* Code block */}
-          <div className="rounded-2xl border border-border bg-card p-5 md:p-6 space-y-4">
-            {isLoading ? (
-              <Skeleton className="h-10 w-48" />
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="font-mono text-2xl font-extrabold tracking-wider text-foreground">
-                    {code || "—"}
-                  </span>
-                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copy(code, "mã")}>
-                    <Copy className="w-3.5 h-3.5" /> Sao chép mã
-                  </Button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[13px] text-muted-foreground break-all">{link}</span>
-                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copy(link, "link")}>
-                    <Copy className="w-3.5 h-3.5" /> Sao chép link
-                  </Button>
-                  <Button size="sm" className="gap-1.5" onClick={share}>
-                    <Share2 className="w-3.5 h-3.5" /> Chia sẻ
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {stats.map(({ icon: Icon, label, value }) => (
-              <div key={label} className="rounded-xl border border-border bg-card p-4">
-                <Icon className="w-4 h-4 text-primary mb-2" />
-                <p className="text-[12px] text-muted-foreground">{label}</p>
-                <p className="text-lg font-extrabold text-foreground">{value}</p>
+        <div className="mx-auto w-full max-w-3xl px-4 space-y-5">
+          <section
+            className="relative overflow-hidden rounded-3xl p-6 text-primary-foreground shadow-[0_20px_50px_-20px_rgba(204,28,1,0.55)] md:p-8"
+            style={{ background: "radial-gradient(120% 140% at 100% 0%, #FF8A3D 0%, #E2451A 38%, #B81600 72%, #8A1000 100%)" }}
+          >
+            <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-primary-foreground/10 blur-2xl" />
+            <div className="relative flex flex-col justify-between gap-6 md:flex-row">
+              <div>
+                <span className="inline-flex rounded-full border border-primary-foreground/25 bg-primary-foreground/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
+                  <span className="[font-family:system-ui]">🎁</span> Giới thiệu bạn
+                </span>
+                <h1 className="mt-3 max-w-lg font-heading text-2xl font-extrabold leading-tight md:text-3xl">
+                  Web xịn ôn hay – Rủ bạn cùng ôn Aptis
+                </h1>
+                <p className="mt-2 text-base font-bold">Bạn rủ – bạn được giảm, mình rủ – mình có quà.</p>
+                <p className="mt-2 max-w-md text-sm text-primary-foreground/90">
+                  Giới thiệu Aptis Kỳ Tích cho bạn bè cùng ôn: bạn mới được giảm {discount}%, bạn nhận {referrerPct}% cho mỗi lượt giới thiệu thành công.
+                </p>
+                {discount < 10 && (
+                  <p className="mt-1.5 text-xs text-primary-foreground/85">
+                    <Link to="/pricing" className="font-semibold underline underline-offset-2">Mua gói bất kỳ</Link>{" "}
+                    để nâng lên 10% / 10%
+                  </p>
+                )}
               </div>
-            ))}
+              <div className="grid shrink-0 grid-cols-2 gap-3 md:self-start">
+                {["Bạn bè được giảm", "Quà cảm ơn cho bạn"].map((label, index) => (
+                  <div key={label} className="min-w-[120px] rounded-2xl border border-primary-foreground/25 bg-primary-foreground/15 px-4 py-3 text-center backdrop-blur-sm">
+                    {isLoading ? <Skeleton className="mx-auto h-9 w-16 bg-primary-foreground/20" /> : (
+                      <p className="text-3xl font-extrabold">{index === 0 ? `-${discount}%` : `${referrerPct}%`}</p>
+                    )}
+                    <p className="mt-1 text-[11px]">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-card p-2.5 pl-4 text-foreground">
+              <div className="mr-1">
+                <p className="text-[11px] font-semibold text-muted-foreground">Mã của bạn</p>
+                {isLoading ? <Skeleton className="mt-1 h-8 w-36" /> : (
+                  <p className="font-mono text-2xl font-extrabold tracking-[0.12em] text-primary">{code || "—"}</p>
+                )}
+              </div>
+              <p className="min-w-[180px] flex-1 truncate text-[13px] text-muted-foreground">
+                {code ? `aptiskytich.vn/?ref=${code}` : ""}
+              </p>
+              <Button size="sm" variant="outline" className="gap-1.5 border-0 bg-primary/10 text-primary hover:bg-primary/15" onClick={() => copy(code, "mã")}>
+                <Copy className="h-3.5 w-3.5" /> Sao chép mã
+              </Button>
+              <Button size="sm" className="gap-1.5" onClick={() => copy(link, "link")}>
+                <Copy className="h-3.5 w-3.5" /> Sao chép link
+              </Button>
+            </div>
+          </section>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-1 rounded-2xl border border-border bg-card p-4">
+              <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">👥</span> Bạn đã mua</p>
+              <p className="mt-1.5 text-2xl font-extrabold text-foreground">{referred}</p>
+              <p className="text-[11px] text-muted-foreground">tính vào bậc hoa hồng</p>
+            </div>
+            <div className="col-span-1 rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-card p-4 dark:border-emerald-900 dark:from-emerald-950/30">
+              <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">💰</span> Rút được</p>
+              <p className="mt-1.5 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{vnd(available)}</p>
+              <p className="text-[11px] text-muted-foreground">tối thiểu 50.000đ</p>
+            </div>
           </div>
           {Number(info?.requested_vnd ?? 0) > 0 && (
             <p className="text-[13px] font-medium text-foreground">
               Đang chờ admin chuyển: {vnd(info?.requested_vnd)}
             </p>
           )}
-          {/* Mức hoa hồng */}
+
           {isLoading ? (
-            <Skeleton className="h-28 w-full rounded-2xl" />
+            <Skeleton className="h-28 w-full rounded-3xl" />
           ) : (
-            <div className="rounded-2xl border border-border bg-card p-5 md:p-6">
-              <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> Mức hoa hồng
-              </h2>
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <section className="rounded-3xl border border-border bg-card p-6">
+              <h2 className="font-heading text-base font-bold text-foreground"><span className="[font-family:system-ui]">📈</span> Mức hoa hồng của bạn</h2>
+              <p className="mt-1 text-[13px] text-muted-foreground">Càng nhiều bạn mua gói qua mã của bạn, mức hoa hồng càng tăng.</p>
+              <div className="relative mt-5 grid grid-cols-4">
+                <div className="absolute left-[12.5%] right-[12.5%] top-[21px] h-1 rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-gradient-to-r from-primary to-[#FEAD5F]" style={{ width: `${(tierIdx / 3) * 100}%` }} />
+                </div>
                 {TIERS.map((t, tIdx) => {
                   const isCurrent = t.key === tierKey;
                   const isLower = tIdx < tierIdx;
                   return (
-                    <div
-                      key={t.key}
-                      className={`relative rounded-xl p-3 border ${
-                        isCurrent ? "border-primary bg-primary/5" : "border-border"
-                      } ${isLower ? "opacity-60" : ""}`}
-                    >
-                      <div className="flex items-start justify-between gap-1.5">
-                        <p className="text-[12px] font-semibold text-foreground">{t.label}</p>
-                        {isCurrent && (
-                          <span className="shrink-0 rounded-full bg-primary text-primary-foreground text-[10px] px-2 py-0.5 whitespace-nowrap">
-                            Bạn đang ở đây
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xl font-extrabold text-foreground">{t.pct}%</p>
-                      <p className="text-[11px] text-muted-foreground">{t.cond}</p>
-                      <p className="text-[11px] text-muted-foreground">Bạn bè giảm {t.friend}%</p>
+                    <div key={t.key} className="relative z-10 flex min-w-0 flex-col items-center px-1 text-center">
+                      <div className={`flex h-11 w-11 items-center justify-center rounded-full border-[3px] text-sm font-extrabold ${
+                        isCurrent
+                          ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/15"
+                          : isLower
+                            ? "border-primary/30 bg-primary/10 text-primary"
+                            : "border-muted bg-card text-muted-foreground"
+                      }`}>{t.pct}%</div>
+                      <p className={`mt-2 text-xs font-bold ${isCurrent ? "text-primary" : "text-foreground"}`}>{t.label}</p>
+                      <p className="mt-0.5 hidden text-[11px] text-muted-foreground sm:block">{t.cond} · bạn bè giảm {t.friend}%</p>
+                      {isCurrent && <span className="mt-1.5 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">Bạn đang ở đây</span>}
                     </div>
                   );
                 })}
               </div>
-              <div className="mt-4">
+              <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-3.5 text-sm">
                 {tierKey === "free" && (
-                  <p className="text-[13px] text-muted-foreground">
-                    <Link
-                      to="/pricing"
-                      className="text-primary font-semibold underline underline-offset-2"
-                    >
-                      Mua gói bất kỳ
-                    </Link>{" "}
+                  <p className="text-muted-foreground"><Link to="/pricing" className="font-semibold text-primary underline underline-offset-2">Mua gói bất kỳ</Link>{" "}
                     để lên 10% hoa hồng và bạn bè được giảm 10%.
                   </p>
                 )}
                 {tierKey === "t1" && (
-                  <>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${Math.min(100, (referred / 5) * 100)}%` }}
-                      />
-                    </div>
-                    <p className="mt-1.5 text-[12px] text-muted-foreground">
-                      Còn {Math.max(0, 5 - referred)} bạn nữa để lên 12%
-                    </p>
-                  </>
+                  <><p className="shrink-0 text-muted-foreground"><span className="[font-family:system-ui]">🎯</span> Còn <strong className="text-foreground">{Math.max(0, 5 - referred)} bạn</strong> nữa để lên <strong className="text-foreground">12%</strong></p><div className="hidden h-2 flex-1 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (referred / 5) * 100)}%` }} /></div><span className="ml-auto shrink-0 text-xs font-bold text-primary">{referred}/5</span></>
                 )}
                 {tierKey === "t2" && (
-                  <>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${Math.min(100, ((referred - 5) / 15) * 100)}%` }}
-                      />
-                    </div>
-                    <p className="mt-1.5 text-[12px] text-muted-foreground">
-                      Còn {Math.max(0, 20 - referred)} bạn nữa để lên 15%
-                    </p>
-                  </>
+                  <><p className="shrink-0 text-muted-foreground"><span className="[font-family:system-ui]">🎯</span> Còn <strong className="text-foreground">{Math.max(0, 20 - referred)} bạn</strong> nữa để lên <strong className="text-foreground">15%</strong></p><div className="hidden h-2 flex-1 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, ((referred - 5) / 15) * 100)}%` }} /></div><span className="ml-auto shrink-0 text-xs font-bold text-primary">{referred}/20</span></>
                 )}
-                {tierKey === "t3" && (
-                  <p className="text-[13px] text-muted-foreground">
-                    Bạn đang ở mức cao nhất 🎉
-                  </p>
-                )}
+                {tierKey === "t3" && <p className="text-muted-foreground">Bạn đang ở mức cao nhất <span className="[font-family:system-ui]">🎉</span></p>}
               </div>
-              <p className="mt-3 text-[11px] text-muted-foreground">
+              <p className="mt-3 text-[12.5px] text-muted-foreground"><span className="[font-family:system-ui]">💡</span> Ví dụ: bạn bè mua gói 3 tháng 349k → bạn ấy trả {vnd(Math.round(349000 * (100 - discount) / 100))}, bạn nhận {vnd(Math.round(349000 * (100 - discount) / 100 * referrerPct / 100))}.</p>
+              <p className="mt-2 text-[11px] text-muted-foreground">
                 Mức % áp dụng cho đơn mới tại thời điểm bạn của bạn thanh toán. Chỉ tính bạn mua gói từ 1 tuần trở lên.
               </p>
-            </div>
+            </section>
           )}
 
-          {/* Payout */}
-          <div className="rounded-2xl border border-border bg-card p-5 md:p-6">
-            <h2 className="font-heading font-bold text-base text-foreground flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-primary" /> Rút hoa hồng
-            </h2>
+          <section className="rounded-3xl border border-border bg-card p-6">
+            <h2 className="font-heading text-base font-bold text-foreground"><span className="[font-family:system-ui]">🧭</span> Cách hoạt động</h2>
+            <p className="mt-1 text-[13px] text-muted-foreground">3 bước, không cần đăng ký thêm gì.</p>
+            <div className="mt-7 grid gap-6 md:grid-cols-3 md:gap-4">
+              {[
+                { icon: "🔗", title: "Gửi mã hoặc link", desc: "Sao chép mã hay link ở trên, gửi cho bạn bè đang ôn Aptis qua Zalo, Messenger, nhóm lớp.", pill: "Bấm link là tự điền mã" },
+                { icon: "🛒", title: "Bạn bè mua gói lần đầu", desc: `Nhập mã lúc thanh toán, được giảm ngay ${discount}%. Áp dụng gói từ 1 tuần trở lên.`, pill: "Giảm ngay khi thanh toán" },
+                { icon: "💸", title: "Nhận tiền về tài khoản", desc: "Hoa hồng chờ 7 ngày rồi chuyển sang \"Rút được\". Từ 50.000đ bấm Rút tiền, nhận trong 3 ngày làm việc.", pill: "Chuyển khoản ngân hàng" },
+              ].map((step, index) => (
+                <div key={step.title} className="relative rounded-2xl border border-border bg-gradient-to-b from-primary/5 to-card p-5 pt-6">
+                  <span className="absolute -top-3.5 left-5 flex h-8 w-8 items-center justify-center rounded-xl bg-primary font-extrabold text-primary-foreground shadow-md">{index + 1}</span>
+                  <span className="text-3xl [font-family:system-ui]" aria-hidden="true">{step.icon}</span>
+                  <h3 className="mt-2 text-[15px] font-extrabold text-foreground">{step.title}</h3>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{step.desc}</p>
+                  <span className="mt-3 inline-block rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">{step.pill}</span>
+                  {index < 2 && <ChevronRight className="absolute -right-3 top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 text-muted-foreground/50 md:block" />}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card p-6">
+            <div className="min-w-0 flex-1">
+              <h2 className="font-heading text-base font-bold text-foreground"><span className="[font-family:system-ui]">💰</span> Rút hoa hồng</h2>
             {pendingPayout ? (
               <p className="mt-2 text-sm text-muted-foreground">
                 Yêu cầu {vnd(pendingPayout.amount_vnd)} đang được xử lý, admin sẽ chuyển trong 3 ngày làm việc.
               </p>
             ) : (
               <>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Số rút được hiện tại: <span className="font-semibold text-foreground">{vnd(available)}</span>
+                <p className="mt-2 text-3xl font-extrabold text-foreground">{vnd(available)}</p>
+                <div className="mt-2 h-2 w-80 max-w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, available / 50000 * 100)}%` }} /></div>
+                <p className={`mt-1.5 text-[12px] font-medium ${available >= 50000 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  {available < 50000 ? `Cần thêm ${vnd(50000 - available)} để rút` : "Đủ điều kiện rút"}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <Button disabled={available < 50000} onClick={() => { setPayoutMsg(null); setPayoutOpen(true); }}>
-                    Rút tiền
-                  </Button>
-                  {available < 50000 && (
-                    <span className="text-[12px] text-muted-foreground">Cần tối thiểu 50.000đ</span>
-                  )}
-                </div>
               </>
             )}
             {payoutMsg && (
@@ -439,13 +391,19 @@ export default function Referral() {
                 {payoutMsg.text}
               </p>
             )}
-          </div>
+            </div>
+            {!pendingPayout && <Button disabled={available < 50000} onClick={() => { setPayoutMsg(null); setPayoutOpen(true); }}>Rút tiền</Button>}
+          </section>
 
-          {/* History */}
-          <div className="rounded-2xl border border-border bg-card p-5 md:p-6">
+          <section className="rounded-3xl border border-border bg-card p-6">
             <h2 className="font-heading font-bold text-base text-foreground mb-3">Lịch sử hoa hồng</h2>
             {!history || history.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Chưa có bạn nào mua qua mã của bạn</p>
+              <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+                <p className="text-3xl [font-family:system-ui]" aria-hidden="true">🌱</p>
+                <p className="mt-2 font-bold text-foreground">Chưa có bạn nào mua qua mã của bạn</p>
+                <p className="mt-1 text-[13px] text-muted-foreground">Gửi link cho 1 người bạn đang ôn Aptis để bắt đầu nhé.</p>
+                <Button className="mt-4 gap-1.5" onClick={() => copy(link, "link")}><Copy className="h-3.5 w-3.5" /> Sao chép link giới thiệu</Button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -481,28 +439,20 @@ export default function Referral() {
                 </table>
               </div>
             )}
-          </div>
-
-          {/* How it works + terms */}
-          <div className="rounded-2xl border border-border bg-card p-5 md:p-6">
-            <h2 className="font-heading font-bold text-base text-foreground mb-3">Cách hoạt động</h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              {STEPS.map((s) => (
-                <div key={s.title} className="rounded-xl bg-muted/50 p-4">
-                  <p className="font-semibold text-sm text-foreground flex items-center gap-1.5">
-                    <BadgeCheck className="w-4 h-4 text-primary" /> {s.title}
-                  </p>
-                  <p className="text-[12px] text-muted-foreground mt-1">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            <ul className="mt-5 space-y-1.5 text-[12px] text-muted-foreground list-disc pl-5">
-              {TERMS.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          </div>
+            <Collapsible open={termsOpen} onOpenChange={setTermsOpen} className="mt-5 border-t border-border pt-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="h-auto w-full justify-between px-0 py-1 font-bold text-foreground hover:bg-transparent">
+                  Điều khoản chương trình
+                  <ChevronDown className={`h-4 w-4 transition-transform ${termsOpen ? "rotate-180" : ""}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <ul className="mt-3 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                  {TERMS.map((term) => <li key={term} className="flex gap-2 text-[12.5px] text-muted-foreground"><span className="font-bold text-emerald-600 dark:text-emerald-400">✓</span><span>{term}</span></li>)}
+                </ul>
+              </CollapsibleContent>
+            </Collapsible>
+          </section>
         </div>
       </main>
       <Footer />
