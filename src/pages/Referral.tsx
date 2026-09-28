@@ -266,7 +266,7 @@ export default function Referral() {
               <div className="mr-1">
                 <p className="text-[11px] font-semibold text-muted-foreground">Mã của bạn</p>
                 {isLoading ? <Skeleton className="mt-1 h-8 w-36" /> : (
-                  <p className="font-mono text-2xl font-extrabold tracking-[0.12em] text-primary">{code || "—"}</p>
+                  <p className="whitespace-nowrap font-mono text-2xl font-extrabold tracking-[0.12em] text-primary">{code || "—"}</p>
                 )}
               </div>
               <p className="min-w-[180px] flex-1 truncate text-[13px] text-muted-foreground">
@@ -323,7 +323,7 @@ export default function Referral() {
                         isCurrent
                           ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/15"
                           : isLower
-                            ? "border-primary/30 bg-primary/10 text-primary"
+                            ? "border-primary/30 bg-card text-primary shadow-[inset_0_0_0_999px_hsl(var(--primary)/0.1)]"
                             : "border-muted bg-card text-muted-foreground"
                       }`}>{t.pct}%</div>
                       <p className={`mt-2 text-xs font-bold ${isCurrent ? "text-primary" : "text-foreground"}`}>{t.label}</p>
