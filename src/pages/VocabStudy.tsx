@@ -41,6 +41,17 @@ import { VocabStudySkeleton } from "@/components/ui/tech-skeleton";
 
 type StudyMode = "browse" | "flashcard" | "quiz" | "matching";
 
+const wfLabel = (wf: unknown): string => {
+  if (typeof wf === "string") return wf;
+  if (wf && typeof wf === "object") {
+    const o = wf as { word?: unknown; partOfSpeech?: unknown };
+    const w = typeof o.word === "string" ? o.word : "";
+    const p = typeof o.partOfSpeech === "string" && o.partOfSpeech ? ` (${o.partOfSpeech})` : "";
+    return w ? w + p : "";
+  }
+  return "";
+};
+
 function speak(text: string, lang: "en" | "vi") {
   void speakWithTTS(text, lang);
 }
@@ -377,17 +388,22 @@ const VocabStudy = () => {
                 {/* Row 3 — Word family */}
                 <div className="p-6">
                   <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-3">Word Family</p>
-                  {word.word_family.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {word.word_family.map((wf: string) => (
-                        <Badge key={wf} variant="secondary" className="text-sm font-normal cursor-pointer hover:bg-accent" onClick={() => speak(wf.split(" ")[0], "en")}>
-                          <Volume2 className="w-3 h-3 mr-1.5 opacity-50" />{wf}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">—</p>
-                  )}
+                  {(() => {
+                    const familyLabels = (Array.isArray(word.word_family) ? word.word_family : [])
+                      .map(wfLabel)
+                      .filter(Boolean);
+                    return familyLabels.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {familyLabels.map((label, i) => (
+                          <Badge key={`${label}-${i}`} variant="secondary" className="text-sm font-normal cursor-pointer hover:bg-accent" onClick={() => speak(label.split(" ")[0], "en")}>
+                            <Volume2 className="w-3 h-3 mr-1.5 opacity-50" />{label}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">—</p>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
