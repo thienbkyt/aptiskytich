@@ -113,13 +113,8 @@ Deno.serve(async (req) => {
         } else if (planKey === "day" || !planOk) {
           console.log("create-payment: referral: plan not eligible", promoCode, planKey);
         } else {
-          const { data: paidRows } = await admin
-            .from("payments")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("status", "paid")
-            .limit(1);
-          if (paidRows && paidRows.length > 0) {
+          const { data: isCustomer } = await admin.rpc("referral_is_customer", { p_user: userId });
+          if (isCustomer === true) {
             console.log("create-payment: referral: not new user", promoCode);
           } else {
             const { data: rateRows, error: rateErr } = await admin.rpc("referral_rate_for", {
