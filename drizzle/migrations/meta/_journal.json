@@ -148,6 +148,13 @@
       "when": 1790565318021,
       "tag": "0020_record_referral_is_customer",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790565338264,
+      "tag": "0021_enable_rls_backup_tables",
+      "breakpoints": true
     }
   ]
 }
