@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="referrer" content="no-referrer">
+<title>Báo cáo Affiliate — Aptis Kỳ Tích</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+:root{--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc;--brand:#1f4e79;--brand-soft:#eef4fa;--up:#047857;--down:#b91c1c;--tt:#7c3aed}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 18px 60px;background:#f1f5f9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:13.5px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto}
+.sheet{background:#fff;border-radius:14px;padding:22px 24px 28px;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+h1{font-size:21px;margin:0 0 4px}.sub{color:var(--muted);font-size:11.5px}
+.hr{height:3px;background:var(--brand);border-radius:2px;margin:12px 0 14px}
+#bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:9px 12px;background:var(--brand-soft);border:1px solid #d6e3ef;border-radius:10px;margin-bottom:10px}
+#bar label{font-size:11.5px;color:var(--muted);font-weight:600}
+#bar button{font:inherit;font-size:12px;padding:5px 12px;border:1px solid #c9d8e6;background:#fff;color:var(--brand);border-radius:7px;cursor:pointer}
+#bar button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+#bar input{font:inherit;font-size:12px;padding:4px 7px;border:1px solid #c9d8e6;border-radius:7px}
+#bar .sep{width:1px;height:20px;background:#c9d8e6;margin:0 5px}
+#tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+#tabs button{font:inherit;font-size:13px;font-weight:600;padding:8px 15px;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px}
+#tabs button.on{color:var(--brand);border-bottom-color:var(--brand)}
+.insight{background:var(--brand-soft);border:1px solid #d6e3ef;border-radius:9px;padding:9px 13px;font-size:12.5px;margin-bottom:14px}
+.insight b{color:var(--brand)}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:22px 0 10px}
+.sec-h h2{font-size:12px;margin:0;color:var(--brand);text-transform:uppercase;letter-spacing:.7px;font-weight:800}
+.sec-h .tag{font-size:11px;color:var(--muted)}
+.row{display:grid;gap:10px}.c4{grid-template-columns:repeat(4,1fr)}.c3{grid-template-columns:repeat(3,1fr)}
+.card{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:var(--soft)}
+.card .lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.card .val{font-size:20px;font-weight:750;margin-top:4px}
+.card .note{font-size:10.5px;color:var(--muted);margin-top:3px}
+.hero .card{background:linear-gradient(180deg,#f7fbff,#fff);border-color:#cddcea}
+.pos{color:var(--up)}.neg{color:var(--down)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--brand);color:#fff;text-align:left;padding:7px 10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+th:first-child{border-radius:8px 0 0 0}th:last-child{border-radius:0 8px 0 0}
+td{padding:6px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:750;border-top:2px solid var(--brand);background:var(--brand-soft)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+.p-tt{background:#f3e8ff;color:var(--tt)}.p-hv{background:#e0f2fe;color:#0369a1}
+.s-pending{background:#fef3c7;color:#92400e}.s-available{background:#dcfce7;color:#166534}.s-paid{background:#e0e7ff;color:#3730a3}.s-reversed{background:#f1f5f9;color:#64748b}
+.s-requested{background:#fef3c7;color:#92400e}.s-rejected{background:#fee2e2;color:#991b1b}
+.small{font-size:11px;color:var(--muted)}
+.chart{height:250px;position:relative;border:1px solid var(--line);border-radius:11px;padding:10px 8px 4px}
+.tbl-wrap{overflow-x:auto}
+.foot{margin-top:26px;padding-top:12px;border-top:1px solid var(--line);color:#94a3b8;font-size:10.5px}
+.center{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center}
+.box{background:#fff;border-radius:14px;padding:34px 30px;max-width:460px;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.box h2{margin:0 0 8px;font-size:17px;color:var(--brand)}.box p{margin:0;color:var(--muted)}
+.spin{width:26px;height:26px;border:3px solid #dbe6f0;border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.muted{color:#94a3b8;font-style:italic}
+@media(max-width:900px){.c4,.c3{grid-template-columns:repeat(2,1fr)}body{padding:12px 10px 40px}.sheet{padding:16px 14px 20px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"><div class="center"><div class="box"><div class="spin"></div><h2>Đang tải báo cáo</h2><p>Vui lòng đợi vài giây.</p></div></div></div>
+<script>
+const SUPABASE_URL="https://bacoamhbatqpxatrrflz.supabase.co";
+const ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhY29hbWhiYXRxcHhhdHJyZmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMTgyODgsImV4cCI6MjA4ODY5NDI4OH0.BcFLY1mFlFxCK7E0E89iLlh4am3mEXkbYZaFJ4O_mpw";
+const PLAN={day:"1 ngày",week:"1 tuần",month:"1 tháng",quarter:"3 tháng",half_year:"6 tháng",lifetime:"Trọn đời"};
+const ST={pending:"Đang chờ",available:"Rút được",paid:"Đã trả",reversed:"Đã huỷ",requested:"Chờ xử lý",rejected:"Từ chối"};
+const vnd=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN")+"đ");
+const num=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN"));
+const pct=n=>(isFinite(n)?(n*100).toFixed(1)+"%":"–");
+const dm=d=>d?d.split("-").reverse().join("/"):"–";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const card=(l,v,nt,cls="")=>`<div class="card"><div class="lab">${l}</div><div class="val ${cls}">${v}</div><div class="note">${nt||""}</div></div>`;
+let D=null,RANGE={mode:"all",from:null,to:null},TAB="overview",charts=[];
+function addDays(s,k){const p=s.split("-").map(Number);const t=new Date(Date.UTC(p[0],p[1]-1,p[2]));t.setUTCDate(t.getUTCDate()+k);return t.toISOString().slice(0,10);}
+const inR=d=>RANGE.mode==="all"||(d>=RANGE.from&&d<=RANGE.to);
+function rangeLabel(){if(RANGE.mode==="all")return "toàn thời gian";if(RANGE.mode==="month")return "tháng "+RANGE.from.slice(0,7);if(RANGE.mode==="30d")return "30 ngày gần nhất";return dm(RANGE.from)+" → "+dm(RANGE.to);}
+function mkChart(id,cfg){const el=document.getElementById(id);if(el)charts.push(new Chart(el,cfg));}
+function fail(t,m){document.getElementById("root").innerHTML=`<div class="center"><div class="box"><h2>${t}</h2><p>${m}</p></div></div>`;}
+
+function calc(){
+ const R={};(D.referrers||[]).forEach(r=>{R[r.rid]={...r,clicks:0,created:0,paidOrd:0,rev:0,comm:0,commPaid:0,buyers:0};});
+ const get=id=>R[id]||(R[id]={rid:id,name:"(không rõ)",code:"–",clicks:0,created:0,paidOrd:0,rev:0,comm:0,commPaid:0,buyers:0});
+ (D.clicks||[]).filter(x=>inR(x.d)).forEach(x=>{get(x.rid).clicks+=x.n;});
+ (D.orders||[]).filter(x=>inR(x.d)).forEach(x=>{get(x.rid).created+=x.n;});
+ const E=(D.earnings||[]).filter(x=>inR(x.d));
+ E.forEach(e=>{const r=get(e.rid);if(e.st==="reversed")return;r.paidOrd++;r.rev+=+e.order;r.comm+=+e.comm;if(e.st==="paid")r.commPaid+=+e.comm;});
+ const all=Object.values(R);
+ const tt=all.filter(r=>r.type==="tiktoker"),hv=all.filter(r=>r.type!=="tiktoker");
+ const sum=(a,k)=>a.reduce((s,x)=>s+(+x[k]||0),0);
+ const live=E.filter(e=>e.st!=="reversed");
+ const tot={clicks:sum(all,"clicks"),created:sum(all,"created"),paidOrd:live.length,rev:sum(live,"order"),comm:sum(live,"comm"),
+  pending:sum(live.filter(e=>e.st==="pending"),"comm"),avail:sum(live.filter(e=>e.st==="available"),"comm"),paid:sum(live.filter(e=>e.st==="paid"),"comm"),
+  reversed:sum(E.filter(e=>e.st==="reversed"),"comm")};
+ const P=(D.payouts||[]).filter(x=>inR(x.d));
+ return {R,all,tt,hv,E,tot,P,sum};
+}
+function nameOf(C,id){const r=C.R[id];if(!r)return "(không rõ)";return r.type==="tiktoker"?(r.label||r.name):r.name;}
+function typePill(r){return r.type==="tiktoker"?'<span class="pill p-tt">TikToker</span>':'<span class="pill p-hv">Học viên</span>';}
+
+function shell(){
+ const t=D.today,m0=t.slice(0,8)+"01";
+ const tabs=[["overview","Tổng quan"],["tiktok","TikToker"],["refs","Người giới thiệu"],["flow","Luồng hoa hồng"],["payout","Rút tiền"]];
+ return `<div class="sheet"><h1>Báo cáo Affiliate — Aptis Kỳ Tích</h1>
+ <div class="sub">Số liệu trực tiếp từ hệ thống · Đơn vị VND · Giờ Việt Nam · Người xem: <b>${esc(D.viewer)}</b> · ${D.as_of}</div>
+ <div class="hr"></div>
+ <div id="bar"><label>Kỳ báo cáo</label>
+  <button data-m="month">Tháng này</button><button data-m="30d">30 ngày</button><button data-m="all">Toàn thời gian</button>
+  <span class="sep"></span><label>Từ</label><input type="date" id="f" value="${RANGE.from||m0}"><label>đến</label><input type="date" id="t" value="${RANGE.to||t}"><button id="go">Áp dụng</button></div>
+ <div id="tabs">${tabs.map(([k,l])=>`<button data-t="${k}" class="${k===TAB?"on":""}">${l}</button>`).join("")}</div>
+ <div id="body"></div>
+ <div class="foot">Doanh thu qua mã = số tiền bạn bè thực trả (đã trừ giảm giá). Hoa hồng "Đang chờ" rút được sau 7 ngày. Chi phí TikToker = phí booking + hoa hồng phát sinh.
+ Trang này dành riêng cho ${esc(D.viewer)}, vui lòng không chuyển tiếp đường dẫn.</div></div>`;}
+
+function wire(){
+ const t=D.today,m0=t.slice(0,8)+"01";
+ document.querySelectorAll("#bar button[data-m]").forEach(b=>{if(b.dataset.m===RANGE.mode)b.classList.add("on");
+  b.onclick=()=>{const m=b.dataset.m;RANGE=m==="all"?{mode:"all"}:m==="month"?{mode:"month",from:m0,to:t}:{mode:"30d",from:addDays(t,-29),to:t};render();};});
+ document.getElementById("go").onclick=()=>{RANGE={mode:"custom",from:document.getElementById("f").value,to:document.getElementById("t").value};render();};
+ document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{TAB=b.dataset.t;render();});}
+
+function tOverview(C){
+ const T=C.tot,sT=C.sum(C.tt,"rev"),cT=C.sum(C.tt,"comm"),fT=C.sum(C.tt,"fee");
+ const byDay={};C.E.filter(e=>e.st!=="reversed").forEach(e=>{const x=byDay[e.d]||(byDay[e.d]={r:0,c:0,n:0});x.r+=+e.order;x.c+=+e.comm;x.n++;});
+ const days=Object.keys(byDay).sort().slice(-62);
+ document.getElementById("body").innerHTML=`
+ <div class="insight">Kỳ ${rangeLabel()}: <b>${num(T.paidOrd)}</b> đơn qua mã giới thiệu, doanh thu <b>${vnd(T.rev)}</b>, hoa hồng phát sinh <b>${vnd(T.comm)}</b> (${pct(T.rev?T.comm/T.rev:0)} doanh thu).
+ Tỉ lệ bấm link → trả tiền: <b>${pct(T.clicks?T.paidOrd/T.clicks:0)}</b>. Riêng TikToker: doanh thu <b>${vnd(sT)}</b>, tổng chi (booking + hoa hồng) <b>${vnd(fT+cT)}</b>.</div>
+ <div class="row c4 hero">
+  ${card("Doanh thu qua mã",vnd(T.rev),`${num(T.paidOrd)} đơn`)}
+  ${card("Hoa hồng phát sinh",vnd(T.comm),`${pct(T.rev?T.comm/T.rev:0)} doanh thu`)}
+  ${card("Đã trả",vnd(T.paid),"đã chuyển khoản")}
+  ${card("Còn phải trả",vnd(T.pending+T.avail),`chờ ${vnd(T.pending)} · rút được ${vnd(T.avail)}`,"neg")}
+ </div>
+ <div class="row c4" style="margin-top:10px">
+  ${card("Lượt bấm link",num(T.clicks),"link ?ref=")}
+  ${card("Đơn tạo qua mã",num(T.created),"gồm cả chưa thanh toán")}
+  ${card("Tỉ lệ tạo đơn → trả",pct(T.created?T.paidOrd/T.created:0),"")}
+  ${card("Hoa hồng bị huỷ",vnd(T.reversed),"hoàn tiền / gian lận")}
+ </div>
+ <div class="sec-h"><h2>Doanh thu qua mã theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="chart"><canvas id="c1"></canvas></div>`;
+ mkChart("c1",{type:"bar",data:{labels:days.map(d=>dm(d).slice(0,5)),datasets:[
+  {label:"Doanh thu",data:days.map(d=>byDay[d].r),backgroundColor:"#1f4e79",borderRadius:4,maxBarThickness:36},
+  {label:"Hoa hồng",data:days.map(d=>byDay[d].c),backgroundColor:"#d97757",borderRadius:4,maxBarThickness:36}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:11}}},
+   tooltip:{callbacks:{label:c=>c.dataset.label+": "+vnd(c.parsed.y)}}},
+   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1000).toFixed(0)+"k",font:{size:11}}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});}
+
+function tTiktok(C){
+ const L=C.tt.slice().sort((a,b)=>b.rev-a.rev);
+ if(!L.length){document.getElementById("body").innerHTML=`<div class="insight">Chưa có TikToker nào được gắn nhãn. Gửi danh sách để admin gắn vào hệ thống.</div>`;return;}
+ const s=k=>C.sum(L,k),cost=s("fee")+s("comm"),net=s("rev")-cost;
+ document.getElementById("body").innerHTML=`
+ <div class="insight">${L.length} TikToker · doanh thu <b>${vnd(s("rev"))}</b> · chi phí (booking ${vnd(s("fee"))} + hoa hồng ${vnd(s("comm"))}) = <b>${vnd(cost)}</b> →
+  ${net>=0?"lãi":"lỗ"} <b class="${net>=0?"pos":"neg"}">${vnd(Math.abs(net))}</b>. Phí booking tính toàn bộ, không chia theo kỳ lọc.</div>
+ <div class="row c4 hero">
+  ${card("Doanh thu từ TikToker",vnd(s("rev")),`${num(s("paidOrd"))} đơn`)}
+  ${card("Tổng chi phí",vnd(cost),"booking + hoa hồng")}
+  ${card(net>=0?"Lãi sau chi phí":"Lỗ sau chi phí",vnd(Math.abs(net)),`ROI ${pct(cost?net/cost:0)}`,net>=0?"pos":"neg")}
+  ${card("Chi phí / đơn",vnd(s("paidOrd")?cost/s("paidOrd"):0),"CAC")}
+ </div>
+ <div class="sec-h"><h2>Hiệu quả từng TikToker</h2><span class="tag">${rangeLabel()} · xếp theo doanh thu</span></div>
+ <div class="tbl-wrap"><table><thead><tr><th>TikToker</th><th>Mã</th><th class="n">Bấm link</th><th class="n">Tạo đơn</th><th class="n">Đơn trả</th><th class="n">Chuyển đổi</th>
+  <th class="n">Doanh thu</th><th class="n">Hoa hồng</th><th class="n">Phí booking</th><th class="n">Lãi/lỗ</th><th class="n">ROI</th></tr></thead><tbody>
+ ${L.map(r=>{const c=(+r.fee)+r.comm,n=r.rev-c;return `<tr><td><b>${esc(r.label||r.name)}</b>${r.channel?`<div class="small">${esc(r.channel)}</div>`:""}${r.booked?`<div class="small">book ${dm(r.booked)}</div>`:""}</td>
+  <td>${esc(r.code)}</td><td class="n">${num(r.clicks)}</td><td class="n">${num(r.created)}</td><td class="n">${num(r.paidOrd)}</td>
+  <td class="n">${pct(r.clicks?r.paidOrd/r.clicks:0)}</td><td class="n">${vnd(r.rev)}</td><td class="n">${vnd(r.comm)}</td><td class="n">${vnd(+r.fee)}</td>
+  <td class="n ${n>=0?"pos":"neg"}">${vnd(n)}</td><td class="n">${c?pct(n/c):"–"}</td></tr>`;}).join("")}
+ <tr class="tot"><td colspan="2">Tổng</td><td class="n">${num(s("clicks"))}</td><td class="n">${num(s("created"))}</td><td class="n">${num(s("paidOrd"))}</td>
+  <td class="n">${pct(s("clicks")?s("paidOrd")/s("clicks"):0)}</td><td class="n">${vnd(s("rev"))}</td><td class="n">${vnd(s("comm"))}</td><td class="n">${vnd(s("fee"))}</td>
+  <td class="n ${net>=0?"pos":"neg"}">${vnd(net)}</td><td class="n">${cost?pct(net/cost):"–"}</td></tr>
+ </tbody></table></div>
+ <div class="sec-h"><h2>So sánh doanh thu</h2></div><div class="chart"><canvas id="c2"></canvas></div>`;
+ mkChart("c2",{type:"bar",data:{labels:L.map(r=>r.label||r.name),datasets:[
+  {label:"Doanh thu",data:L.map(r=>r.rev),backgroundColor:"#7c3aed",borderRadius:4,maxBarThickness:40},
+  {label:"Chi phí",data:L.map(r=>(+r.fee)+r.comm),backgroundColor:"#d97757",borderRadius:4,maxBarThickness:40}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+": "+vnd(c.parsed.y)}}},
+   scales:{y:{ticks:{callback:v=>(v/1000).toFixed(0)+"k"}},x:{grid:{display:false}}}}});}
+
+function tRefs(C){
+ const L=C.all.filter(r=>r.clicks||r.created||r.paidOrd).sort((a,b)=>b.rev-a.rev||b.clicks-a.clicks);
+ document.getElementById("body").innerHTML=`
+ <div class="sec-h"><h2>Tất cả người giới thiệu</h2><span class="tag">${rangeLabel()} · ${L.length} người có hoạt động</span></div>
+ <div class="tbl-wrap"><table><thead><tr><th>Người giới thiệu</th><th>Loại</th><th>Mã</th><th class="n">% hiện tại</th><th class="n">Bấm link</th><th class="n">Tạo đơn</th><th class="n">Đơn trả</th><th class="n">Doanh thu</th><th class="n">Hoa hồng</th><th class="n">Đã trả</th></tr></thead><tbody>
+ ${L.map(r=>`<tr><td><b>${esc(r.type==="tiktoker"?(r.label||r.name):r.name)}</b><div class="small">${esc(r.email||"")}</div></td><td>${typePill(r)}</td><td>${esc(r.code)}</td>
+  <td class="n">${r.rate??"–"}%</td><td class="n">${num(r.clicks)}</td><td class="n">${num(r.created)}</td><td class="n">${num(r.paidOrd)}</td>
+  <td class="n">${vnd(r.rev)}</td><td class="n">${vnd(r.comm)}</td><td class="n">${vnd(r.commPaid)}</td></tr>`).join("")||'<tr><td colspan="10" class="muted">Chưa có hoạt động trong kỳ</td></tr>'}
+ </tbody></table></div>`;}
+
+function tFlow(C){
+ document.getElementById("body").innerHTML=`
+ <div class="sec-h"><h2>Luồng hoa hồng</h2><span class="tag">${rangeLabel()} · ${C.E.length} dòng · mới nhất trước</span></div>
+ <div class="tbl-wrap"><table><thead><tr><th>Thời gian</th><th>Người giới thiệu</th><th>Người mua</th><th>Gói</th><th class="n">Đơn</th><th class="n">%</th><th class="n">Hoa hồng</th><th>Trạng thái</th><th>Rút được từ</th></tr></thead><tbody>
+ ${C.E.map(e=>{const r=C.R[e.rid]||{};return `<tr><td>${e.ts}</td><td>${esc(nameOf(C,e.rid))} ${r.type==="tiktoker"?'<span class="pill p-tt">TT</span>':""}</td><td>${esc(e.buyer)}</td>
+  <td>${PLAN[e.plan]||e.plan||"–"}</td><td class="n">${vnd(+e.order)}</td><td class="n">${e.pct}%</td><td class="n"><b>${vnd(+e.comm)}</b></td>
+  <td><span class="pill s-${e.st}">${ST[e.st]||e.st}</span></td><td>${dm(e.avail)}</td></tr>`;}).join("")||'<tr><td colspan="9" class="muted">Chưa có hoa hồng trong kỳ</td></tr>'}
+ </tbody></table></div>`;}
+
+function tPayout(C){
+ const s=st=>C.P.filter(p=>p.st===st).reduce((a,p)=>a+(+p.amt),0);
+ document.getElementById("body").innerHTML=`
+ <div class="row c3 hero">${card("Chờ xử lý",vnd(s("requested")),"cần chuyển trong 3 ngày làm việc",s("requested")?"neg":"")}${card("Đã chuyển",vnd(s("paid")),"")}${card("Đã từ chối",vnd(s("rejected")),"")}</div>
+ <div class="sec-h"><h2>Yêu cầu rút</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="tbl-wrap"><table><thead><tr><th>Ngày yêu cầu</th><th>Người rút</th><th>Ngân hàng</th><th class="n">Số tiền</th><th>Trạng thái</th><th>Ngày chuyển</th></tr></thead><tbody>
+ ${C.P.map(p=>`<tr><td>${dm(p.d)}</td><td>${esc(nameOf(C,p.rid))}</td><td>${esc(p.bank||"–")}</td><td class="n"><b>${vnd(+p.amt)}</b></td>
+  <td><span class="pill s-${p.st}">${ST[p.st]||p.st}</span></td><td>${dm(p.paid)}</td></tr>`).join("")||'<tr><td colspan="6" class="muted">Chưa có yêu cầu rút</td></tr>'}
+ </tbody></table></div>
+ <div class="small" style="margin-top:8px">Duyệt chuyển khoản trong Admin → tab Affiliate. Trang này chỉ để xem.</div>`;}
+
+function render(){charts.forEach(c=>c.destroy());charts=[];
+ document.getElementById("root").innerHTML=shell();wire();const C=calc();
+ ({overview:tOverview,tiktok:tTiktok,refs:tRefs,flow:tFlow,payout:tPayout}[TAB]||tOverview)(C);}
+
+async function load(){
+ const t=new URLSearchParams(location.search).get("t");
+ if(!t)return fail("Thiếu mã truy cập","Vui lòng dùng đúng link đã được gửi cho bạn.");
+ let r;
+ for(let i=0;i<3;i++){try{r=await fetch(SUPABASE_URL+"/rest/v1/rpc/affiliate_report",{method:"POST",
+  headers:{apikey:ANON_KEY,Authorization:"Bearer "+ANON_KEY,"Content-Type":"application/json"},body:JSON.stringify({p_token:t})});
+  if(r.ok||r.status<500)break;}catch(e){}await new Promise(x=>setTimeout(x,700*(i+1)));}
+ if(!r)return fail("Không kết nối được","Vui lòng kiểm tra mạng rồi thử lại.");
+ if(!r.ok)return fail("Link không còn hiệu lực","Đường dẫn đã bị thu hồi hoặc hết hạn.");
+ D=await r.json();render();}
+load();
+</script>
+</body>
+</html>
