@@ -7708,6 +7708,7 @@ export type Database = {
       promo_active: { Args: never; Returns: boolean }
       public_stats: { Args: never; Returns: Json }
       redeem_voucher: { Args: { p_code: string }; Returns: Json }
+      referral_is_customer: { Args: { p_user: string }; Returns: boolean }
       referral_rate_for: {
         Args: { p_user: string }
         Returns: {
