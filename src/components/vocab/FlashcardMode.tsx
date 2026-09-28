@@ -21,8 +21,19 @@ interface VocabWord {
   meaning?: string;
   example_en?: string;
   example_vi?: string;
-  word_family: string[];
+  word_family?: Array<string | { word?: string; partOfSpeech?: string }> | null;
 }
+
+const wfLabel = (wf: unknown): string => {
+  if (typeof wf === "string") return wf;
+  if (wf && typeof wf === "object") {
+    const o = wf as { word?: unknown; partOfSpeech?: unknown };
+    const w = typeof o.word === "string" ? o.word : "";
+    const p = typeof o.partOfSpeech === "string" && o.partOfSpeech ? ` (${o.partOfSpeech})` : "";
+    return w ? w + p : "";
+  }
+  return "";
+};
 
 interface FlashcardModeProps {
   words: VocabWord[];
@@ -206,16 +217,21 @@ const FlashcardMode = ({ words, learnedWords, onMarkLearned, onBackToList }: Fla
               </div>
             )}
 
-            {current.word_family.length > 0 && (
-              <div className="border-t border-border pt-3 mt-3">
-                <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">Word Family</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {current.word_family.map((wf) => (
-                    <Badge key={wf} variant="secondary" className="text-xs font-normal">{wf}</Badge>
-                  ))}
+            {(() => {
+              const familyLabels = (Array.isArray(current.word_family) ? current.word_family : [])
+                .map(wfLabel)
+                .filter(Boolean);
+              return familyLabels.length > 0 ? (
+                <div className="border-t border-border pt-3 mt-3">
+                  <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">Word Family</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {familyLabels.map((label, i) => (
+                      <Badge key={`${label}-${i}`} variant="secondary" className="text-xs font-normal">{label}</Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : null;
+            })()}
 
             <p className="text-xs text-muted-foreground mt-4 text-center">Bấm để lật lại</p>
           </div>
