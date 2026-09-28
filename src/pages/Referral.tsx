@@ -235,7 +235,7 @@ export default function Referral() {
             <div className="relative flex flex-col justify-between gap-6 md:flex-row">
               <div>
                 <span className="inline-flex rounded-full border border-primary-foreground/25 bg-primary-foreground/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider">
-                  🎁 Giới thiệu bạn
+                  <span className="[font-family:system-ui]">🎁</span> Giới thiệu bạn
                 </span>
                 <h1 className="mt-3 max-w-lg font-heading text-2xl font-extrabold leading-tight md:text-3xl">
                   Web xịn ôn hay – Rủ bạn cùng ôn Aptis
@@ -283,12 +283,12 @@ export default function Referral() {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-1 rounded-2xl border border-border bg-card p-4">
-              <p className="text-[12px] text-muted-foreground">👥 Bạn đã mua</p>
+              <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">👥</span> Bạn đã mua</p>
               <p className="mt-1.5 text-2xl font-extrabold text-foreground">{referred}</p>
               <p className="text-[11px] text-muted-foreground">tính vào bậc hoa hồng</p>
             </div>
             <div className="col-span-1 rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-card p-4 dark:border-emerald-900 dark:from-emerald-950/30">
-              <p className="text-[12px] text-muted-foreground">💰 Rút được</p>
+              <p className="text-[12px] text-muted-foreground"><span className="[font-family:system-ui]">💰</span> Rút được</p>
               <p className="mt-1.5 text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{vnd(available)}</p>
               <p className="text-[11px] text-muted-foreground">tối thiểu 50.000đ</p>
             </div>
@@ -303,7 +303,7 @@ export default function Referral() {
             <Skeleton className="h-28 w-full rounded-3xl" />
           ) : (
             <section className="rounded-3xl border border-border bg-card p-6">
-              <h2 className="font-heading text-base font-bold text-foreground">📈 Mức hoa hồng của bạn</h2>
+              <h2 className="font-heading text-base font-bold text-foreground"><span className="[font-family:system-ui]">📈</span> Mức hoa hồng của bạn</h2>
               <p className="mt-1 text-[13px] text-muted-foreground">Càng nhiều bạn mua gói qua mã của bạn, mức hoa hồng càng tăng.</p>
               <div className="relative mt-5 grid grid-cols-4">
                 <div className="absolute left-[12.5%] right-[12.5%] top-[21px] h-1 rounded-full bg-muted">
@@ -335,14 +335,14 @@ export default function Referral() {
                   </p>
                 )}
                 {tierKey === "t1" && (
-                  <><p className="shrink-0 text-muted-foreground">🎯 Còn <strong className="text-foreground">{Math.max(0, 5 - referred)} bạn</strong> nữa để lên <strong className="text-foreground">12%</strong></p><div className="hidden h-2 flex-1 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (referred / 5) * 100)}%` }} /></div><span className="ml-auto shrink-0 text-xs font-bold text-primary">{referred}/5</span></>
+                  <><p className="shrink-0 text-muted-foreground"><span className="[font-family:system-ui]">🎯</span> Còn <strong className="text-foreground">{Math.max(0, 5 - referred)} bạn</strong> nữa để lên <strong className="text-foreground">12%</strong></p><div className="hidden h-2 flex-1 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, (referred / 5) * 100)}%` }} /></div><span className="ml-auto shrink-0 text-xs font-bold text-primary">{referred}/5</span></>
                 )}
                 {tierKey === "t2" && (
-                  <><p className="shrink-0 text-muted-foreground">🎯 Còn <strong className="text-foreground">{Math.max(0, 20 - referred)} bạn</strong> nữa để lên <strong className="text-foreground">15%</strong></p><div className="hidden h-2 flex-1 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, ((referred - 5) / 15) * 100)}%` }} /></div><span className="ml-auto shrink-0 text-xs font-bold text-primary">{referred}/20</span></>
+                  <><p className="shrink-0 text-muted-foreground"><span className="[font-family:system-ui]">🎯</span> Còn <strong className="text-foreground">{Math.max(0, 20 - referred)} bạn</strong> nữa để lên <strong className="text-foreground">15%</strong></p><div className="hidden h-2 flex-1 overflow-hidden rounded-full bg-muted sm:block"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, ((referred - 5) / 15) * 100)}%` }} /></div><span className="ml-auto shrink-0 text-xs font-bold text-primary">{referred}/20</span></>
                 )}
-                {tierKey === "t3" && <p className="text-muted-foreground">Bạn đang ở mức cao nhất 🎉</p>}
+                {tierKey === "t3" && <p className="text-muted-foreground">Bạn đang ở mức cao nhất <span className="[font-family:system-ui]">🎉</span></p>}
               </div>
-              <p className="mt-3 text-[12.5px] text-muted-foreground">💡 Ví dụ: bạn bè mua gói 3 tháng 349k → bạn ấy trả {vnd(Math.round(349000 * (100 - discount) / 100))}, bạn nhận {vnd(Math.round(349000 * (100 - discount) / 100 * referrerPct / 100))}.</p>
+              <p className="mt-3 text-[12.5px] text-muted-foreground"><span className="[font-family:system-ui]">💡</span> Ví dụ: bạn bè mua gói 3 tháng 349k → bạn ấy trả {vnd(Math.round(349000 * (100 - discount) / 100))}, bạn nhận {vnd(Math.round(349000 * (100 - discount) / 100 * referrerPct / 100))}.</p>
               <p className="mt-2 text-[11px] text-muted-foreground">
                 Mức % áp dụng cho đơn mới tại thời điểm bạn của bạn thanh toán. Chỉ tính bạn mua gói từ 1 tuần trở lên.
               </p>
@@ -350,7 +350,7 @@ export default function Referral() {
           )}
 
           <section className="rounded-3xl border border-border bg-card p-6">
-            <h2 className="font-heading text-base font-bold text-foreground">🧭 Cách hoạt động</h2>
+            <h2 className="font-heading text-base font-bold text-foreground"><span className="[font-family:system-ui]">🧭</span> Cách hoạt động</h2>
             <p className="mt-1 text-[13px] text-muted-foreground">3 bước, không cần đăng ký thêm gì.</p>
             <div className="mt-7 grid gap-6 md:grid-cols-3 md:gap-4">
               {[
@@ -360,7 +360,7 @@ export default function Referral() {
               ].map((step, index) => (
                 <div key={step.title} className="relative rounded-2xl border border-border bg-gradient-to-b from-primary/5 to-card p-5 pt-6">
                   <span className="absolute -top-3.5 left-5 flex h-8 w-8 items-center justify-center rounded-xl bg-primary font-extrabold text-primary-foreground shadow-md">{index + 1}</span>
-                  <span className="text-3xl" aria-hidden="true">{step.icon}</span>
+                  <span className="text-3xl [font-family:system-ui]" aria-hidden="true">{step.icon}</span>
                   <h3 className="mt-2 text-[15px] font-extrabold text-foreground">{step.title}</h3>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{step.desc}</p>
                   <span className="mt-3 inline-block rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">{step.pill}</span>
@@ -372,7 +372,7 @@ export default function Referral() {
 
           <section className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card p-6">
             <div className="min-w-0 flex-1">
-              <h2 className="font-heading text-base font-bold text-foreground">💰 Rút hoa hồng</h2>
+              <h2 className="font-heading text-base font-bold text-foreground"><span className="[font-family:system-ui]">💰</span> Rút hoa hồng</h2>
             {pendingPayout ? (
               <p className="mt-2 text-sm text-muted-foreground">
                 Yêu cầu {vnd(pendingPayout.amount_vnd)} đang được xử lý, admin sẽ chuyển trong 3 ngày làm việc.
@@ -382,7 +382,7 @@ export default function Referral() {
                 <p className="mt-2 text-3xl font-extrabold text-foreground">{vnd(available)}</p>
                 <div className="mt-2 h-2 w-80 max-w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, available / 50000 * 100)}%` }} /></div>
                 <p className={`mt-1.5 text-[12px] font-medium ${available >= 50000 ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-                  {available < 50000 ? `Còn thiếu ${vnd(50000 - available)} để rút` : "Đủ điều kiện rút"}
+                  {available < 50000 ? `Cần thêm ${vnd(50000 - available)} để rút` : "Đủ điều kiện rút"}
                 </p>
               </>
             )}
@@ -399,7 +399,7 @@ export default function Referral() {
             <h2 className="font-heading font-bold text-base text-foreground mb-3">Lịch sử hoa hồng</h2>
             {!history || history.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-6 text-center">
-                <p className="text-3xl" aria-hidden="true">🌱</p>
+                <p className="text-3xl [font-family:system-ui]" aria-hidden="true">🌱</p>
                 <p className="mt-2 font-bold text-foreground">Chưa có bạn nào mua qua mã của bạn</p>
                 <p className="mt-1 text-[13px] text-muted-foreground">Gửi link cho 1 người bạn đang ôn Aptis để bắt đầu nhé.</p>
                 <Button className="mt-4 gap-1.5" onClick={() => copy(link, "link")}><Copy className="h-3.5 w-3.5" /> Sao chép link giới thiệu</Button>
