@@ -327,8 +327,8 @@ export default function Referral() {
                             : "border-muted bg-card text-muted-foreground"
                       }`}>{t.pct}%</div>
                       <p className={`mt-2 text-xs font-bold ${isCurrent ? "text-primary" : "text-foreground"}`}>{t.label}</p>
-                      <p className="mt-1 max-w-[180px] text-[11px] leading-snug text-muted-foreground">{t.cond} · bạn bè giảm {t.friend}%</p>
-                      {isCurrent && <span className="mt-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">Bạn đang ở đây</span>}
+                      <p className="mt-1 hidden max-w-[180px] text-[11px] leading-snug text-muted-foreground sm:block">{t.cond} · bạn bè giảm {t.friend}%</p>
+                      {isCurrent && <span className="mt-2 whitespace-nowrap rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">Bạn đang ở đây</span>}
                     </div>
                   );
                 })}
