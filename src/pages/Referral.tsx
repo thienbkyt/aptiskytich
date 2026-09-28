@@ -281,7 +281,7 @@ export default function Referral() {
             </div>
           </section>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="col-span-1 rounded-2xl border border-border bg-card p-4">
               <p className="text-[12px] text-muted-foreground">👥 Bạn đã mua</p>
               <p className="mt-1.5 text-2xl font-extrabold text-foreground">{referred}</p>
