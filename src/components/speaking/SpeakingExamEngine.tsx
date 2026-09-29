@@ -1544,6 +1544,8 @@ const SpeakingExamEngine = ({
           onTopic: it.onTopic,
           improvedVersion: it.improvedVersion,
           upgradeTips: it.upgradeTips,
+          grammarErrors: (it as any).grammarErrors,
+          pronunciationWords: (it as any).pronunciationWords,
           audioUrl: recordings[i] ?? null,
         }))
       : [];

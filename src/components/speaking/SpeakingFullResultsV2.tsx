@@ -4,7 +4,6 @@ import SpeakingHeader from "./SpeakingHeader";
 import SpeakingProfileView from "./SpeakingProfileView";
 import type { SpeakingPartResultV2 } from "./speakingGradingV2";
 import type { SampleAnswerPair } from "@/data/speakingQuestions";
-import SpeakingInsights from "@/components/insights/SpeakingInsights";
 import ShowcaseConsentCard from "@/components/showcase/ShowcaseConsentCard";
 
 export interface SpeakingV2PartEntry {
@@ -183,6 +182,8 @@ const SpeakingFullResultsV2 = ({
                   onTopic: it.onTopic,
                   improvedVersion: it.improvedVersion,
                   upgradeTips: it.upgradeTips,
+                  grammarErrors: (it as any).grammarErrors,
+                  pronunciationWords: (it as any).pronunciationWords,
                   audioUrl: current.recordingUrls[i] ?? null,
                 }))}
                 analysis={current.result.analysis}
@@ -193,19 +194,6 @@ const SpeakingFullResultsV2 = ({
                 sampleAnswers={current.sampleAnswers}
                 sharedSample={current.partType === "part4"}
               />
-            )}
-            {current && (
-              <div className="mt-4">
-                <SpeakingInsights
-                  items={(current.result.perItem || []).map((it: any) => ({
-                    questionText: it?.questionText,
-                    transcript: it?.transcript,
-                    onTopic: it?.onTopic,
-                    grammarErrors: it?.grammarErrors,
-                    pronunciationWords: it?.pronunciationWords,
-                  }))}
-                />
-              </div>
             )}
           </div>
         )}

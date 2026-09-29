@@ -114,6 +114,7 @@ const SpeakingReviewPage = ({
   const [part4Data, setPart4Data] = useState<SpeakingPart4Data | undefined>();
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
+  const [gradingRows, setGradingRows] = useState<any[]>([]);
   const [v2Part, setV2Part] = useState<any | null>(null);
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
@@ -124,8 +125,8 @@ const SpeakingReviewPage = ({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!loading) onQuestionCount?.(promptCount);
-  }, [promptCount, loading, onQuestionCount]);
+    if (!loading) onQuestionCount?.(v2Part ? 1 : promptCount);
+  }, [promptCount, loading, onQuestionCount, v2Part]);
 
   const effectiveIndex = questionIndex ?? reviewIndex;
 
@@ -257,7 +258,7 @@ const SpeakingReviewPage = ({
       if (testResultId) {
         const { data: gradingRows } = await supabase
           .from("speaking_question_gradings")
-          .select("item_index,max_points,part_score,transcript,grammar_errors,pronunciation_errors,improved_version,feedback,part")
+          .select("item_index,question_text,max_points,part_score,transcript,grammar_errors,pronunciation_errors,improved_version,feedback,part")
           .eq("user_id", userId)
           .eq("test_result_id", testResultId)
           .order("item_index", { ascending: true });
@@ -322,6 +323,7 @@ const SpeakingReviewPage = ({
       if (cancelled) return;
       setRecordings(signed);
       setGradings(gradeArr);
+      setGradingRows(matching);
       setV2Part(v2Row ? (v2Row.parts as any)[pt] : null);
       setV2Scale(v2Row?.scale50 ?? null);
       setV2Cefr(v2Row?.cefr ?? null);
@@ -428,18 +430,39 @@ const SpeakingReviewPage = ({
     : part4Data?.sampleAnswers;
 
   if (v2Part) {
-    const rawItems: any[] = Array.isArray(v2Part.items) ? v2Part.items : [];
+    const partQuestions = partType === "part1" ? part1Data?.questions
+      : partType === "part2" ? (part2Data?.questions?.length ? part2Data.questions : [part2Data?.prompt])
+      : partType === "part3" ? (part3Data?.questions?.length ? part3Data.questions : [part3Data?.prompt])
+      : (part4Data?.questions?.length ? part4Data.questions : [part4Data?.topic]);
+    const storedItems = Array.isArray(v2Part.perItem)
+      ? v2Part.perItem
+      : Array.isArray(v2Part.items) ? v2Part.items : [];
+    const rawItems: any[] = storedItems.length > 0
+      ? storedItems
+      : gradingRows.map((row) => ({
+          questionText: row.question_text,
+          transcript: row.transcript,
+          improvedVersion: row.improved_version,
+          grammarErrors: row.grammar_errors,
+          pronunciationWords: row.pronunciation_errors,
+        }));
     // Defensive coercion: some legacy rows stored text fields as objects
     // (e.g. `{ questionText: "..." }`), which crashes React with error #31
     // when rendered directly. Always resolve to a plain string via safeText.
-    const items = rawItems.map((it, i) => ({
-      questionText: safeText(it?.questionText),
-      transcript: safeText(it?.transcript),
+    const items = rawItems.map((it, i) => {
+      const grade = gradings[i];
+      const savedGrade = grade && !("error" in grade) ? grade : null;
+      return {
+      questionText: safeText(it?.questionText || gradingRows[i]?.question_text || partQuestions?.[i]),
+      transcript: safeText(it?.transcript || savedGrade?.transcript),
       onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
-      improvedVersion: safeText(it?.improvedVersion),
+      improvedVersion: safeText(it?.improvedVersion || savedGrade?.improvedVersion),
       upgradeTips: safeText(it?.upgradeTips),
+      grammarErrors: it?.grammarErrors ?? savedGrade?.grammarErrors,
+      pronunciationWords: it?.pronunciationWords ?? savedGrade?.pronunciationErrors,
       audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
-    }));
+      };
+    });
 
     return (
       <div className="min-h-screen bg-muted flex flex-col">

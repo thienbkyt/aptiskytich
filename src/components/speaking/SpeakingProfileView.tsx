@@ -12,6 +12,11 @@ import type { SpeakingPartResultV2, SpeakingCriteriaAnalysisV2 } from "./speakin
 import SpeakingSampleAnswerBlock from "./SpeakingSampleAnswerBlock";
 import type { SampleAnswerPair } from "@/data/speakingQuestions";
 import { safeText } from "@/lib/safeText";
+import InlineErrorText from "@/components/insights/InlineErrorText";
+import PronunciationPractice from "@/components/insights/PronunciationPractice";
+import ErrorTrendsCard from "@/components/insights/ErrorTrendsCard";
+import { asArray, type InsightError } from "@/components/insights/errorCategories";
+import { normPron } from "@/components/insights/SpeakingInsights";
 
 const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; vi: string }> = [
   { key: "tf", vi: "Nội dung" },
@@ -45,6 +50,8 @@ interface SpeakingProfileViewProps {
     improvedVersion?: string;
     upgradeTips?: string;
     audioUrl?: string | null;
+    grammarErrors?: unknown;
+    pronunciationWords?: unknown;
   }>;
   /** @deprecated kept for backward compat; not rendered. */
   feedback?: string;
@@ -215,9 +222,13 @@ const SpeakingProfileView = ({
             {tr && (
               <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Transcript</p>
-                <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                  {tr}
-                </p>
+                {asArray(it.grammarErrors).length > 0 ? (
+                  <InlineErrorText text={tr} errors={asArray<InsightError>(it.grammarErrors)} />
+                ) : (
+                  <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                    {tr}
+                  </p>
+                )}
               </div>
             )}
 
@@ -259,6 +270,9 @@ const SpeakingProfileView = ({
           );
         })}
       </div>
+
+      <PronunciationPractice words={items.flatMap((it) => normPron(it.pronunciationWords))} />
+      <ErrorTrendsCard skill="speaking" />
 
       {sharedSample && (
         <SpeakingSampleAnswerBlock pair={sampleAnswers?.[0]} note="cho cả phần này" />
