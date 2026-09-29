@@ -6428,6 +6428,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_access: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          token_sha256: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          token_sha256: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          token_sha256?: string
+        }
+        Relationships: []
+      }
       system_vocab_sets: {
         Row: {
           created_at: string
@@ -7972,6 +7993,16 @@ export type Database = {
       }
       showcase_withdraw: { Args: { p_entry_id: string }; Returns: undefined }
       slugify_vi: { Args: { _input: string }; Returns: string }
+      sync_export: {
+        Args: {
+          p_arg?: string
+          p_kind: string
+          p_limit?: number
+          p_offset?: number
+          p_token: string
+        }
+        Returns: Json
+      }
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }
       try_jsonb: { Args: { p_text: string }; Returns: Json }
