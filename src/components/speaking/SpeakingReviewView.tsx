@@ -10,6 +10,8 @@ import type {
 } from "@/data/speakingQuestions";
 import type { SpeakingGradingResult } from "./speakingGrading";
 import { safeText } from "@/lib/safeText";
+import SpeakingInsights, { OnTopicBadge } from "@/components/insights/SpeakingInsights";
+import InlineErrorText from "@/components/insights/InlineErrorText";
 import SpeakingSampleAnswerBlock from "./SpeakingSampleAnswerBlock";
 import type { SampleAnswerPair } from "@/data/speakingQuestions";
 
@@ -219,8 +221,15 @@ const SpeakingReviewView = ({
                 )}
                 {safeText(g.transcript) && (
                   <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
-                    <p className="text-xs text-foreground whitespace-pre-wrap">{safeText(g.transcript)}</p>
+                    <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                      <p className="text-[11px] font-semibold text-muted-foreground">Transcript</p>
+                      <OnTopicBadge onTopic={(g as any).onTopic} transcript={safeText(g.transcript)} />
+                    </div>
+                    {Array.isArray(g.grammarErrors) && g.grammarErrors.length > 0 ? (
+                      <InlineErrorText text={safeText(g.transcript)} errors={g.grammarErrors} />
+                    ) : (
+                      <p className="text-xs text-foreground whitespace-pre-wrap">{safeText(g.transcript)}</p>
+                    )}
                   </div>
                 )}
 
@@ -273,6 +282,16 @@ const SpeakingReviewView = ({
           <SpeakingSampleAnswerBlock
             pair={sampleAnswers?.[isPart4 ? 0 : rIdx]}
             note={isPart4 ? "cho cả phần này" : undefined}
+          />
+
+          <SpeakingInsights
+            showPerQuestion={false}
+            items={(gradings || []).map((gr: any) => (gr && !("error" in gr) ? {
+              transcript: safeText(gr.transcript),
+              onTopic: gr.onTopic,
+              grammarErrors: gr.grammarErrors ?? gr.grammar_errors,
+              pronunciationWords: gr.pronunciationErrors ?? gr.pronunciation_errors ?? gr.pronunciationWords,
+            } : {}))}
           />
         </div>
       </div>

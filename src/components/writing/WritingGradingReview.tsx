@@ -1,7 +1,10 @@
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
+import WritingInsights from "@/components/insights/WritingInsights";
 
 interface WritingGradingReviewProps {
   grading: WritingGradingResult;
+  /** Student's answer text (for the "Phân tích chi tiết" block). */
+  answerText?: string;
 }
 
 const SECTIONS: { label: string; icon: string; cls: string }[] = [
@@ -61,7 +64,7 @@ const renderFeedback = (feedback: string) => {
   );
 };
 
-const WritingGradingReview = ({ grading }: WritingGradingReviewProps) => {
+const WritingGradingReview = ({ grading, answerText }: WritingGradingReviewProps) => {
   const allErrors = [
     ...(grading.grammarErrors || []).map((error) => ({ ...error, kind: "Ngữ pháp" })),
     ...(grading.spellingErrors || []).map((error) => ({ ...error, kind: "Chính tả" })),
@@ -96,6 +99,8 @@ const WritingGradingReview = ({ grading }: WritingGradingReviewProps) => {
           </div>
         )}
       </div>
+
+      <WritingInsights text={answerText} grammarErrors={grading.grammarErrors} spellingErrors={grading.spellingErrors} />
 
       {(grading.improvedVersion || grading.upgradeTips) && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-3">
