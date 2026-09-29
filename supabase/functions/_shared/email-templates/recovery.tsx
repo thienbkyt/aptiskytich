@@ -16,11 +16,13 @@ import {
 interface RecoveryEmailProps {
   siteName: string
   confirmationUrl: string
+  code?: string
 }
 
 export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
+  code,
 }: RecoveryEmailProps) => (
   <Html lang="vi" dir="ltr">
     <Head>
@@ -38,6 +40,14 @@ export const RecoveryEmail = ({
         <Button className="dm-btn" style={button} href={confirmationUrl}>
           Đặt lại mật khẩu
         </Button>
+        {code ? (
+          <>
+            <Text style={{ ...text, margin: '25px 0 8px' }}>
+              Nếu nút không mở được, vào aptiskytich.vn/reset-password và nhập mã:
+            </Text>
+            <Text style={codeStyle}>{code}</Text>
+          </>
+        ) : null}
         <Text style={footer}>
           Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.
         </Text>
@@ -73,6 +83,13 @@ const button = {
   fontWeight: 'bold' as const,
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const codeStyle = {
+  fontSize: '28px',
+  fontWeight: 'bold' as const,
+  letterSpacing: '6px',
+  color: '#121212',
+  margin: '0 0 10px',
+}
 // Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
 const darkModeCss = `
   @media (prefers-color-scheme: dark) {

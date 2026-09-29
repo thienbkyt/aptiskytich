@@ -167,11 +167,19 @@ const handler = createAuthEmailHandler({
     },
     recovery: {
       subject: 'Đặt lại mật khẩu — Aptis Kỳ Tích',
-      render: (data) =>
-        React.createElement(RecoveryEmail, {
+      render: (data) => {
+        const d = data as any
+        let tokenHash: string = d.token_hash ?? ''
+        if (!tokenHash) {
+          try { tokenHash = new URL(d.url).searchParams.get('token') ?? '' } catch { /* ignore */ }
+        }
+        const confirmationUrl = `${SITE_URL}/reset-password?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`
+        return React.createElement(RecoveryEmail, {
           siteName: SITE_NAME,
-          confirmationUrl: data.url,
-        }),
+          confirmationUrl,
+          code: d.token ?? undefined,
+        })
+      },
     },
     email_change: {
       subject: 'Xác nhận địa chỉ email mới — Aptis Kỳ Tích',
