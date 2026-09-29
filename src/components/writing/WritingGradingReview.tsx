@@ -100,8 +100,6 @@ const WritingGradingReview = ({ grading, answerText }: WritingGradingReviewProps
         )}
       </div>
 
-      <WritingInsights text={answerText} grammarErrors={grading.grammarErrors} spellingErrors={grading.spellingErrors} />
-
       {(grading.improvedVersion || grading.upgradeTips) && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-3">
           {grading.improvedVersion && (
@@ -118,6 +116,8 @@ const WritingGradingReview = ({ grading, answerText }: WritingGradingReviewProps
           )}
         </div>
       )}
+
+      <WritingInsights text={answerText} grammarErrors={grading.grammarErrors} spellingErrors={grading.spellingErrors} />
     </div>
   );
 };
