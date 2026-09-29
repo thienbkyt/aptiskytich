@@ -813,7 +813,7 @@ const WritingExamEngine = ({
 
         {(reviewMode || isReviewing) && effectiveGrading && (
           <div className="mt-4">
-            <WritingGradingReview grading={effectiveGrading} />
+            <WritingGradingReview grading={effectiveGrading} answerText={getTextAndQuestions().text} />
           </div>
         )}
       </div>
