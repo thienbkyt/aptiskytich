@@ -1432,6 +1432,10 @@ Sau mỗi nhãn xuống dòng rồi viết nội dung 1–3 câu tiếng Việt 
 GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
 
+PHÂN LOẠI LỖI (bắt buộc):
+- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa/không tự nhiên, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
+- Trường "original" phải là đoạn COPY NGUYÊN VĂN từ bài học viên (để giao diện tìm và gạch chân), không sửa chính tả trong "original".
+
 RETURN VIA TOOL CALL.`;
 
       // Rubric rút gọn RIÊNG cho Part 1 (không band anchors, không 5 tiêu chí, không forced complexity)
@@ -1468,6 +1472,10 @@ RÀNG BUỘC FEEDBACK (bắt buộc):
 
 GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
+
+PHÂN LOẠI LỖI (bắt buộc):
+- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa/không tự nhiên, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
+- Trường "original" phải là đoạn COPY NGUYÊN VĂN từ bài học viên (để giao diện tìm và gạch chân), không sửa chính tả trong "original".
 
 RETURN VIA TOOL CALL.`;
 
