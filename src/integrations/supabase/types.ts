@@ -2862,6 +2862,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rp4_de35_4day_20260929: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_rp4_headings_20260928: {
         Row: {
           audio_url: string | null
@@ -4212,6 +4263,27 @@ export type Database = {
           tags?: string[]
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      cefr_words: {
+        Row: {
+          level: string
+          pos: string
+          source: string
+          word: string
+        }
+        Insert: {
+          level: string
+          pos?: string
+          source: string
+          word: string
+        }
+        Update: {
+          level?: string
+          pos?: string
+          source?: string
+          word?: string
         }
         Relationships: []
       }
@@ -7588,6 +7660,10 @@ export type Database = {
         }
         Returns: string
       }
+      error_category: {
+        Args: { p_cat: string; p_expl: string; p_kind: string }
+        Returns: string
+      }
       exam_priority_counts: {
         Args: { p_window?: number }
         Returns: {
@@ -7742,6 +7818,10 @@ export type Database = {
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_intro_video: { Args: never; Returns: Json }
+      get_my_error_trends: {
+        Args: { p_n?: number; p_skill: string }
+        Returns: Json
+      }
       get_my_referral_code: { Args: never; Returns: Json }
       get_my_referral_history: {
         Args: never
