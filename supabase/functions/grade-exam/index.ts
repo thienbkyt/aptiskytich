@@ -751,6 +751,8 @@ HOW TO APPLY:
 
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
+ERROR LISTS PER ITEM: Với mỗi câu có lời nói: liệt kê tối đa 5 lỗi ngữ pháp THẬT trong grammarErrors (original copy nguyên văn transcript) và tối đa 5 từ phát âm chưa chuẩn trong pronunciationWords. Không có lỗi thì để mảng rỗng. Câu im lặng để rỗng.
+
 OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
 - perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (ONLY improvedVersion — and nothing else — may be consolidated into the FIRST item with the rest left empty; this permission NEVER applies to transcript). transcript is MANDATORY for every item. Split the monologue into segments — one per sub-question — using content and the student's transition phrases (for example 'moving to the next question', 'as for the last one', 'regarding'). SEGMENTATION RULE (MANDATORY): split the FULL monologue into EXACTLY ${itemCount} consecutive, non-overlapping segments covering the WHOLE recording from the first word to the LAST word — the final segment MUST run to the very end of the monologue, never cut mid-sentence or mid-word. Concatenating the ${itemCount} transcripts must reproduce essentially the entire monologue (no dropped middle or tail). Only return an empty transcript when the monologue genuinely never addresses that sub-question, and even then the remaining segments must still cover the whole recording. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
 - analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
@@ -843,6 +845,34 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
                     onTopic: { type: "boolean" },
                     improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
                     upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis-oriented tips to score higher on THIS answer (complex grammar, linking words, idea development, vocabulary upgrades). Empty if silent." },
+                    grammarErrors: {
+                      type: "array",
+                      maxItems: 5,
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          original: { type: "string", description: "Copy nguyên văn đoạn sai trong transcript của câu này" },
+                          corrected: { type: "string" },
+                          explanation: { type: "string", description: "Tiếng Việt, 1 câu" },
+                          category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "sentence", "other"] },
+                        },
+                        required: ["original", "corrected", "explanation", "category"],
+                      },
+                    },
+                    pronunciationWords: {
+                      type: "array",
+                      maxItems: 5,
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          word: { type: "string" },
+                          issue: { type: "string", description: "Tiếng Việt ngắn: âm nào sai / trọng âm / nuốt âm" },
+                        },
+                        required: ["word", "issue"],
+                      },
+                    },
                   },
                   required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
                 },
@@ -1115,18 +1145,20 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
             onTopic: !!it?.onTopic,
             improvedVersion: it?.improvedVersion ?? "",
             upgradeTips: it?.upgradeTips ?? "",
+            grammarErrors: Array.isArray(it?.grammarErrors) ? it.grammarErrors : [],
+            pronunciationWords: Array.isArray(it?.pronunciationWords) ? it.pronunciationWords : [],
           }))
         : [];
       // Hard-enforce exact itemCount (= number of questions / sub-questions), in order.
       if (isPart4) {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", grammarErrors: [], pronunciationWords: [] };
           return { ...src, questionText: questions[i] ?? "" };
         });
       } else {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", questionText: questions[i] ?? "" };
-          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", grammarErrors: [], pronunciationWords: [], questionText: questions[i] ?? "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", grammarErrors: [], pronunciationWords: [] };
           return { ...src, questionText: questions[i] ?? "" };
         });
       }
@@ -1432,6 +1464,10 @@ Sau mỗi nhãn xuống dòng rồi viết nội dung 1–3 câu tiếng Việt 
 GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
 
+PHÂN LOẠI LỖI (bắt buộc):
+- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa/không tự nhiên, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
+- Trường "original" phải là đoạn COPY NGUYÊN VĂN từ bài học viên (để giao diện tìm và gạch chân), không sửa chính tả trong "original".
+
 RETURN VIA TOOL CALL.`;
 
       // Rubric rút gọn RIÊNG cho Part 1 (không band anchors, không 5 tiêu chí, không forced complexity)
@@ -1468,6 +1504,10 @@ RÀNG BUỘC FEEDBACK (bắt buộc):
 
 GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
+
+PHÂN LOẠI LỖI (bắt buộc):
+- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa/không tự nhiên, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
+- Trường "original" phải là đoạn COPY NGUYÊN VĂN từ bài học viên (để giao diện tìm và gạch chân), không sửa chính tả trong "original".
 
 RETURN VIA TOOL CALL.`;
 
@@ -1605,6 +1645,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           original: { type: "string" },
           corrected: { type: "string" },
           explanation: { type: "string" },
+          category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "spelling", "sentence", "other"] },
           questionIndex: { type: "integer" },
           emailIndex: { type: "integer" },
         },
@@ -2479,6 +2520,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         original: { type: "string" },
         corrected: { type: "string" },
         explanation: { type: "string" },
+        category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "spelling", "sentence", "other"] },
       };
       const required = ["original", "corrected", "explanation"];
       if (extraField) {
