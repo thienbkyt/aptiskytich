@@ -1145,18 +1145,20 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
             onTopic: !!it?.onTopic,
             improvedVersion: it?.improvedVersion ?? "",
             upgradeTips: it?.upgradeTips ?? "",
+            grammarErrors: Array.isArray(it?.grammarErrors) ? it.grammarErrors : [],
+            pronunciationWords: Array.isArray(it?.pronunciationWords) ? it.pronunciationWords : [],
           }))
         : [];
       // Hard-enforce exact itemCount (= number of questions / sub-questions), in order.
       if (isPart4) {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", grammarErrors: [], pronunciationWords: [] };
           return { ...src, questionText: questions[i] ?? "" };
         });
       } else {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", questionText: questions[i] ?? "" };
-          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", grammarErrors: [], pronunciationWords: [], questionText: questions[i] ?? "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", grammarErrors: [], pronunciationWords: [] };
           return { ...src, questionText: questions[i] ?? "" };
         });
       }
