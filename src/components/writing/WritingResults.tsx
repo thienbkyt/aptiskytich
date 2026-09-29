@@ -100,7 +100,10 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
         )}
       </div>
 
-      <WritingGradingReview grading={grading} />
+      <WritingGradingReview
+        grading={grading}
+        answerText={(submission || []).map((s) => s.answer || "").filter((a) => a.trim()).join("\n\n")}
+      />
 
       <ShowcaseSection
         skill="writing"
