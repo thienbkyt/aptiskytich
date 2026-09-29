@@ -5,7 +5,7 @@ const has = (s: string, phrase: string) => new RegExp(`\\b${phrase.replace(/\s+/
 
 const TextStats = ({ text }: { text: string }) => {
   const t = String(text || "").trim();
-  const sentences = t ? t.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => /[a-z]/i.test(s)) : [];
+  const sentences = t ? t.replace(/([.!?])\s+/g, "$1\n").split(/\n+/).map((s) => s.trim()).filter((s) => /[a-z]/i.test(s)) : [];
   const words = t.match(/[A-Za-z']+/g) || [];
   const avg = sentences.length ? words.length / sentences.length : 0;
   const complex = sentences.filter((s) => COMPLEX.some((c) => has(s, c))).length;
