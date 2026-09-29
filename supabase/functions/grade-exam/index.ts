@@ -1461,6 +1461,7 @@ Chia feedback thành các mục, MỖI mục bắt đầu bằng nhãn in đậm
 **Mạch lạc**
 **Gợi ý nâng cao**
 Sau mỗi nhãn xuống dòng rồi viết nội dung 1–3 câu tiếng Việt tự nhiên. Part 1 KHÔNG dùng mục **Gợi ý nâng cao**.
+Mục **Ngữ pháp & chính tả**: nêu tổng số lỗi, kể 2–3 lỗi quan trọng nhất theo dạng 'X → Y', rồi kết bằng 'Xem đủ các lỗi trong danh sách bên dưới.' Nếu không có lỗi thì khen ngắn.
 
 GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
@@ -1497,6 +1498,7 @@ Chia feedback thành đúng 3 mục, MỖI mục bắt đầu bằng nhãn in đ
 **Ngữ pháp & chính tả**
 **Từ vựng**
 Sau mỗi nhãn xuống dòng rồi viết 1–3 câu tiếng Việt tự nhiên.
+Mục **Ngữ pháp & chính tả**: nêu tổng số lỗi, kể 2–3 lỗi quan trọng nhất theo dạng 'X → Y', rồi kết bằng 'Xem đủ các lỗi trong danh sách bên dưới.' Nếu không có lỗi thì khen ngắn.
 
 RÀNG BUỘC FEEDBACK (bắt buộc):
 - feedback PHẢI nhất quán với items: nếu có bất kỳ item nào tooManyWords=true hoặc grammarCorrect=false thì TUYỆT ĐỐI không được viết những câu như "trả lời đúng và đầy đủ tất cả các câu hỏi".

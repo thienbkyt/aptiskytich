@@ -1,6 +1,4 @@
 import InlineErrorText from "./InlineErrorText";
-import ErrorCategorySummary from "./ErrorCategorySummary";
-import VocabProfile from "./VocabProfile";
 import TextStats from "./TextStats";
 import PronunciationPractice from "./PronunciationPractice";
 import ErrorTrendsCard from "./ErrorTrendsCard";
@@ -34,7 +32,6 @@ interface Props {
 
 const SpeakingInsights = ({ items, showPerQuestion = true }: Props) => {
   const safe = items || [];
-  const allErrors = safe.flatMap((it) => asArray<InsightError>(it.grammarErrors).map((e) => ({ ...e, kind: "grammar" as const })));
   const fullText = safe.map((it) => String(it.transcript ?? "").trim()).filter(Boolean).join("\n");
   const pron = safe.flatMap((it) => normPron(it.pronunciationWords));
 
@@ -62,8 +59,6 @@ const SpeakingInsights = ({ items, showPerQuestion = true }: Props) => {
           </div>
         );
       })}
-      <ErrorCategorySummary errors={allErrors} />
-      {fullText && <VocabProfile text={fullText} />}
       {fullText && <TextStats text={fullText} />}
       <PronunciationPractice words={pron} />
       <ErrorTrendsCard skill="speaking" />
