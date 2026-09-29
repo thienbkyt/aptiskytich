@@ -114,6 +114,7 @@ const SpeakingReviewPage = ({
   const [part4Data, setPart4Data] = useState<SpeakingPart4Data | undefined>();
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
+  const [gradingRows, setGradingRows] = useState<any[]>([]);
   const [v2Part, setV2Part] = useState<any | null>(null);
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
@@ -322,6 +323,7 @@ const SpeakingReviewPage = ({
       if (cancelled) return;
       setRecordings(signed);
       setGradings(gradeArr);
+      setGradingRows(matching);
       setV2Part(v2Row ? (v2Row.parts as any)[pt] : null);
       setV2Scale(v2Row?.scale50 ?? null);
       setV2Cefr(v2Row?.cefr ?? null);
@@ -437,7 +439,7 @@ const SpeakingReviewPage = ({
       : Array.isArray(v2Part.items) ? v2Part.items : [];
     const rawItems: any[] = storedItems.length > 0
       ? storedItems
-      : matching.map((row) => ({
+      : gradingRows.map((row) => ({
           questionText: row.question_text,
           transcript: row.transcript,
           improvedVersion: row.improved_version,
@@ -447,16 +449,20 @@ const SpeakingReviewPage = ({
     // Defensive coercion: some legacy rows stored text fields as objects
     // (e.g. `{ questionText: "..." }`), which crashes React with error #31
     // when rendered directly. Always resolve to a plain string via safeText.
-    const items = rawItems.map((it, i) => ({
-      questionText: safeText(it?.questionText || matching[i]?.question_text || partQuestions?.[i]),
-      transcript: safeText(it?.transcript || gradings[i]?.transcript),
+    const items = rawItems.map((it, i) => {
+      const grade = gradings[i];
+      const savedGrade = grade && !("error" in grade) ? grade : null;
+      return {
+      questionText: safeText(it?.questionText || gradingRows[i]?.question_text || partQuestions?.[i]),
+      transcript: safeText(it?.transcript || savedGrade?.transcript),
       onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
-      improvedVersion: safeText(it?.improvedVersion || gradings[i]?.improvedVersion),
+      improvedVersion: safeText(it?.improvedVersion || savedGrade?.improvedVersion),
       upgradeTips: safeText(it?.upgradeTips),
-      grammarErrors: it?.grammarErrors ?? gradings[i]?.grammarErrors,
-      pronunciationWords: it?.pronunciationWords ?? gradings[i]?.pronunciationErrors,
+      grammarErrors: it?.grammarErrors ?? savedGrade?.grammarErrors,
+      pronunciationWords: it?.pronunciationWords ?? savedGrade?.pronunciationErrors,
       audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
-    }));
+      };
+    });
 
     return (
       <div className="min-h-screen bg-muted flex flex-col">
