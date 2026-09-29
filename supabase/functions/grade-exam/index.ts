@@ -843,6 +843,34 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
                     onTopic: { type: "boolean" },
                     improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
                     upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis-oriented tips to score higher on THIS answer (complex grammar, linking words, idea development, vocabulary upgrades). Empty if silent." },
+                    grammarErrors: {
+                      type: "array",
+                      maxItems: 5,
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          original: { type: "string", description: "Copy nguyên văn đoạn sai trong transcript của câu này" },
+                          corrected: { type: "string" },
+                          explanation: { type: "string", description: "Tiếng Việt, 1 câu" },
+                          category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "sentence", "other"] },
+                        },
+                        required: ["original", "corrected", "explanation", "category"],
+                      },
+                    },
+                    pronunciationWords: {
+                      type: "array",
+                      maxItems: 5,
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          word: { type: "string" },
+                          issue: { type: "string", description: "Tiếng Việt ngắn: âm nào sai / trọng âm / nuốt âm" },
+                        },
+                        required: ["word", "issue"],
+                      },
+                    },
                   },
                   required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
                 },
