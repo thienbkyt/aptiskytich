@@ -385,8 +385,8 @@ async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: numb
         part_score: i === 0 ? Math.round(rawPart) : 0,
         question_text: it.questionText ?? null,
         transcript: it.transcript ?? null,
-        grammar_errors: [] as any,
-        pronunciation_errors: [] as any,
+        grammar_errors: (Array.isArray(it.grammarErrors) ? it.grammarErrors : []) as any,
+        pronunciation_errors: (Array.isArray(it.pronunciationWords) ? it.pronunciationWords : []) as any,
         improved_version: it.improvedVersion ?? null,
         feedback: body.feedback || body.analysis || "",
       }))
