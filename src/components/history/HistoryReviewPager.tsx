@@ -96,7 +96,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
 
         supabase
           .from("speaking_skill_results")
-          .select("test_result_id,parts")
+          .select("test_result_id,parts,cefr")
           .in("test_result_id", trIds),
       ]);
       if (cancelled) return;
@@ -119,8 +119,10 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         if (!wsrCefrAny && typeof r.cefr === "string" && r.cefr) wsrCefrAny = r.cefr;
       });
       const ssrPartsMerged: Record<string, any> = {};
+      let ssrCefrAny: string | null = null;
       (ssrRes.data || []).forEach((r: any) => {
         Object.assign(ssrPartsMerged, r.parts || {});
+        if (!ssrCefrAny && typeof r.cefr === "string" && r.cefr) ssrCefrAny = r.cefr;
       });
       const extractPartNum = (s: string | undefined): number | null => {
         if (!s) return null;
@@ -131,8 +133,9 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       pages.forEach((p, i) => {
         const isAI = p.skill === "speaking" || p.skill === "writing";
         const snap = snapByTr[p.testResultId];
-        const band =
-          typeof snap?.band === "string" && snap.band ? (snap.band as string) : null;
+        const band = isAI
+          ? (p.skill === "speaking" ? ssrCefrAny : null)
+          : (typeof snap?.band === "string" && snap.band ? (snap.band as string) : null);
         let items: PageStatus["items"] = [];
         let aiRaw: number | null = null;
         if (isAI) {
@@ -252,8 +255,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           if (wsrCefrAny) meta[sk] = { band: wsrCefrAny };
 
         } else if (sk === "speaking") {
-          const cefr = idxs.map((i) => map[i]?.band).find(Boolean) || null;
-          if (cefr) meta[sk] = { band: cefr };
+          if (ssrCefrAny) meta[sk] = { band: ssrCefrAny };
         }
       });
       setSkillMeta(meta);
