@@ -43,7 +43,8 @@ const PronunciationPractice = ({ words }: { words: { word: string; issue?: strin
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5">
-      <h3 className="text-sm font-heading font-bold text-foreground mb-3">🗣️ Luyện phát âm</h3>
+      <h3 className="text-sm font-heading font-bold text-foreground mb-1">🗣️ Luyện phát âm</h3>
+      <p className="text-[11px] text-muted-foreground mb-3">AI gợi ý từ nghe bài nói — dùng để luyện thêm, không phải điểm phát âm chính thức.</p>
       <div className="space-y-2">
         {list.map(({ word, issue }) => (
           <div key={word} className="flex flex-wrap items-center gap-2 border-b border-border last:border-0 pb-2 last:pb-0">
