@@ -37,6 +37,11 @@ const ResetPassword = () => {
   const [checking, setChecking] = useState(true);
   const [showPw, setShowPw] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [pendingHash, setPendingHash] = useState<string | null>(null);
+  const [codeMode, setCodeMode] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,10 +57,22 @@ const ResetPassword = () => {
       return;
     }
 
+    // New flow: token_hash in query — do NOT verify on load (scanner-safe)
+    const q = new URLSearchParams(window.location.search);
+    const th = q.get("token_hash");
+    if (th && q.get("type") === "recovery") {
+      setPendingHash(th);
+      setChecking(false);
+      return;
+    }
+
+    const hasLegacyToken = params.has("access_token") || q.has("code");
+
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
         setChecking(false);
+        setCodeMode(false);
       }
     });
 
@@ -64,6 +81,9 @@ const ResetPassword = () => {
       if (data.session) {
         setReady(true);
         setChecking(false);
+      } else if (!hasLegacyToken) {
+        setCodeMode(true);
+        setChecking(false);
       }
     });
 
@@ -71,6 +91,38 @@ const ResetPassword = () => {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  const handleVerifyHash = async () => {
+    if (!pendingHash) return;
+    setVerifying(true);
+    const { error } = await supabase.auth.verifyOtp({ token_hash: pendingHash, type: "recovery" });
+    setVerifying(false);
+    if (error) {
+      setPendingHash(null);
+      setLinkError("Link không hợp lệ hoặc đã hết hạn");
+      return;
+    }
+    setPendingHash(null);
+    setReady(true);
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifying(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email: otpEmail.trim(),
+      token: otpCode.trim(),
+      type: "recovery",
+    });
+    setVerifying(false);
+    if (error) {
+      toast({ title: "Mã không đúng", description: "Mã sai hoặc đã hết hạn. Vui lòng kiểm tra lại.", variant: "destructive" });
+      return;
+    }
+    setCodeMode(false);
+    setLinkError(null);
+    setReady(true);
+  };
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,26 +145,88 @@ const ResetPassword = () => {
     }
   };
 
+  const Shell = ({ children }: { children: React.ReactNode }) => (
+    <GradientBg>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
+        <div className="text-center mb-6">
+          <img src="/logo.png" alt="Aptis Kỳ Tích" className="h-28 w-28 object-contain mx-auto mb-3" />
+          <h1 className="text-3xl font-heading font-extrabold text-white drop-shadow-sm">Đặt lại mật khẩu</h1>
+        </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">{children}</div>
+      </motion.div>
+    </GradientBg>
+  );
+
+  if (!ready && codeMode) {
+    return (
+      <Shell>
+        <h2 className="font-heading font-bold text-foreground text-lg mb-1 text-center">Nhập mã trong email</h2>
+        <p className="text-sm text-muted-foreground mb-5 text-center">Nhập email và mã 6 số trong email đặt lại mật khẩu.</p>
+        <form onSubmit={handleVerifyCode} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="otp-email">Email</Label>
+            <Input id="otp-email" type="email" value={otpEmail} onChange={(e) => setOtpEmail(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="otp-code">Mã 6 số</Label>
+            <Input
+              id="otp-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={10}
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+              className="tracking-[0.4em] text-center text-lg font-bold"
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled={verifying}>
+            {verifying ? "Đang xác thực..." : (<>Xác nhận mã <ArrowRight className="w-4 h-4" /></>)}
+          </Button>
+        </form>
+        <div className="mt-6 pt-4 border-t border-border text-center">
+          <button type="button" onClick={() => navigate("/auth")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            ← Quay lại đăng nhập
+          </button>
+        </div>
+      </Shell>
+    );
+  }
+
   if (linkError) {
     return (
-      <GradientBg>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
-          <div className="text-center mb-6">
-            <img src="/logo.png" alt="Aptis Kỳ Tích" className="h-28 w-28 object-contain mx-auto mb-3" />
-            <h1 className="text-3xl font-heading font-extrabold text-white drop-shadow-sm">Đặt lại mật khẩu</h1>
+      <Shell>
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-7 h-7 text-destructive" />
           </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8 text-center">
-            <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-7 h-7 text-destructive" />
-            </div>
-            <h2 className="font-heading font-bold text-foreground text-lg mb-2">Link không hợp lệ hoặc đã hết hạn</h2>
-            <p className="text-sm text-muted-foreground mb-6">Vui lòng yêu cầu gửi lại email đặt lại mật khẩu.</p>
-            <Button onClick={() => navigate("/auth")} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-              Về trang đăng nhập <ArrowRight className="w-4 h-4" />
-            </Button>
+          <h2 className="font-heading font-bold text-foreground text-lg mb-2">Link không hợp lệ hoặc đã hết hạn</h2>
+          <p className="text-sm text-muted-foreground mb-6">Bạn có thể nhập mã 6 số trong email, hoặc yêu cầu gửi lại email đặt lại mật khẩu.</p>
+          <Button onClick={() => setCodeMode(true)} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2 mb-3">
+            Nhập mã trong email <ArrowRight className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/auth")} className="w-full">
+            Về trang đăng nhập
+          </Button>
+        </div>
+      </Shell>
+    );
+  }
+
+  if (!ready && pendingHash) {
+    return (
+      <Shell>
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7 text-primary" />
           </div>
-        </motion.div>
-      </GradientBg>
+          <h2 className="font-heading font-bold text-foreground text-lg mb-2">Xác nhận đặt lại mật khẩu</h2>
+          <p className="text-sm text-muted-foreground mb-6">Bấm "Tiếp tục" để tạo mật khẩu mới cho tài khoản của bạn.</p>
+          <Button onClick={handleVerifyHash} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled={verifying}>
+            {verifying ? "Đang xác thực..." : (<>Tiếp tục <ArrowRight className="w-4 h-4" /></>)}
+          </Button>
+        </div>
+      </Shell>
     );
   }
 
