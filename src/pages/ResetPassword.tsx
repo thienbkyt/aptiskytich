@@ -28,6 +28,18 @@ const GradientBg = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+const Shell = ({ children }: { children: React.ReactNode }) => (
+  <GradientBg>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
+      <div className="text-center mb-6">
+        <img src="/logo.png" alt="Aptis Kỳ Tích" className="h-28 w-28 object-contain mx-auto mb-3" />
+        <h1 className="text-3xl font-heading font-extrabold text-white drop-shadow-sm">Đặt lại mật khẩu</h1>
+      </div>
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">{children}</div>
+    </motion.div>
+  </GradientBg>
+);
+
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -145,17 +157,6 @@ const ResetPassword = () => {
     }
   };
 
-  const Shell = ({ children }: { children: React.ReactNode }) => (
-    <GradientBg>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
-        <div className="text-center mb-6">
-          <img src="/logo.png" alt="Aptis Kỳ Tích" className="h-28 w-28 object-contain mx-auto mb-3" />
-          <h1 className="text-3xl font-heading font-extrabold text-white drop-shadow-sm">Đặt lại mật khẩu</h1>
-        </div>
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">{children}</div>
-      </motion.div>
-    </GradientBg>
-  );
 
   if (!ready && codeMode) {
     return (
