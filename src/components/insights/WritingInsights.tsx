@@ -1,6 +1,4 @@
 import InlineErrorText from "./InlineErrorText";
-import ErrorCategorySummary from "./ErrorCategorySummary";
-import VocabProfile from "./VocabProfile";
 import TextStats from "./TextStats";
 import RepeatedWords from "./RepeatedWords";
 import ErrorTrendsCard from "./ErrorTrendsCard";
@@ -27,8 +25,6 @@ const WritingInsights = ({ text, grammarErrors, spellingErrors }: Props) => {
           <InlineErrorText text={body} errors={errors} />
         </div>
       )}
-      <ErrorCategorySummary errors={errors} />
-      {body && <VocabProfile text={body} />}
       {body && <TextStats text={body} />}
       {body && <RepeatedWords text={body} />}
       <ErrorTrendsCard skill="writing" />
