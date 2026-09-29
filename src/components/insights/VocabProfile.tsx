@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+const LEVELS = ["A1", "A2", "B1", "B2", "C"] as const;
 type Level = (typeof LEVELS)[number];
 const COLORS: Record<Level, string> = {
   A1: "bg-slate-300 dark:bg-slate-600",
   A2: "bg-sky-400",
   B1: "bg-emerald-500",
   B2: "bg-amber-500",
-  C1: "bg-fuchsia-500",
-  C2: "bg-purple-700",
+  C: "bg-fuchsia-500",
 };
 
 const variants = (w: string): string[] => {
@@ -40,7 +39,8 @@ const VocabProfile = ({ text }: { text: string }) => {
       for (let i = 0; i < cand.length; i += 300) {
         const { data } = await supabase.from("cefr_words").select("word,level").in("word", cand.slice(i, i + 300));
         for (const r of (data || []) as { word: string; level: string }[]) {
-          const L = String(r.level).toUpperCase().slice(0, 2) as Level;
+          const raw = String(r.level).toUpperCase().slice(0, 2);
+          const L = (raw === "C1" || raw === "C2" ? "C" : raw) as Level;
           if (!LEVELS.includes(L)) continue;
           const prev = lv.get(r.word);
           if (!prev || LEVELS.indexOf(L) < LEVELS.indexOf(prev)) lv.set(r.word, L);
