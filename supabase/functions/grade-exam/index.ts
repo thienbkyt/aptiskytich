@@ -1605,6 +1605,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           original: { type: "string" },
           corrected: { type: "string" },
           explanation: { type: "string" },
+          category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "spelling", "sentence", "other"] },
           questionIndex: { type: "integer" },
           emailIndex: { type: "integer" },
         },
@@ -2479,6 +2480,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         original: { type: "string" },
         corrected: { type: "string" },
         explanation: { type: "string" },
+        category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "spelling", "sentence", "other"] },
       };
       const required = ["original", "corrected", "explanation"];
       if (extraField) {
