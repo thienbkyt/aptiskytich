@@ -39,7 +39,8 @@ const VocabProfile = ({ text }: { text: string }) => {
       for (let i = 0; i < cand.length; i += 300) {
         const { data } = await supabase.from("cefr_words").select("word,level").in("word", cand.slice(i, i + 300));
         for (const r of (data || []) as { word: string; level: string }[]) {
-          const L = String(r.level).toUpperCase().slice(0, 2) as Level;
+          const raw = String(r.level).toUpperCase().slice(0, 2);
+          const L = (raw === "C1" || raw === "C2" ? "C" : raw) as Level;
           if (!LEVELS.includes(L)) continue;
           const prev = lv.get(r.word);
           if (!prev || LEVELS.indexOf(L) < LEVELS.indexOf(prev)) lv.set(r.word, L);
