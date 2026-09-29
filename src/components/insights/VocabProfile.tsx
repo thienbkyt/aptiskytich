@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+const LEVELS = ["A1", "A2", "B1", "B2", "C"] as const;
 type Level = (typeof LEVELS)[number];
 const COLORS: Record<Level, string> = {
   A1: "bg-slate-300 dark:bg-slate-600",
   A2: "bg-sky-400",
   B1: "bg-emerald-500",
   B2: "bg-amber-500",
-  C1: "bg-fuchsia-500",
-  C2: "bg-purple-700",
+  C: "bg-fuchsia-500",
 };
 
 const variants = (w: string): string[] => {
