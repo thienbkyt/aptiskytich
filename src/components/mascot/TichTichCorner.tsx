@@ -9,7 +9,7 @@ import { useLocation } from "react-router-dom";
 import TichTich from "./TichTich";
 
 const HIDE_BODY_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
-const HIDE_PATHS = [/^\/auth/, /^\/reset-password/, /^\/admin/];
+const HIDE_PATHS = [/^\/$/, /^\/dashboard/, /^\/auth/, /^\/reset-password/, /^\/admin/];
 
 const TIPS = [
   "Mỗi ngày 1 bài là giữ được chuỗi 🔥",
