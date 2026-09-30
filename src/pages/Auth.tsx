@@ -10,6 +10,7 @@ import { signInWithGoogle } from "@/lib/lovableOAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParticlesBackground from "@/components/ui/particles-background";
+import TichTich from "@/components/mascot/TichTich";
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -64,6 +65,8 @@ const Auth = () => {
   const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
   const [forgotSentTo, setForgotSentTo] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
+  const [pwFocused, setPwFocused] = useState(false);
+  const [emailCaret, setEmailCaret] = useState<{ x: number; y: number } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -194,6 +197,14 @@ const Auth = () => {
 
   const showSocialProof = mode !== "forgot";
 
+  const handleEmailCaret = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setEmailCaret({
+      x: rect.left + 14 + Math.min(1, e.currentTarget.value.length / 28) * (rect.width - 28),
+      y: rect.top + rect.height / 2,
+    });
+  };
+
   const renderPasswordInput = (id: string, value: string, onChange: (v: string) => void, placeholder: string, minLength?: number) => (
     <div className="relative">
       <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
@@ -203,6 +214,8 @@ const Auth = () => {
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setPwFocused(true)}
+        onBlur={() => setPwFocused(false)}
         className="pl-10 pr-10"
         required
         minLength={minLength}
@@ -237,6 +250,9 @@ const Auth = () => {
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">
+          <div className="hidden md:flex justify-center -mt-2 mb-2">
+            <TichTich size={96} shy={pwFocused} lookAt={emailCaret} />
+          </div>
           <div className="text-center mb-6">
             <p className="text-foreground font-semibold text-base">{subtitle}</p>
             {showSocialProof && (
@@ -253,7 +269,7 @@ const Auth = () => {
                   <Label htmlFor="email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                    <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => { setEmail(e.target.value); handleEmailCaret(e); }} onFocus={handleEmailCaret} onBlur={() => setEmailCaret(null)} className="pl-10" required />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -334,7 +350,7 @@ const Auth = () => {
                       <Label htmlFor="email2">Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <Input id="email2" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                        <Input id="email2" type="email" placeholder="you@example.com" value={email} onChange={(e) => { setEmail(e.target.value); handleEmailCaret(e); }} onFocus={handleEmailCaret} onBlur={() => setEmailCaret(null)} className="pl-10" required />
                       </div>
                       {email && SCHOOL_EMAIL_RE.test(email) && (
                         <p className="text-xs text-yellow-700 dark:text-yellow-400">
