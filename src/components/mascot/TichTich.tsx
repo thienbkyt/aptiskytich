@@ -27,6 +27,10 @@ export interface TichTichProps {
   idleSleep?: boolean;
   /** Điểm nhìn ưu tiên (toạ độ viewport), vd con trỏ gõ trong ô email. */
   lookAt?: { x: number; y: number } | null;
+  /** Vị trí bong bóng lời thoại: trên đầu (mặc định) hoặc bên trái robot. */
+  bubbleSide?: "top" | "left";
+  /** Câu nói khi di chuột vào (thay cho câu chào mặc định). */
+  enterLines?: string[];
   className?: string;
 }
 
@@ -106,6 +110,9 @@ const CSS = `
 .tt-robot.tt-is-dizzy .tt-eyes-normal .tt-pupil{animation:tt-dizzy .5s linear infinite}
 @keyframes tt-dizzy{0%{transform:translate(3px,0)}25%{transform:translate(0,3px)}50%{transform:translate(-3px,0)}75%{transform:translate(0,-3px)}100%{transform:translate(3px,0)}}
 .tt-robot.tt-is-dizzy .tt-head{animation:tt-shake .25s ease-in-out infinite}
+.tt-bubble.tt-left{left:auto;right:100%;bottom:auto;top:18%;transform:translate(4px,0) scale(.9);white-space:normal;width:max-content;max-width:230px;line-height:1.35;text-align:left}
+.tt-bubble.tt-left.tt-show{transform:translate(-8px,0) scale(1)}
+.tt-bubble.tt-left::after{left:100%;top:50%;transform:translateY(-50%);border-top-color:transparent;border-left-color:#fff}
 @media (hover:none),(pointer:coarse){.tt-robot{display:none!important}}
 `;
 
@@ -145,6 +152,8 @@ export default function TichTich({
   interactive = true,
   idleSleep = false,
   lookAt = null,
+  bubbleSide = "top",
+  enterLines,
   className = "",
 }: TichTichProps) {
   const rawId = useId();
@@ -278,7 +287,7 @@ export default function TichTich({
   const onEnter = () => {
     if (!interactive) return;
     enteredAt.current = Date.now();
-    react("happy", 2200, pick(LINES.enter));
+    react("happy", 2600, pick(enterLines && enterLines.length ? enterLines : LINES.enter));
     setFx((f) => ({ ...f, wave: true }));
     window.setTimeout(() => setFx((f) => ({ ...f, wave: false })), 1900);
     clearTimeout(hoverTimer.current);
@@ -460,7 +469,7 @@ export default function TichTich({
         <g className="tt-hand tt-hand-r"><rect x="84" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/></g>
         </g>
         </svg>
-      <div className={`tt-bubble ${bubble.show ? "tt-show" : ""}`}>{bubble.text}</div>
+      <div className={`tt-bubble ${bubbleSide === "left" ? "tt-left" : ""} ${bubble.show ? "tt-show" : ""}`}>{bubble.text}</div>
     </div>
   );
 }
