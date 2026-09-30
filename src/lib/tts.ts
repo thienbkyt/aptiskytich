@@ -96,9 +96,16 @@ function browserFallback(text: string, lang: Lang, token: number): Promise<void>
     if (voice) u.voice = voice;
 
     let done = false;
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    // Some Android browsers never fire onend — hard timeout.
+    const timer = setTimeout(() => {
+      try { window.speechSynthesis.cancel(); } catch { /* noop */ }
+      finish();
+    }, words * 450 + 3000);
     const finish = () => {
       if (done) return;
       done = true;
+      clearTimeout(timer);
       resolve();
     };
     u.onend = finish;
@@ -213,24 +220,50 @@ export async function speakWithTTS(text: string, lang: Lang, opts?: { surface?: 
   }
 }
 
+export type TTSStage = "fetch" | "play" | "ended" | "fallback";
+/** Last stage reached by speakAsync (diagnostics). */
+export let lastStage: TTSStage = "fetch";
+
 /**
  * Awaitable speak — resolves when audio finishes (or fails / is superseded).
  */
-export function speakAsync(text: string, lang: Lang, opts?: { surface?: Surface }): Promise<void> {
+export function speakAsync(
+  text: string,
+  lang: Lang,
+  opts?: { surface?: Surface; onStage?: (s: TTSStage) => void },
+): Promise<void> {
   const trimmed = text?.trim();
   if (!trimmed) return Promise.resolve();
   stopCurrent();
   const token = playToken;
+  const setStage = (s: TTSStage) => {
+    lastStage = s;
+    try { opts?.onStage?.(s); } catch { /* noop */ }
+  };
 
   return new Promise(async (resolve) => {
     let settled = false;
+    let fellBack = false;
+    let playWatchdog: ReturnType<typeof setTimeout> | null = null;
     const finish = () => {
       if (settled) return;
       settled = true;
+      if (playWatchdog) { clearTimeout(playWatchdog); playWatchdog = null; }
       resolve();
+    };
+    const fallback = () => {
+      if (fellBack || settled) return;
+      fellBack = true;
+      if (playWatchdog) { clearTimeout(playWatchdog); playWatchdog = null; }
+      setStage("fallback");
+      browserFallback(trimmed, lang, token).then(() => {
+        if (token === playToken) setStage("ended");
+        finish();
+      });
     };
 
     try {
+      setStage("fetch");
       const url = await fetchUrl(trimmed, lang, opts?.surface);
       if (token !== playToken) {
         // We were superseded while fetching the URL — bail out cleanly.
@@ -238,8 +271,7 @@ export function speakAsync(text: string, lang: Lang, opts?: { surface?: Surface 
         return;
       }
       if (!url) {
-        await browserFallback(trimmed, lang, token);
-        finish();
+        fallback();
         return;
       }
 
@@ -247,27 +279,39 @@ export function speakAsync(text: string, lang: Lang, opts?: { surface?: Surface 
       audio.muted = false;
       audio.src = url;
       currentAudio = audio;
+      setStage("play");
 
+      let playing = false;
+      audio.onplaying = () => { playing = true; };
       audio.onended = () => {
-        if (token !== playToken) { finish(); return; }
+        if (fellBack) return;
+        setStage("ended");
         finish();
       };
       audio.onerror = () => {
         if (token !== playToken) { finish(); return; }
-        // Single fallback path — never run twice for the same segment.
-        browserFallback(trimmed, lang, token).then(finish);
+        fallback();
       };
+
+      // Some browsers leave play() pending forever when blocked.
+      playWatchdog = setTimeout(() => {
+        playWatchdog = null;
+        if (playing || settled || token !== playToken) return;
+        try { audio.onended = null; audio.onerror = null; audio.pause(); } catch { /* noop */ }
+        fallback();
+      }, 4000);
 
       try {
         await audio.play();
+        playing = true;
       } catch {
         if (token !== playToken) { finish(); return; }
-        browserFallback(trimmed, lang, token).then(finish);
+        fallback();
       }
     } catch (e) {
       console.warn("[tts] speakAsync error, falling back:", e);
-      if (token === playToken) await browserFallback(trimmed, lang, token);
-      finish();
+      if (token === playToken) fallback();
+      else finish();
     }
   });
 }
