@@ -229,14 +229,8 @@ const MarathonNavigator = ({
           </span>
           <span className="mx-1.5 text-muted-foreground">·</span>
           <span className="text-muted-foreground">
-            Đề {activeSetNumber}/{totalSets}
+            Đang làm: {(sets as any[])[activeSetNumber - 1]?.title || `Đề ${activeSetNumber}`} ({activeSetNumber}/{totalSets})
           </span>
-          {/* Tên đề đang mở: giúp học viên đối chiếu với danh sách ngoài. */}
-          {(sets as any[])[activeSetNumber - 1]?.title && (
-            <p className="text-[11px] text-muted-foreground mt-0.5 truncate" title={(sets as any[])[activeSetNumber - 1].title}>
-              {(sets as any[])[activeSetNumber - 1].title}
-            </p>
-          )}
           {isReadingPart23 && (
             <p className="text-[11px] text-muted-foreground mt-0.5">Lưu ý: Mỗi đề gồm 2 đoạn</p>
           )}
@@ -320,7 +314,7 @@ const MarathonNavigator = ({
           <div className="space-y-3">
             {groupedFlat.map((grp) => (
               <div key={grp.si}>
-                <div className="text-[11px] text-muted-foreground mb-1 truncate" title={(sets as any[])[grp.si]?.title || undefined}>Đề {grp.si + 1}{(sets as any[])[grp.si]?.title ? ` — ${(sets as any[])[grp.si].title}` : ""}</div>
+                <div className="text-[11px] text-muted-foreground mb-1 truncate" title={(sets as any[])[grp.si]?.title || undefined}>{(sets as any[])[grp.si]?.title || `Đề ${grp.si + 1}`}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {grp.cells.map(({ cell, gi }) => renderChip(cell, gi))}
                 </div>

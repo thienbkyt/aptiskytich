@@ -3,6 +3,8 @@ export type MarathonResultEntry = { correct: number; total: number; examSetId: s
 
 export interface MarathonProgress {
   currentIndex: number;
+  /** Id của đề đang làm — resume ưu tiên theo id để không lệch khi có đề mới thêm vào. */
+  currentSetId?: string;
   results: (MarathonResultEntry | null)[];
   /** Per-set draft answers keyed by examSetId (unsubmitted work-in-progress). */
   drafts?: Record<string, any>;
