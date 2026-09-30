@@ -1,8 +1,9 @@
 /**
- * Tích Tích nổi ở góc dưới bên trái mọi trang.
+ * Tích Tích nổi ở góc dưới bên phải (ngay trên nút "Chat với admin").
+ * Lời thoại / mẹo hiện ở bên trái robot để không bị cắt mép màn hình.
  * Ẩn khi: đang làm bài / xem lại bài (body có class exam-mode, history-review-mode,
- * exam-fullscreen, full-test-active), trang /auth, /reset-password, /admin*.
- * Ẩn trên thiết bị cảm ứng (CSS trong TichTich).
+ * exam-fullscreen, full-test-active), trang /, /dashboard (đã có robot riêng),
+ * /auth, /reset-password, /admin*. Ẩn trên thiết bị cảm ứng (CSS trong TichTich).
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -16,13 +17,12 @@ const TIPS = [
   "Đề Key dự đoán cập nhật hằng ngày nha ✨",
   "Speaking: nói đủ ý, đừng im lặng quá 3 giây 🎙️",
   "Writing: soát lại thì và mạo từ trước khi nộp ✍️",
+  "Listening: đọc câu hỏi trước khi bấm nghe nha 🎧",
 ];
 
 export default function TichTichCorner() {
   const { pathname } = useLocation();
   const [examHidden, setExamHidden] = useState(false);
-  const [tip, setTip] = useState(TIPS[0]);
-  const [hover, setHover] = useState(false);
 
   useEffect(() => {
     const check = () =>
@@ -36,19 +36,8 @@ export default function TichTichCorner() {
   if (examHidden || HIDE_PATHS.some((r) => r.test(pathname))) return null;
 
   return (
-    <div
-      className="fixed left-4 bottom-16 z-40 hidden md:flex items-end gap-1.5"
-      onMouseEnter={() => { setHover(true); setTip(TIPS[Math.floor(Math.random() * TIPS.length)]); }}
-      onMouseLeave={() => setHover(false)}
-    >
-      <TichTich size={96} idleSleep />
-      <div
-        className={`mb-16 max-w-[200px] rounded-xl rounded-bl-sm border border-orange-200 bg-white px-3 py-2 text-xs text-foreground shadow-md transition-all duration-200 ${
-          hover ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-1"
-        }`}
-      >
-        {tip}
-      </div>
+    <div className="fixed right-6 bottom-[84px] z-40 hidden md:block">
+      <TichTich size={96} idleSleep bubbleSide="left" enterLines={TIPS} />
     </div>
   );
 }
