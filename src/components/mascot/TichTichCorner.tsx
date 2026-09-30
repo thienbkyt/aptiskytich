@@ -41,9 +41,9 @@ export default function TichTichCorner() {
       onMouseEnter={() => { setHover(true); setTip(TIPS[Math.floor(Math.random() * TIPS.length)]); }}
       onMouseLeave={() => setHover(false)}
     >
-      <TichTich size={72} idleSleep />
+      <TichTich size={96} idleSleep />
       <div
-        className={`mb-12 max-w-[200px] rounded-xl rounded-bl-sm border border-orange-200 bg-white px-3 py-2 text-xs text-foreground shadow-md transition-all duration-200 ${
+        className={`mb-16 max-w-[200px] rounded-xl rounded-bl-sm border border-orange-200 bg-white px-3 py-2 text-xs text-foreground shadow-md transition-all duration-200 ${
           hover ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-1"
         }`}
       >
