@@ -119,7 +119,9 @@ const CSS = `
 let cssInjected = false;
 function injectCss() {
   if (cssInjected || typeof document === "undefined") return;
-  if (document.getElementById("tichtich-css")) { cssInjected = true; return; }
+  const existing = document.getElementById("tichtich-css");
+  // Luôn ghi đè CSS mới (tránh bản cũ còn sót sau khi cập nhật / hot reload).
+  if (existing) { existing.textContent = CSS; cssInjected = true; return; }
   const el = document.createElement("style");
   el.id = "tichtich-css";
   el.textContent = CSS;
