@@ -546,7 +546,7 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-1 shrink-0">
-                  <div className="hidden md:block -mb-2"><TichTich size={88} /></div>
+                  <div className="hidden md:block -mb-4"><TichTich size={124} /></div>
                   <Button asChild variant="glow" size="lg" className="shrink-0">
                     <Link to="/thi-thu">
                       <Zap className="w-4 h-4 mr-2" /> Thi thử ngay
