@@ -976,6 +976,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             if (persist) {
               saveMarathonProgress("reading", progPart, {
                 currentIndex: si,
+                currentSetId: sets[si]?.id,
                 results: nextResults as any,
                 drafts: nextDrafts,
                 sessionId: sessionIdRef.current,
