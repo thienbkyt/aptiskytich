@@ -80,7 +80,11 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     openedRef.current = true;
     void recordMarathonOpenedSets("listening", partType, ids);
   }, [sets, partType]);
-  const [currentIndex, setCurrentIndex] = useState(Math.min(Math.max(0, savedInit?.currentIndex ?? 0), Math.max(0, (setsInput?.length ?? 1) - 1)));
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const byId = savedInit?.currentSetId ? sets.findIndex((s) => s.id === savedInit.currentSetId) : -1;
+    const idx = byId >= 0 ? byId : (savedInit?.currentIndex ?? 0);
+    return Math.min(Math.max(0, idx), Math.max(0, (setsInput?.length ?? 1) - 1));
+  });
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
@@ -274,7 +278,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
     if (persist) {
-      saveMarathonProgress("listening", progPart, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
+      saveMarathonProgress("listening", progPart, { currentIndex: nextIndex, currentSetId: sets[nextIndex]?.id, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     }
     if (pending) {
       setJumpQ(pending.qi);
@@ -358,6 +362,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
         if (persist) {
           saveMarathonProgress("listening", progPart, {
             currentIndex,
+            currentSetId: sets[currentIndex]?.id,
             results: list as any,
             drafts,
             sessionId: sessionIdRef.current,
@@ -741,6 +746,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       if (persist) {
         saveMarathonProgress("listening", progPart, {
           currentIndex,
+          currentSetId: sets[currentIndex]?.id,
           results: results as any,
           drafts: next,
           sessionId: sessionIdRef.current,
@@ -917,6 +923,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
             if (persist) {
               saveMarathonProgress("listening", progPart, {
                 currentIndex: si,
+                currentSetId: sets[si]?.id,
                 results: nextResults as any,
                 drafts: nextDrafts,
                 sessionId: sessionIdRef.current,
