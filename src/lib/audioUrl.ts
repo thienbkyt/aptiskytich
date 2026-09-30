@@ -181,6 +181,11 @@ export async function resolveAudioBlobUrl(
       const res = await fetch(signed, { signal: ctrl.signal });
       if (!res.ok) return signed;
       const total = Number(res.headers.get("content-length") || 0);
+      // Some storage responses come back with an empty or generic
+      // "application/octet-stream" content type, which makes media decoders
+      // fail. Force a safe audio MIME type in that case.
+      const ct = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+      const safeType = !ct || ct === "application/octet-stream" ? "audio/mpeg" : ct;
       let blob: Blob;
       if (res.body && total > 0 && opts.onProgress) {
         const reader = res.body.getReader();
@@ -195,7 +200,10 @@ export async function resolveAudioBlobUrl(
             opts.onProgress(Math.min(99, Math.round((loaded / total) * 100)));
           }
         }
-        blob = new Blob(chunks, { type: res.headers.get("content-type") || "audio/mpeg" });
+        blob = new Blob(chunks, { type: safeType });
+      } else if (safeType === "audio/mpeg" && ct !== "audio/mpeg") {
+        const buf = await res.arrayBuffer();
+        blob = new Blob([buf], { type: "audio/mpeg" });
       } else {
         blob = await res.blob();
       }
