@@ -13,7 +13,7 @@ import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import { playBeep, unlockBeepAudio } from "@/lib/beep";
 import SpeakingSoundCheck from "./SpeakingSoundCheck";
-import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio, warmTTS } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio, warmTTS, type TTSStage } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
@@ -215,6 +215,7 @@ const SpeakingExamEngine = ({
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
   const ttsUnavailableRef = useRef(false);
+  const ttsStallCountRef = useRef(0);
   const adminNavLockedRef = useRef(false);
   const suppressRecordingSaveRef = useRef(false);
   // Guards to prevent doStopAndAdvance / handleFinish firing twice
@@ -345,12 +346,19 @@ const SpeakingExamEngine = ({
     if (nextText) void warmTTS(nextText, "en", "exam");
   }, [currentIndex, partType, getSpokenTextForIndex]);
 
-  // Warm the FIRST question while the student is still on the instructions screen.
+  // Warm ALL questions of the part (in parallel) while on start/instructions.
   useEffect(() => {
     if (phase !== "prompt" && phase !== "instructions" && phase !== "start") return;
-    const firstText = getSpokenTextForIndex(0);
-    if (firstText) void warmTTS(firstText, "en", "exam");
-  }, [phase, getSpokenTextForIndex]);
+    const texts = new Set<string>();
+    for (let i = 0; i < 20; i++) {
+      const t = getSpokenTextForIndex(i);
+      if (!t) break;
+      if (texts.has(t)) break; // prompt fallback repeats past the last question
+      texts.add(t);
+      if (partType === "part4") break;
+    }
+    void Promise.all([...texts].map((t) => warmTTS(t, "en", "exam")));
+  }, [phase, partType, getSpokenTextForIndex]);
 
   // Warm the PART PROMPT (first audio of every part) before the prompt screen.
   useEffect(() => {
@@ -661,7 +669,7 @@ const SpeakingExamEngine = ({
       }
     } else if (questionText) {
       const words = questionText.trim().split(/\s+/).filter(Boolean).length;
-      const speakTimeout = Math.max(12000, words * 600 + 5000);
+      const speakTimeout = 15000 + words * 600 + 4000;
       // Reading countdown shown in the right panel while TTS plays.
       const readingEndAt = Date.now() + speakTimeout;
       setReadingSecsLeft(Math.ceil(speakTimeout / 1000));
@@ -670,9 +678,11 @@ const SpeakingExamEngine = ({
         setReadingSecsLeft(Math.max(0, Math.ceil((readingEndAt - Date.now()) / 1000)));
       }, 500);
       let finished = false;
+      let stage: TTSStage = "fetch";
       try {
         await withTimeout(
-          speakAsync(questionText).then(() => { finished = true; }),
+          ttsSpeakAsync(questionText, "en", { surface: "exam", onStage: (s) => { stage = s; } })
+            .then(() => { finished = true; }),
           speakTimeout
         );
       } catch {
@@ -680,10 +690,17 @@ const SpeakingExamEngine = ({
       }
       if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
       if (!finished) {
-        ttsUnavailableRef.current = true;
-        logClientError("speaking_tts_stall", new Error("tts_timeout"), { partType, examSetId: examSetId ?? null, words, timeoutMs: speakTimeout, fullFlow });
+        ttsStallCountRef.current += 1;
+        if (ttsStallCountRef.current >= 2) ttsUnavailableRef.current = true;
+        logClientError("speaking_tts_stall", new Error("tts_timeout"), {
+          partType, examSetId: examSetId ?? null, words, timeoutMs: speakTimeout, fullFlow,
+          stage, ua: typeof navigator !== "undefined" ? navigator.userAgent : "",
+          consecutive: ttsStallCountRef.current,
+        });
         // Timed out: cut the voice so it never overlaps the prep timer.
         try { stopTTS(); } catch { /* noop */ }
+      } else {
+        ttsStallCountRef.current = 0;
       }
     }
 
