@@ -395,6 +395,7 @@ export default function PredictionKeyView() {
             partType={marathon.part.replace("part", "task") as any}
             skillLabel={label}
             persist
+            resume
             onExit={close}
           />
         )}

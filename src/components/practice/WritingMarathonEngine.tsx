@@ -87,6 +87,9 @@ const Checklist = ({ partType }: { partType: WritingPartType }) => {
   const items = CHECKLISTS[partType];
   return (
     <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+      <p className="text-sm font-bold text-foreground mb-2">
+        Marathon Writing là chế độ luyện nhanh, không chấm điểm. Bài viết được tự lưu trên trình duyệt này — thoát ra vào lại vẫn còn.
+      </p>
       <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
         CHECKLIST VIẾT BÀI · {partName(partType).toUpperCase()}
       </p>
@@ -329,7 +332,6 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   };
 
   const handleExit = () => {
-    commitCurrent(currentIndex);
     // Compute updated answers map synchronously for the persist call.
     const setId = sets[currentIndex]?.id;
     const live = currentAnswersRef.current;
@@ -337,6 +339,18 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     if (setId) {
       if (isNonEmpty(live)) merged[setId] = live;
       else delete merged[setId];
+    }
+    // Persist synchronously BEFORE onExit — setState/setAnswersMap may never
+    // run once the component unmounts.
+    if (persist) {
+      saveMarathonProgress("writing", marathonKey, {
+        currentIndex,
+        results: [],
+        drafts: merged as any,
+        sessionId: sessionIdRef.current,
+        testResultId: testResultIdRef.current,
+        updatedAt: Date.now(),
+      });
     }
     // Fire-and-forget — exit immediately.
     persistHistoryRow(merged);
