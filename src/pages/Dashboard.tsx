@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import TichTich from "@/components/mascot/TichTich";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
@@ -544,11 +545,14 @@ const Dashboard = () => {
                     {" - "}hôm nay luyện tiếp nhé!
                   </p>
                 </div>
-                <Button asChild variant="glow" size="lg" className="shrink-0">
-                  <Link to="/thi-thu">
-                    <Zap className="w-4 h-4 mr-2" /> Thi thử ngay
-                  </Link>
-                </Button>
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <div className="hidden md:block -mb-2"><TichTich size={88} /></div>
+                  <Button asChild variant="glow" size="lg" className="shrink-0">
+                    <Link to="/thi-thu">
+                      <Zap className="w-4 h-4 mr-2" /> Thi thử ngay
+                    </Link>
+                  </Button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

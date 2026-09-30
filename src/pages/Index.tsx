@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
+import TichTich from "@/components/mascot/TichTich";
 import Footer from "@/components/layout/Footer";
 import LatestBlogSection from "@/components/blog/LatestBlogSection";
 
@@ -291,6 +292,8 @@ const Index = () => {
                   <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>18 ngày</div>
                 </div>
               </div>
+
+              <div className="hidden lg:block absolute -bottom-12 -right-8 z-20"><TichTich size={130} /></div>
             </motion.div>
           </div>
         </div>

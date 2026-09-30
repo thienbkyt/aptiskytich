@@ -16,6 +16,7 @@ import RouteProgressBar from "@/components/layout/RouteProgressBar";
 
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
+import TichTichCorner from "@/components/mascot/TichTichCorner";
 import SupportChatFab from "@/components/support/SupportChatFab";
 import VisitLogger from "@/components/VisitLogger";
 import ReferralCapture from "@/components/referral/ReferralCapture";
@@ -239,6 +240,7 @@ const App = () => (
                 </Suspense>
                 <AICoachFab />
                 <ReportFab />
+                <TichTichCorner />
                 <SupportChatFab />
                 <VisitLogger />
                 <ReferralCapture />
