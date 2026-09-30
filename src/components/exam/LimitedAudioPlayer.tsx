@@ -192,6 +192,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         logClientError("audio_playback", err, {
 
           stage,
+          ua: navigator.userAgent,
           questionKey: String(m.questionKey ?? ""),
           src: activeSrc,
           readyState: audio?.readyState ?? null,
