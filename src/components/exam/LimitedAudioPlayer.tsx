@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay, RefreshCw, LogIn } from "lucide-react";
-import { bustAudioUrlCache, resolveAudioBlobUrl, revokeAudioBlobUrl, hasAudioBlob } from "@/lib/audioUrl";
+import { bustAudioUrlCache, resolveAudioBlobUrl, resolveAudioUrl, revokeAudioBlobUrl, hasAudioBlob } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
 import { logClientError } from "@/lib/clientErrorLog";
@@ -27,6 +27,10 @@ interface LimitedAudioPlayerProps {
 // refreshing the page does not reset the play count. Closing the tab clears it.
 const SS_PREFIX = "limitedPlays:";
 const playCountStore = new Map<string, number>();
+
+// Paths whose downloaded blob failed to decode (MEDIA_ERR_DECODE/SRC_NOT_SUPPORTED).
+// Every future play for these files streams the signed URL directly — never blob again.
+const decodeFailedPaths = new Set<string>();
 
 // Module-level registry: only ONE audio element may play per page.
 // Must be module-level (not state) so we can pause a player whose component
@@ -217,6 +221,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
    */
   const loadAudioSrc = useCallback(async (path: string): Promise<string | null> => {
     if (!path) return null;
+    // A file that previously failed to decode as a blob always streams directly.
+    if (decodeFailedPaths.has(path)) return resolveAudioUrl(path);
     if (hasAudioBlob(path)) return resolveAudioBlobUrl(path);
     blobPathsRef.current.add(path);
     setLoadingAudio(true);
@@ -484,6 +490,42 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // Ignore errors raised by the silent priming play — the main play flow owns recovery.
     if (primingRef.current) return;
     const el = audioRef.current;
+    // MEDIA_ERR_DECODE (3) / SRC_NOT_SUPPORTED (4) on a blob: source → the
+    // downloaded blob itself is broken (bad/missing MIME type). Do NOT re-download
+    // the blob: remember the path and stream the signed URL directly instead.
+    const mediaCode = el?.error?.code ?? 0;
+    const elSrc = el?.src ?? "";
+    const decodePath = activeSrcRef.current || src;
+    if ((mediaCode === 3 || mediaCode === 4) && elSrc.startsWith("blob:")) {
+      decodeFailedPaths.add(decodePath);
+      revokeAudioBlobUrl(decodePath);
+      setErrorMsg("Đang chuyển sang phát trực tiếp...");
+      try {
+        const url = await resolveAudioUrl(decodePath);
+        if (!url || !audioRef.current) throw new Error("resolveAudioUrl returned null");
+        const a = audioRef.current;
+        a.src = url;
+        if (decodePath === src) setResolvedSrc(url);
+        a.load();
+        if (isPlaying) {
+          stopOthers(a);
+          await a.play();
+          lastTimeUpdateRef.current = Date.now();
+        }
+        setErrorMsg("");
+        logAudioError("decode_fallback_stream", el?.error, a, decodePath, undefined, "fallback", {
+          mediaErrorCode: mediaCode,
+        });
+        return;
+      } catch (e) {
+        setIsPlaying(false);
+        setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError("decode_fallback_failed", e, audioRef.current, decodePath, undefined, "error", {
+          mediaErrorCode: mediaCode,
+        });
+        return;
+      }
+    }
     // Mid-playback failure → resume in place instead of restarting the file.
     if (isPlaying && el && el.currentTime > 1) {
       await resumeAtPosition(el);
