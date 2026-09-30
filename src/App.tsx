@@ -240,6 +240,7 @@ const App = () => (
                 </Suspense>
                 <AICoachFab />
                 <ReportFab />
+                <TichTichCorner />
                 <SupportChatFab />
                 <VisitLogger />
                 <ReferralCapture />
