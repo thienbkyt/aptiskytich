@@ -84,7 +84,11 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     openedRef.current = true;
     void recordMarathonOpenedSets("reading", partType, ids);
   }, [sets, partType]);
-  const [currentIndex, setCurrentIndex] = useState(Math.min(Math.max(0, savedInit?.currentIndex ?? 0), Math.max(0, (setsInput?.length ?? 1) - 1)));
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const byId = savedInit?.currentSetId ? sets.findIndex((s) => s.id === savedInit.currentSetId) : -1;
+    const idx = byId >= 0 ? byId : (savedInit?.currentIndex ?? 0);
+    return Math.min(Math.max(0, idx), Math.max(0, (setsInput?.length ?? 1) - 1));
+  });
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
@@ -334,7 +338,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     const nextDrafts = { ...drafts };
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
-    if (persist) saveMarathonProgress("reading", progPart, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
+    if (persist) saveMarathonProgress("reading", progPart, { currentIndex: nextIndex, currentSetId: sets[nextIndex]?.id, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     if (pending) {
       setEnterAtLast(false);
       setJumpQ(pending.qi);
@@ -407,6 +411,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
         if (persist) {
           saveMarathonProgress("reading", progPart, {
             currentIndex: resultsRef.current === list ? currentIndex : currentIndex,
+            currentSetId: sets[currentIndex]?.id,
             results: list as any,
             drafts,
             sessionId: sessionIdRef.current,
@@ -836,6 +841,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       if (persist) {
         saveMarathonProgress("reading", progPart, {
           currentIndex,
+          currentSetId: sets[currentIndex]?.id,
           results: results as any,
           drafts: next,
           sessionId: sessionIdRef.current,
