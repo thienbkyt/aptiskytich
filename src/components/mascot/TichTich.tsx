@@ -270,7 +270,8 @@ export default function TichTich({
 
   // ---- ngủ khi idle ----
   useEffect(() => {
-    if (!idleSleep) return;
+    // Tắt chế độ ngủ (vd đang đố từ vựng) → đánh thức ngay.
+    if (!idleSleep) { setSleeping(false); return; }
     let t: number;
     let asleep = false;
     const arm = () => {
