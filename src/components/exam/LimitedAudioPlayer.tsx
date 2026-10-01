@@ -1014,6 +1014,14 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
           setIsPlaying(false);
         }}
         onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={() => {
+          const a = audioRef.current;
+          if (a && Number.isFinite(a.duration)) setBarDuration(a.duration);
+        }}
+        onDurationChange={() => {
+          const a = audioRef.current;
+          if (a && Number.isFinite(a.duration)) setBarDuration(a.duration);
+        }}
         onError={resolvedSrc ? handleAudioError : undefined}
         onStalled={() => {
           // networkState 3 === NETWORK_NO_SOURCE → signed URL expired mid-exam.
