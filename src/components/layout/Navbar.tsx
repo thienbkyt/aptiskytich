@@ -6,7 +6,7 @@ import {
   BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
-  MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare, Bell, Sun, Moon, UserRound, LogOut,
+  MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare, Bell, Sun, Moon, Ghost, UserRound, LogOut,
   Trophy, Gift,
   type LucideIcon } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import { useTheme } from "@/hooks/useTheme";
+import { isHalloweenSeason } from "@/lib/halloween";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -525,6 +526,17 @@ const Navbar = () => {
 
                         <div className="my-2 border-t border-border" />
                         <div className="px-3 pb-1 text-xs font-semibold text-muted-foreground">Giao diện</div>
+                        {isHalloweenSeason() && (
+                          <button
+                            type="button"
+                            onClick={() => setTheme("halloween")}
+                            className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
+                          >
+                            <Ghost className="w-4 h-4" />
+                            <span>Halloween 🎃</span>
+                            {theme === "halloween" && <span className="ml-auto text-primary">✓</span>}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => setTheme("light")}
