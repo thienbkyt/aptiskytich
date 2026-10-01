@@ -1049,6 +1049,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         )}
         <span>Play/Stop</span>
       </button>
+      {reviewMode && (
+        <div className="mt-1.5 flex items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={barDuration ?? 0}
+            step={0.1}
+            value={Math.min(barTime, barDuration ?? barTime)}
+            onChange={(e) => {
+              const t = Number(e.target.value);
+              setBarTime(t);
+              void handleSeek(t);
+            }}
+            className="w-full max-w-[320px] h-5 cursor-pointer"
+            style={{ accentColor: "#CC1C01" }}
+            aria-label="Tua audio"
+          />
+          <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+            {formatTime(barTime)} / {barDuration != null ? formatTime(barDuration) : "--:--"}
+          </span>
+        </div>
+      )}
       {(introSpeaking || loadingAudio) && (
         <p className="text-xs text-muted-foreground mt-1">
           {introSpeaking
