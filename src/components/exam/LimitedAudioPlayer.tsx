@@ -421,6 +421,59 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     });
 
   /**
+   * Review-mode seek: jump to `target` seconds, keeping the play state.
+   * If the element has no usable source yet, resolve/load it first and wait
+   * for metadata before setting currentTime.
+   */
+  const handleSeek = useCallback(async (target: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const wasPlaying = !audio.paused && !audio.ended;
+    let changedSrc = false;
+    try {
+      if (!audio.src || audio.readyState === 0) {
+        let url = resolvedSrc;
+        if (!url) {
+          bustAudioUrlCache(src);
+          revokeAudioBlobUrl(src);
+          url = await loadAudioSrc(src);
+          if (!url) {
+            setErrorMsg("Không tải được audio.");
+            return;
+          }
+          setResolvedSrc(url);
+        }
+        if (audio.src !== url) {
+          audio.src = url;
+          audio.load();
+          changedSrc = true;
+        }
+        await waitForMetadata(audio);
+      }
+      try {
+        audio.currentTime = target;
+      } catch (e) {
+        logAudioError("seek_set_failed", e, audio, src, undefined, "error", { target });
+        return;
+      }
+      // While playing, setting currentTime continues playback in place.
+      // If the source was swapped, restart playback from the new position.
+      if (changedSrc && wasPlaying) {
+        try {
+          stopOthers(audio);
+          await audio.play();
+          lastTimeUpdateRef.current = Date.now();
+        } catch (e) {
+          logAudioError("seek_play_failed", e, audio, src, undefined, "error", { target });
+        }
+      }
+    } catch (e) {
+      logAudioError("seek_failed", e, audio, src, undefined, "error", { target });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedSrc, src]);
+
+  /**
    * Re-signs the URL and continues playback from the exact position.
    * Used when the signed URL dies mid-playback (stall or media error).
    * Never counts a play — this is the same listen, not a new one.
@@ -610,7 +663,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     if (playedMsRef.current >= 3000 && !countedRef.current) {
       countThisPlay();
     }
-  }, [countThisPlay]);
+    // Review seek bar follows playback (exam mode never re-renders for this).
+    if (reviewMode) setBarTime(audio.currentTime);
+  }, [countThisPlay, reviewMode]);
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
   useEffect(() => {
