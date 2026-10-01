@@ -53,6 +53,30 @@ const releaseIfMine = (el: HTMLAudioElement | null) => {
 const storeKey = (qk: string | number | undefined, src: string) =>
   `${qk ?? "_"}::${src}`;
 
+/** m:ss formatting for the review seek bar. */
+const formatTime = (s: number) => {
+  if (!Number.isFinite(s) || s < 0) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${String(sec).padStart(2, "0")}`;
+};
+
+/** Resolves once metadata is known (seekable), or after 8s. */
+const waitForMetadata = (audio: HTMLAudioElement) =>
+  new Promise<void>((resolve) => {
+    if (audio.readyState >= 1) return resolve();
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(t);
+      audio.removeEventListener("loadedmetadata", finish);
+      resolve();
+    };
+    const t = setTimeout(finish, 8000);
+    audio.addEventListener("loadedmetadata", finish);
+  });
+
 /** Diagnostics snapshot of the most recently rendered player on the page. */
 export type AudioDiag = {
   src: string;
@@ -121,6 +145,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [introSpeaking, setIntroSpeaking] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [loadPercent, setLoadPercent] = useState<number | null>(null);
+  // Review-mode seek bar state (exam mode never touches these).
+  const [barTime, setBarTime] = useState(0);
+  const [barDuration, setBarDuration] = useState<number | null>(null);
 
   const blobPathsRef = useRef<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -319,6 +346,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     countedRef.current = false;
     playedMsRef.current = 0;
     lastCurrentTimeRef.current = 0;
+    setBarTime(0);
+    setBarDuration(null);
     // Cancel any pending intro sequence for the previous question.
     introTokenRef.current += 1;
     stopTTS();
