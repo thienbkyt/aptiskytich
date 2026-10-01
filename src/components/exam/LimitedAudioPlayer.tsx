@@ -53,6 +53,30 @@ const releaseIfMine = (el: HTMLAudioElement | null) => {
 const storeKey = (qk: string | number | undefined, src: string) =>
   `${qk ?? "_"}::${src}`;
 
+/** m:ss formatting for the review seek bar. */
+const formatTime = (s: number) => {
+  if (!Number.isFinite(s) || s < 0) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${String(sec).padStart(2, "0")}`;
+};
+
+/** Resolves once metadata is known (seekable), or after 8s. */
+const waitForMetadata = (audio: HTMLAudioElement) =>
+  new Promise<void>((resolve) => {
+    if (audio.readyState >= 1) return resolve();
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(t);
+      audio.removeEventListener("loadedmetadata", finish);
+      resolve();
+    };
+    const t = setTimeout(finish, 8000);
+    audio.addEventListener("loadedmetadata", finish);
+  });
+
 /** Diagnostics snapshot of the most recently rendered player on the page. */
 export type AudioDiag = {
   src: string;
@@ -121,6 +145,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [introSpeaking, setIntroSpeaking] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [loadPercent, setLoadPercent] = useState<number | null>(null);
+  // Review-mode seek bar state (exam mode never touches these).
+  const [barTime, setBarTime] = useState(0);
+  const [barDuration, setBarDuration] = useState<number | null>(null);
 
   const blobPathsRef = useRef<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -319,6 +346,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     countedRef.current = false;
     playedMsRef.current = 0;
     lastCurrentTimeRef.current = 0;
+    setBarTime(0);
+    setBarDuration(null);
     // Cancel any pending intro sequence for the previous question.
     introTokenRef.current += 1;
     stopTTS();
@@ -390,6 +419,59 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       audio.addEventListener("loadeddata", finish);
       audio.addEventListener("canplay", finish);
     });
+
+  /**
+   * Review-mode seek: jump to `target` seconds, keeping the play state.
+   * If the element has no usable source yet, resolve/load it first and wait
+   * for metadata before setting currentTime.
+   */
+  const handleSeek = useCallback(async (target: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const wasPlaying = !audio.paused && !audio.ended;
+    let changedSrc = false;
+    try {
+      if (!audio.src || audio.readyState === 0) {
+        let url = resolvedSrc;
+        if (!url) {
+          bustAudioUrlCache(src);
+          revokeAudioBlobUrl(src);
+          url = await loadAudioSrc(src);
+          if (!url) {
+            setErrorMsg("Không tải được audio.");
+            return;
+          }
+          setResolvedSrc(url);
+        }
+        if (audio.src !== url) {
+          audio.src = url;
+          audio.load();
+          changedSrc = true;
+        }
+        await waitForMetadata(audio);
+      }
+      try {
+        audio.currentTime = target;
+      } catch (e) {
+        logAudioError("seek_set_failed", e, audio, src, undefined, "error", { target });
+        return;
+      }
+      // While playing, setting currentTime continues playback in place.
+      // If the source was swapped, restart playback from the new position.
+      if (changedSrc && wasPlaying) {
+        try {
+          stopOthers(audio);
+          await audio.play();
+          lastTimeUpdateRef.current = Date.now();
+        } catch (e) {
+          logAudioError("seek_play_failed", e, audio, src, undefined, "error", { target });
+        }
+      }
+    } catch (e) {
+      logAudioError("seek_failed", e, audio, src, undefined, "error", { target });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedSrc, src]);
 
   /**
    * Re-signs the URL and continues playback from the exact position.
@@ -581,7 +663,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     if (playedMsRef.current >= 3000 && !countedRef.current) {
       countThisPlay();
     }
-  }, [countThisPlay]);
+    // Review seek bar follows playback (exam mode never re-renders for this).
+    if (reviewMode) setBarTime(audio.currentTime);
+  }, [countThisPlay, reviewMode]);
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
   useEffect(() => {
@@ -677,8 +761,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     token?: number,
   ): Promise<"ok" | "blocked" | "error" | "stale"> => {
     // Pick the source for this play: first play uses `src`, later plays use
-    // `src2` when provided (falls back to `src`).
-    const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    // `src2` when provided (falls back to `src`). Review mode always uses
+    // `src` so the seek bar stays matched to one file.
+    const activeSrc = !reviewMode && !isFirstPlay && src2 ? src2 : src;
     activeSrcRef.current = activeSrc;
     // Always re-sign right before playing: signed URLs live only 5 minutes, and
     // a student may replay long after the part was batch-signed. The cache in
@@ -727,11 +812,14 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
     if (token !== undefined && token !== introTokenRef.current) return "stale";
     audio.muted = false;
+    // Review mode resumes from the current position (unless the clip already
+    // ended → restart from 0, same as exam mode).
+    const resumePos = reviewMode && !audio.ended ? audio.currentTime : 0;
     // After load() the browser already resets currentTime; touching it while
     // readyState === 0 throws InvalidStateError.
     if (!reloaded) {
       try {
-        audio.currentTime = 0;
+        if (!reviewMode || audio.ended) audio.currentTime = 0;
       } catch {
         /* noop */
       }
@@ -753,6 +841,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         audio.addEventListener("canplay", finish);
       });
       if (token !== undefined && token !== introTokenRef.current) return "stale";
+    }
+    // Review mode: restore the pre-reload position so the seek bar and the
+    // audio stay in sync instead of restarting from 0.
+    if (reviewMode && resumePos > 0) {
+      try {
+        audio.currentTime = resumePos;
+      } catch {
+        /* noop */
+      }
     }
     try {
       // Only one audio may sound at a time across the whole page.
@@ -917,6 +1014,14 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
           setIsPlaying(false);
         }}
         onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={() => {
+          const a = audioRef.current;
+          if (a && Number.isFinite(a.duration)) setBarDuration(a.duration);
+        }}
+        onDurationChange={() => {
+          const a = audioRef.current;
+          if (a && Number.isFinite(a.duration)) setBarDuration(a.duration);
+        }}
         onError={resolvedSrc ? handleAudioError : undefined}
         onStalled={() => {
           // networkState 3 === NETWORK_NO_SOURCE → signed URL expired mid-exam.
@@ -944,6 +1049,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         )}
         <span>Play/Stop</span>
       </button>
+      {reviewMode && (
+        <div className="mt-1.5 flex items-center gap-3">
+          <input
+            type="range"
+            min={0}
+            max={barDuration ?? 0}
+            step={0.1}
+            value={Math.min(barTime, barDuration ?? barTime)}
+            onChange={(e) => {
+              const t = Number(e.target.value);
+              setBarTime(t);
+              void handleSeek(t);
+            }}
+            className="w-full max-w-[320px] h-5 cursor-pointer"
+            style={{ accentColor: "#CC1C01" }}
+            aria-label="Tua audio"
+          />
+          <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+            {formatTime(barTime)} / {barDuration != null ? formatTime(barDuration) : "--:--"}
+          </span>
+        </div>
+      )}
       {(introSpeaking || loadingAudio) && (
         <p className="text-xs text-muted-foreground mt-1">
           {introSpeaking
