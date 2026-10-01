@@ -98,3 +98,142 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
 @media (max-width: 767px) {
   .hw-ghosts { display: none; }
 }
+
+/* ==========================================================================
+   Halloween "đêm": navbar, khối đầu trang, footer tím đêm như mockup
+   ========================================================================== */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) {
+  --background: 285 35% 96%;
+  --card: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --sidebar-background: 280 60% 7%;
+  --sidebar-border: 280 30% 18%;
+}
+
+/* Bộ biến "nền đêm" dùng chung */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(
+  nav.fixed.top-0,
+  main > section.bg-card.border-b:first-child,
+  main > section.border-b:first-child[class*="from-primary"],
+  .section-container.space-y-6 > .relative.overflow-hidden.rounded-3xl.bg-card\/60,
+  section[style*="255, 247, 240"],
+  .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type,
+  main > header.py-8,
+  section.rounded-3xl[style*="radial-gradient"],
+  main.container > div:first-child:has(> h1),
+  main > .container > .text-center:first-child:has(> h1),
+  .section-container > .flex.items-center.gap-3.mb-2:has(> h1),
+  .section-container > .flex.items-center.gap-3.mb-2:has(> h1) + p,
+  main.pt-20 > h1,
+  main.pt-20 > h1 + p
+) {
+  --background: 280 50% 10%;
+  --foreground: 30 60% 97%;
+  --card: 280 45% 15%;
+  --card-foreground: 30 60% 97%;
+  --popover: 280 45% 13%;
+  --popover-foreground: 30 60% 97%;
+  --muted: 280 35% 20%;
+  --muted-foreground: 275 35% 82%;
+  --secondary: 280 35% 20%;
+  --secondary-foreground: 30 60% 97%;
+  --border: 280 30% 28%;
+  --input: 280 30% 28%;
+  --primary: 24 95% 55%;
+  --accent: 30 100% 62%;
+  --gradient-text-glow: linear-gradient(135deg, hsl(30 100% 62%) 0%, hsl(40 100% 68%) 100%);
+  color: hsl(var(--foreground));
+}
+
+/* Nền đêm + trăng + mạng nhện cho các khối đầu trang */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(
+  main > section.bg-card.border-b:first-child,
+  main > section.border-b:first-child[class*="from-primary"],
+  .section-container.space-y-6 > .relative.overflow-hidden.rounded-3xl.bg-card\/60,
+  section[style*="255, 247, 240"],
+  .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type,
+  main > header.py-8,
+  section.rounded-3xl[style*="radial-gradient"],
+  main.container > div:first-child:has(> h1),
+  main > .container > .text-center:first-child:has(> h1)
+) {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg stroke='%23b9a3c9' stroke-width='.7' fill='none' opacity='.55'%3E%3Cpath d='M100 0 L0 0 M100 0 L100 100 M100 0 L10 45 M100 0 L55 90 M100 0 L30 70'/%3E%3Cpath d='M80 0 Q86 6 100 20 M60 0 Q72 14 100 40 M38 0 Q56 22 100 62 M16 0 Q40 30 100 84'/%3E%3C/g%3E%3C/svg%3E") right top / 140px 140px no-repeat,
+    radial-gradient(1.5px 1.5px at 12% 22%, #fff9, transparent),
+    radial-gradient(1px 1px at 33% 68%, #fff8, transparent),
+    radial-gradient(1.6px 1.6px at 58% 16%, #fffa, transparent),
+    radial-gradient(1px 1px at 83% 58%, #fff8, transparent),
+    radial-gradient(1.2px 1.2px at 46% 40%, #fff7, transparent),
+    radial-gradient(circle at 72% -8%, rgba(255, 222, 150, 0.35) 0, rgba(255, 222, 150, 0.12) 90px, transparent 170px),
+    linear-gradient(120deg, #22092f 0%, #3b1458 55%, #5a1a3a 100%) !important;
+  border-color: hsl(280 30% 24%) !important;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(main > header.py-8, main.container > div:first-child:has(> h1), main > .container > .text-center:first-child:has(> h1)) {
+  border-radius: 24px;
+  padding: 28px !important;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) main > header.py-8 { margin-top: 24px; }
+
+/* Trang chỉ có tiêu đề rời (Lịch sử, Nghe chép): ghép tiêu đề + mô tả thành 1 khối đêm */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(.section-container > .flex.items-center.gap-3.mb-2:has(> h1), main.pt-20 > h1, .section-container > .flex.items-center.gap-3.mb-2:has(> h1) + p, main.pt-20 > h1 + p) {
+  background: linear-gradient(120deg, #22092f 0%, #3b1458 55%, #5a1a3a 100%) fixed;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(.section-container > .flex.items-center.gap-3.mb-2:has(> h1), main.pt-20 > h1) {
+  border-radius: 24px 24px 0 0;
+  padding: 26px 26px 8px;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(.section-container > .flex.items-center.gap-3.mb-2:has(> h1) + p, main.pt-20 > h1 + p) {
+  border-radius: 0 0 24px 24px;
+  padding: 0 26px 24px;
+  margin-bottom: 24px;
+}
+
+/* Chữ màu cứng trong khối đêm */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(section[style*="255, 247, 240"], .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type) :is([style*="rgb(77, 13, 13)"], .text-brand-brown, h1, h2):not(.bg-white *, [class*="bg-white/"] *) {
+  color: #fff7ef !important;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(section[style*="255, 247, 240"], .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type) :is([style*="rgb(107, 74, 74)"], [style*="rgb(107, 74, 59)"], p):not(.bg-white *, [class*="bg-white/"] *) {
+  color: #ddcbea !important;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(nav.fixed.top-0, section[style*="255, 247, 240"], main > section:first-child, .rounded-3xl.bg-card\/60, main > header.py-8, .bg-\[\#FFF8F5\] > section:first-of-type) .from-\[\#CC1C01\] {
+  --tw-gradient-from: #ff9a3c var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(255 154 60 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .particles-bg { opacity: .35; }
+
+/* Nền trang blog & các nền kem viết cứng → tím nhạt */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(.bg-\[\#FFF8F5\], .bg-\[\#FFFBF6\]) {
+  background-color: hsl(var(--background)) !important;
+}
+
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav.fixed.top-0 {
+  background-color: rgba(29, 10, 43, 0.97) !important;
+  border-bottom-color: rgba(180, 85, 255, 0.25) !important;
+}
+
+/* Chip trắng trong hero trang chủ → kính mờ trên nền đêm */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm,
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm * {
+  color: #fff7ef !important;
+}
+
+/* Trang đăng nhập / đăng ký: nền đỏ → đêm tím */
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) div.min-h-screen[style*="rgb(77, 13, 13) 0%"] {
+  background:
+    radial-gradient(1.5px 1.5px at 12% 22%, #fff9, transparent),
+    radial-gradient(1px 1px at 33% 68%, #fff8, transparent),
+    radial-gradient(1.6px 1.6px at 62% 14%, #fffa, transparent),
+    radial-gradient(1px 1px at 86% 58%, #fff8, transparent),
+    radial-gradient(circle at 18% 12%, rgba(255, 222, 150, 0.35) 0, rgba(255, 222, 150, 0.12) 110px, transparent 200px),
+    linear-gradient(160deg, #1d0a2b 0%, #3b1458 55%, #5a1a3a 100%) !important;
+}
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) div.min-h-screen[style*="rgb(77, 13, 13) 0%"] > div.pointer-events-none.rounded-full {
+  background: radial-gradient(circle, rgba(180, 85, 255, 0.35), transparent 70%) !important;
+}
