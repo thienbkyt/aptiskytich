@@ -21,7 +21,7 @@ interface Question {
   answer: string;
 }
 
-const FIRST_DELAY_MS = 60_000;      // lần đầu: sau 1 phút ở trang
+const FIRST_DELAY_MS = 30_000;      // lần đầu: sau 30 giây ở trang
 const NEXT_DELAY_MS = 4 * 60_000;   // sau khi ẩn: 4 phút đố lại
 const IDLE_HIDE_MS = 30_000;        // không bấm 30s thì tự ẩn
 const NEXT_QUESTION_MS = 2200;      // trả lời xong → câu tiếp
