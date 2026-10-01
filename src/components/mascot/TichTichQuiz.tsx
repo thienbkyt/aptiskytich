@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { QuizBank } from "./tichtichQuizBank";
 
-export type QuizMood = "think" | "happy" | "worry" | null;
+export type QuizMood = "think" | "happy" | "worry" | "sad" | null;
 
 type Kind = "vi" | "syn" | "def" | "gap";
 interface Question {
@@ -94,16 +94,38 @@ const isOffToday = () => {
 
 const PRAISE = ["Chuẩn luôn! 🎉", "Giỏi quá đi! ✨", "Đúng rồi nè! 🙌", "Xịn! Nhớ từ này nha 💪"];
 
+// Học viên chưa chọn đáp án → Tích Tích nũng nịu nhắc (10s và 20s).
+const NUDGES = [
+  "Bạn iu ơi, chú ý Tích Tích xíu nhứ 🥺",
+  "Đố dễ mà, chọn đại 1 cái đi nè 👉👈",
+  "Tích Tích đợi nãy giờ á 😚",
+  "Hong trả lời là Tích Tích dỗi đó nha 😤",
+  "Bạn iu bận hả? Liếc qua 1 xíu thui 🥹",
+  "Câu này dễ ẹc à, thử hong? 🤭",
+  "Tích Tích ngồi chờ bạn iu nè 🫶",
+];
+const NUDGE_1_MS = 10_000;
+const NUDGE_2_MS = 20_000;
+
 export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => void }) {
   const [bank, setBank] = useState<QuizBank | null>(null);
   const [q, setQ] = useState<Question | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [praise, setPraise] = useState(PRAISE[0]);
+  const [nudge, setNudge] = useState<string | null>(null);
+  const nudgeTimers = useRef<number[]>([]);
   const showTimer = useRef<number>();
   const idleTimer = useRef<number>();
   const nextTimer = useRef<number>();
 
+  const clearNudges = () => {
+    nudgeTimers.current.forEach((t) => clearTimeout(t));
+    nudgeTimers.current = [];
+    setNudge(null);
+  };
+
   const clearAll = () => {
+    clearNudges();
     clearTimeout(showTimer.current);
     clearTimeout(idleTimer.current);
     clearTimeout(nextTimer.current);
@@ -129,8 +151,13 @@ export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => voi
 
   const armIdle = useCallback(() => {
     clearTimeout(idleTimer.current);
+    clearNudges();
+    const lines = shuffle(NUDGES);
+    nudgeTimers.current.push(window.setTimeout(() => { setNudge(lines[0]); onMood?.("worry"); }, NUDGE_1_MS));
+    nudgeTimers.current.push(window.setTimeout(() => { setNudge(lines[1]); onMood?.("sad"); }, NUDGE_2_MS));
     idleTimer.current = window.setTimeout(() => hide(true), IDLE_HIDE_MS);
-  }, [hide]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hide, onMood]);
 
   const open = useCallback(async (avoid?: string) => {
     if (isOffToday()) return;
@@ -158,6 +185,7 @@ export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => voi
   const choose = (opt: string) => {
     if (!q || picked) return;
     clearTimeout(idleTimer.current);
+    clearNudges();
     setPicked(opt);
     const ok = opt === q.answer;
     if (ok) setPraise(pickOne(PRAISE));
@@ -205,9 +233,17 @@ export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => voi
       className="absolute right-[108px] bottom-0 w-[300px] rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)] p-3.5 animate-in fade-in slide-in-from-right-2"
       role="dialog"
       aria-label="Tích Tích đố từ vựng"
-      onMouseEnter={() => clearTimeout(idleTimer.current)}
+      onMouseEnter={() => {
+        clearTimeout(idleTimer.current);
+        if (nudge) { clearNudges(); if (!picked) onMood?.("think"); }
+      }}
       onMouseLeave={() => { if (!picked) armIdle(); }}
     >
+      {nudge && !picked && (
+        <div className="absolute -top-12 right-2 max-w-[270px] rounded-2xl rounded-br-sm border border-pink-200 bg-pink-50 px-3 py-1.5 text-[12.5px] font-semibold text-pink-700 shadow-md animate-in fade-in zoom-in-95">
+          {nudge}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <span className="text-[12px] font-bold text-primary">🧠 Tích Tích đố nè · {q.title}</span>
         <button
