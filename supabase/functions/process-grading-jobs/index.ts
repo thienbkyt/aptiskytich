@@ -67,7 +67,7 @@ const STEP_TIMEOUT_MS = 60_000;
 // "step timeout after 60s" otherwise.
 const WRITING_STEP_TIMEOUT_MS = 110_000;
 // Transcription is the slow step (audio download + STT), so it gets 120s.
-const TRANSCRIBE_TIMEOUT_MS = 90_000;
+const TRANSCRIBE_TIMEOUT_MS = 120_000;
 // A transient failure never kills the job: it goes back to pending with a
 // 10-minute × attempts backoff until this many attempts are spent.
 const RETRY_CEILING = 6;
@@ -408,12 +408,29 @@ async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: numb
   });
   if (upErr) throw new Error(`speaking_question_gradings upsert failed: ${upErr.message}`);
 
-  const { error: trErr } = await admin.from("test_results").update({
-    score: Math.round(rawPart),
-    total: 30,
-    correct_answers: Math.round(rawPart),
-  } as any).eq("id", job.test_result_id);
-  if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
+  // V2 full test: ONE aggregate test_result holds the whole speaking skill (the
+  // client pre-creates a speaking_skill_results row for the session). Never
+  // overwrite that aggregate with a single part's /30 score — mergeSpeakingV2
+  // patches it with scale50/CEFR once all 4 parts are graded.
+  let isV2Aggregate = false;
+  if (meta.fullTestSessionId) {
+    const { data: agg } = await admin
+      .from("speaking_skill_results")
+      .select("id")
+      .eq("user_id", job.user_id)
+      .eq("full_test_session_id", meta.fullTestSessionId)
+      .eq("test_result_id", job.test_result_id)
+      .maybeSingle();
+    isV2Aggregate = !!agg?.id;
+  }
+  if (!isV2Aggregate) {
+    const { error: trErr } = await admin.from("test_results").update({
+      score: Math.round(rawPart),
+      total: 30,
+      correct_answers: Math.round(rawPart),
+    } as any).eq("id", job.test_result_id);
+    if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
+  }
 
   // ── Standalone part row (always, per test_result_id) ──────────────────────
   // The session finalizer only writes aggregate rows for full tests, and
@@ -461,12 +478,110 @@ async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: numb
 }
 
 
+// ─── V2 full-test speaking: merge a background-graded part, then finalize ───
+// The V2 full test grades the 4 parts in the browser and stores ONE
+// speaking_skill_results row (cefr = null while any part is missing). When a
+// part failed in the browser it is queued here; once the worker grades it we
+// merge it into that row and, when all 4 parts are present, compute scale50 +
+// CEFR. Returns true when the session belongs to the V2 flow (handled here).
+async function mergeSpeakingV2(job: any, sessionId: string, body: any): Promise<boolean> {
+  const { data: row } = await admin
+    .from("speaking_skill_results")
+    .select("id, parts, cefr, test_result_id")
+    .eq("user_id", job.user_id)
+    .eq("full_test_session_id", sessionId)
+    .maybeSingle();
+  if (!row?.id) return false;      // legacy per-part flow → fall through
+  if (row.cefr) return true;       // already finalized → never overwrite
+
+  const partType = String(job.part || body?.partType || "");
+  const parts: Record<string, any> = { ...((row.parts as any) || {}) };
+  if (body && /^part[1-4]$/.test(partType)) {
+    parts[partType] = {
+      bands: body.bands ?? null,
+      items: Array.isArray(body.perItem) ? body.perItem : [],
+      analysis: body.analysis || "",
+      criteriaAnalysis: body.criteriaAnalysis ?? null,
+      feedback: body.feedback ?? null,
+      improvedVersion: body.improvedVersion || "",
+      rawPart: Number(body.rawPart ?? body.raw_part ?? 0),
+      fullTranscript: body.fullTranscript ?? null,
+    };
+  }
+
+  const keys = ["part1", "part2", "part3", "part4"];
+  const complete = keys.every((k) => {
+    const v = parts[k]?.rawPart;
+    return v !== undefined && v !== null && Number.isFinite(Number(v));
+  });
+  if (!complete) {
+    await admin.from("speaking_skill_results").update({ parts } as any).eq("id", row.id);
+    return true;
+  }
+
+  const rawParts: Record<string, number> = {};
+  for (const k of keys) rawParts[k] = Number(parts[k].rawPart);
+
+  let coreGV: string | null = null;
+  try {
+    const { data: gvRows } = await admin
+      .from("test_results")
+      .select("level, skill_scores")
+      .eq("user_id", job.user_id)
+      .eq("full_test_session_id", sessionId);
+    const gv = (gvRows || []).find((r: any) => r?.skill_scores?.skill === "grammar_vocab");
+    if (gv?.level) coreGV = String(gv.level).toUpperCase();
+  } catch (e) {
+    console.warn("[worker] V2 coreGV lookup failed:", (e as any)?.message || e);
+  }
+
+  const { body: fin, ok } = await invokeGradeExam(
+    { type: "speaking_finalize", skill: "speaking", rawParts, coreGV },
+    job.user_id,
+  );
+  if (!ok || !fin || fin.error) {
+    // Keep the merged parts; the next graded part / retry will finalize.
+    await admin.from("speaking_skill_results").update({ parts } as any).eq("id", row.id);
+    return true;
+  }
+
+  const scale50 = Number(fin.scale50 ?? 0);
+  const cefr = String(fin.cefr ?? "");
+  const rawTotal = Number(fin.rawTotal ?? fin.raw_total ?? 0);
+  const { error: upErr } = await admin.from("speaking_skill_results").update({
+    parts,
+    raw_total: rawTotal,
+    scale50,
+    cefr,
+    grey_zone: !!fin.greyZone,
+    flag_review: !!fin.flagReview,
+  } as any).eq("id", row.id);
+  if (upErr) throw new Error("speaking_skill_results V2 merge failed: " + upErr.message);
+
+  const trId = row.test_result_id || job.test_result_id;
+  if (trId) {
+    await admin.from("test_results").update({
+      score: scale50,
+      total: 50,
+      correct_answers: scale50,
+      level: cefr,
+      grade_payload: null,
+    } as any).eq("id", trId);
+  }
+  return true;
+}
+
 // ─── finalize (all 4 parts of a session) ────────────────────────────────────
 
-async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
+async function tryFinalizeSession(job: any, skill: "writing" | "speaking", body: any = null) {
   const meta = job.payload?._meta || {};
   const sessionId: string | null = meta.fullTestSessionId ?? null;
   if (!sessionId || !job.test_result_id) return;
+
+  if (skill === "speaking") {
+    const handled = await mergeSpeakingV2(job, sessionId, body);
+    if (handled) return;
+  }
 
   // Already settled for this session → do not recompute / overwrite.
   {
@@ -604,7 +719,7 @@ async function persistJobResult(job: any, body: any) {
   // persist successful (skill_results row will be filled in when the last
   // part's job runs / retries).
   try {
-    await tryFinalizeSession(job, skill);
+    await tryFinalizeSession(job, skill, body);
   } catch (e: any) {
     console.warn("[worker] finalize failed (non-fatal):", e?.message || e);
   }
