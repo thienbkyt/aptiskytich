@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import TichTich from "./TichTich";
+import TichTichQuiz, { type QuizMood } from "./TichTichQuiz";
 
 const HIDE_BODY_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
 const HIDE_PATHS = [/^\/$/, /^\/dashboard/, /^\/auth/, /^\/reset-password/, /^\/admin/];
@@ -23,6 +24,8 @@ const TIPS = [
 export default function TichTichCorner() {
   const { pathname } = useLocation();
   const [examHidden, setExamHidden] = useState(false);
+  // Biểu cảm của Tích Tích khi đang đố từ vựng (nghĩ / vui / lo).
+  const [quizMood, setQuizMood] = useState<QuizMood>(null);
 
   useEffect(() => {
     const check = () =>
@@ -37,7 +40,8 @@ export default function TichTichCorner() {
 
   return (
     <div className="fixed right-6 bottom-[84px] z-40 hidden md:block">
-      <TichTich size={96} idleSleep bubbleSide="left" enterLines={TIPS} />
+      <TichTichQuiz onMood={setQuizMood} />
+      <TichTich size={96} idleSleep bubbleSide="left" enterLines={TIPS} mood={quizMood ?? "normal"} />
     </div>
   );
 }
