@@ -953,10 +953,15 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         let failedSpeakingParts = 0;
         let speakingQuotaBlocked = false;
         try {
+          let gradeCursor = 0;
           for (const entry of orderedEntries) {
             const partType = entry.sub.partType as "part1" | "part2" | "part3" | "part4";
             const questions = submissionQuestionTexts(entry.sub).map((q) => safeText(q));
             const blobs = entry.sub.items.map((it) => it.blob ?? null);
+            // Recordings already saved in step 2 — reused if this part has to be
+            // retried in the background (no second upload needed).
+            const entryPaths = entry.sub.items.map((_, i) => pathByIndex[gradeCursor + i] ?? null);
+            gradeCursor += entry.sub.items.length;
 
             try {
               const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs, {
@@ -964,6 +969,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
                 fullTestSessionId: sessionIdRef.current,
                 testResultId,
                 examSetId: entry.partId ?? null,
+                audioPaths: entryPaths,
               });
 
               const merged: SpeakingPartResultV2 = {
