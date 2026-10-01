@@ -113,6 +113,10 @@ const CSS = `
 .tt-bubble.tt-left{left:auto;right:100%;bottom:auto;top:18%;transform:translate(4px,0) scale(.9);white-space:normal;width:max-content;max-width:230px;line-height:1.35;text-align:left}
 .tt-bubble.tt-left.tt-show{transform:translate(-8px,0) scale(1)}
 .tt-bubble.tt-left::after{left:100%;top:50%;transform:translateY(-50%);border-top-color:transparent;border-left-color:#fff}
+/* Halloween: mũ phù thủy + giỏ bí ngô (html.halloween do useTheme gắn) */
+.tt-robot .tt-hw{display:none}
+html.halloween .tt-robot .tt-hw{display:inline}
+html.halloween .tt-robot .tt-bow,html.halloween .tt-robot .tt-antenna{display:none}
 @media (hover:none),(pointer:coarse){.tt-robot{display:none!important}}
 `;
 
@@ -131,6 +135,7 @@ function injectCss() {
 
 const LINES = {
   enter: ["Chào bạn! 👋", "Hôm nay luyện gì nè?", "Hi hi 😄"],
+  hw: ["Trick or treat! Luyện 1 đề nhận kẹo 🍬", "Boo! 👻 Hôm nay ôn gì nè?", "Đừng sợ Aptis, có tui đây 🎃"],
   love: ["Được xoa đầu thích quá 💕", "Hehe nhột 🥰"],
   click: [
     ["laugh", "Hahaha 😆"],
@@ -289,7 +294,7 @@ export default function TichTich({
   const onEnter = () => {
     if (!interactive) return;
     enteredAt.current = Date.now();
-    react("happy", 2600, pick(enterLines && enterLines.length ? enterLines : LINES.enter));
+    react("happy", 2600, pick(document.documentElement.classList.contains("halloween") && Math.random() < 0.5 ? LINES.hw : (enterLines && enterLines.length ? enterLines : LINES.enter)));
     setFx((f) => ({ ...f, wave: true }));
     window.setTimeout(() => setFx((f) => ({ ...f, wave: false })), 1900);
     clearTimeout(hoverTimer.current);
@@ -374,8 +379,8 @@ export default function TichTich({
         <text x="60" y="111.5" textAnchor="middle" fontSize="9" fontWeight="800" fill="#CC1C01" fontFamily="Arial">A</text>
         {/* đầu */}
         <g className="tt-head">
-        <line x1="60" y1="14" x2="60" y2="26" stroke="#CC1C01" strokeWidth="3" strokeLinecap="round"/>
-        <circle className="tt-antenna-dot" cx="60" cy="11" r="5" fill="#FEAD5F"/>
+        <line className="tt-antenna" x1="60" y1="14" x2="60" y2="26" stroke="#CC1C01" strokeWidth="3" strokeLinecap="round"/>
+        <circle className="tt-antenna-dot tt-antenna" cx="60" cy="11" r="5" fill="#FEAD5F"/>
         <rect x="16" y="24" width="88" height="70" rx="30" fill={`url(#${uid}-body)`}/>
         <rect x="8" y="50" width="10" height="20" rx="5" fill="#CC1C01"/>
         <rect x="102" y="50" width="10" height="20" rx="5" fill="#CC1C01"/>
@@ -387,6 +392,13 @@ export default function TichTich({
         <path d="M84 30 C78 24 75 31 80 34" fill="#FF8FB1"/>
         <path d="M88 30 C94 24 97 31 92 34" fill="#FF8FB1"/>
         <circle cx="86" cy="32" r="3.6" fill="#E23D6E"/>
+        </g>
+        {/* mũ phù thủy — chỉ hiện ở giao diện Halloween */}
+        <g className="tt-hw">
+        <path d="M38 28 L66 -34 Q70 -38 72 -30 L84 26 Z" fill="#3b1458"/>
+        <path d="M40 22 Q62 16 82 22 L83 27 Q62 21 39 27 Z" fill="#FF7A1A"/>
+        <path d="M14 30 Q60 16 106 30 Q60 42 14 30 Z" fill="#2a0f3d"/>
+        <circle cx="70" cy="-30" r="3" fill="#FFB020"/>
         </g>
         {/* mắt thường */}
         <g className="tt-eyes-normal">
@@ -468,7 +480,7 @@ export default function TichTich({
         </g>
         {/* tay */}
         <g className="tt-hand tt-hand-l"><rect x="22" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/></g>
-        <g className="tt-hand tt-hand-r"><rect x="84" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/></g>
+        <g className="tt-hand tt-hand-r"><rect x="84" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/><g className="tt-hw" transform="translate(100 118)"><path d="M-11 -4 Q0 -19 11 -4" stroke="#3a1300" strokeWidth="2" fill="none"/><ellipse cx="0" cy="5" rx="12" ry="10" fill="#FF8A2A"/><path d="M-6 1 l3 3 h-6z M6 1 l3 3 h-6z" fill="#3a1300"/><path d="M-5 9 q5 3.5 10 0" stroke="#3a1300" strokeWidth="2" fill="none"/></g></g>
         </g>
         </svg>
       <div className={`tt-bubble ${bubbleSide === "left" ? "tt-left" : ""} ${bubble.show ? "tt-show" : ""}`}>{bubble.text}</div>
