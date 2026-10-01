@@ -43,8 +43,8 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
 }
 
 /* Hero trang chủ (nền kem viết inline) → tím nhạt ngả cam */
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"],
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="FFF7F0" i] {
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav + section[style*="255, 247, 240"],
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav + section[style*="FFF7F0" i] {
   background: linear-gradient(180deg, #f1e4fb 0%, #fbeef6 50%, #fff3e8 100%) !important;
 }
 
@@ -116,7 +116,7 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
   main > section.bg-card.border-b:first-child,
   main > section.border-b:first-child[class*="from-primary"],
   .section-container.space-y-6 > .relative.overflow-hidden.rounded-3xl.bg-card\/60,
-  section[style*="255, 247, 240"],
+  nav + section[style*="255, 247, 240"],
   .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type,
   main > header.py-8,
   section.rounded-3xl[style*="radial-gradient"],
@@ -150,7 +150,7 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
   main > section.bg-card.border-b:first-child,
   main > section.border-b:first-child[class*="from-primary"],
   .section-container.space-y-6 > .relative.overflow-hidden.rounded-3xl.bg-card\/60,
-  section[style*="255, 247, 240"],
+  nav + section[style*="255, 247, 240"],
   .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type,
   main > header.py-8,
   section.rounded-3xl[style*="radial-gradient"],
@@ -191,18 +191,18 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
 }
 
 /* Chữ màu cứng trong khối đêm */
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(section[style*="255, 247, 240"], .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type) :is([style*="rgb(77, 13, 13)"], .text-brand-brown, h1, h2):not(.bg-white *, [class*="bg-white/"] *) {
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(nav + section[style*="255, 247, 240"], .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type) :is([style*="rgb(77, 13, 13)"], .text-brand-brown, h1, h2):not(.bg-white *, [class*="bg-white/"] *) {
   color: #fff7ef !important;
 }
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(section[style*="255, 247, 240"], .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type) :is([style*="rgb(107, 74, 74)"], [style*="rgb(107, 74, 59)"], p):not(.bg-white *, [class*="bg-white/"] *) {
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(nav + section[style*="255, 247, 240"], .bg-\[\#FFF8F5\] > section.relative.overflow-hidden:first-of-type) :is([style*="rgb(107, 74, 74)"], [style*="rgb(107, 74, 59)"], p):not(.bg-white *, [class*="bg-white/"] *) {
   color: #ddcbea !important;
 }
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(nav.fixed.top-0, section[style*="255, 247, 240"], main > section:first-child, .rounded-3xl.bg-card\/60, main > header.py-8, .bg-\[\#FFF8F5\] > section:first-of-type) .from-\[\#CC1C01\] {
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(nav.fixed.top-0, nav + section[style*="255, 247, 240"], main > section:first-child, .rounded-3xl.bg-card\/60, main > header.py-8, .bg-\[\#FFF8F5\] > section:first-of-type) .from-\[\#CC1C01\] {
   --tw-gradient-from: #ff9a3c var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(255 154 60 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .particles-bg { opacity: .35; }
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav + section[style*="255, 247, 240"] .particles-bg { opacity: .35; }
 
 /* Nền trang blog & các nền kem viết cứng → tím nhạt */
 html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) :is(.bg-\[\#FFF8F5\], .bg-\[\#FFFBF6\]) {
@@ -215,12 +215,12 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
 }
 
 /* Chip trắng trong hero trang chủ → kính mờ trên nền đêm */
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm {
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav + section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: rgba(255, 255, 255, 0.22) !important;
 }
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm,
-html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm * {
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav + section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm,
+html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav + section[style*="255, 247, 240"] .rounded-xl.bg-white.shadow-sm * {
   color: #fff7ef !important;
 }
 
@@ -237,3 +237,33 @@ html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
 html.halloween body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) div.min-h-screen[style*="rgb(77, 13, 13) 0%"] > div.pointer-events-none.rounded-full {
   background: radial-gradient(circle, rgba(180, 85, 255, 0.35), transparent 70%) !important;
 }
+
+/* Nhện thả tơ lên xuống ở mạng nhện góc trái (desktop) */
+.hw-decor::before {
+  content: "";
+  position: fixed;
+  left: 47px;
+  top: 96px;
+  width: 1px;
+  height: 12px;
+  background: rgba(190, 165, 220, 0.9);
+  z-index: 31;
+  pointer-events: none;
+  animation: hw-thread 9s ease-in-out infinite;
+}
+.hw-decor::after {
+  content: "";
+  position: fixed;
+  left: 35px;
+  top: 104px;
+  width: 25px;
+  height: 25px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg stroke='%231a0826' stroke-width='1.3' fill='none' stroke-linecap='round'%3E%3Cg%3E%3Cpath d='M9 11 L3 6 M9 13 L2 12 M9 15 L3 19 M10 16 L6 22'/%3E%3CanimateTransform attributeName='transform' type='rotate' values='-7 12 13%3B7 12 13%3B-7 12 13' dur='0.7s' repeatCount='indefinite'/%3E%3C/g%3E%3Cg%3E%3Cpath d='M15 11 L21 6 M15 13 L22 12 M15 15 L21 19 M14 16 L18 22'/%3E%3CanimateTransform attributeName='transform' type='rotate' values='7 12 13%3B-7 12 13%3B7 12 13' dur='0.7s' repeatCount='indefinite'/%3E%3C/g%3E%3C/g%3E%3Cellipse cx='12' cy='14' rx='4.6' ry='5.2' fill='%231a0826'/%3E%3Ccircle cx='12' cy='8.2' r='3' fill='%232a0f3d'/%3E%3Ccircle cx='10.9' cy='7.8' r='0.9' fill='%23FF9A3C'/%3E%3Ccircle cx='13.1' cy='7.8' r='0.9' fill='%23FF9A3C'/%3E%3Cpath d='M10.2 15 Q12 16.6 13.8 15' stroke='%237a1fa2' stroke-width='0.8' fill='none'/%3E%3C/svg%3E") center / contain no-repeat;
+  z-index: 31;
+  pointer-events: none;
+  animation: hw-spider 9s ease-in-out infinite;
+}
+@keyframes hw-thread { 0%, 100% { height: 12px; } 30%, 45% { height: 74px; } 70%, 82% { height: 34px; } }
+@keyframes hw-spider { 0%, 100% { transform: translateY(0); } 30%, 45% { transform: translateY(62px); } 70%, 82% { transform: translateY(22px); } }
+@media (max-width: 1023px) { .hw-decor::before, .hw-decor::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { .hw-decor::before, .hw-decor::after { animation: none; } }
