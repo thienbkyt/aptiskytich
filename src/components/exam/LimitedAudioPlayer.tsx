@@ -761,8 +761,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     token?: number,
   ): Promise<"ok" | "blocked" | "error" | "stale"> => {
     // Pick the source for this play: first play uses `src`, later plays use
-    // `src2` when provided (falls back to `src`).
-    const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    // `src2` when provided (falls back to `src`). Review mode always uses
+    // `src` so the seek bar stays matched to one file.
+    const activeSrc = !reviewMode && !isFirstPlay && src2 ? src2 : src;
     activeSrcRef.current = activeSrc;
     // Always re-sign right before playing: signed URLs live only 5 minutes, and
     // a student may replay long after the part was batch-signed. The cache in
@@ -811,11 +812,14 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
     if (token !== undefined && token !== introTokenRef.current) return "stale";
     audio.muted = false;
+    // Review mode resumes from the current position (unless the clip already
+    // ended → restart from 0, same as exam mode).
+    const resumePos = reviewMode && !audio.ended ? audio.currentTime : 0;
     // After load() the browser already resets currentTime; touching it while
     // readyState === 0 throws InvalidStateError.
     if (!reloaded) {
       try {
-        audio.currentTime = 0;
+        if (!reviewMode || audio.ended) audio.currentTime = 0;
       } catch {
         /* noop */
       }
@@ -837,6 +841,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         audio.addEventListener("canplay", finish);
       });
       if (token !== undefined && token !== introTokenRef.current) return "stale";
+    }
+    // Review mode: restore the pre-reload position so the seek bar and the
+    // audio stay in sync instead of restarting from 0.
+    if (reviewMode && resumePos > 0) {
+      try {
+        audio.currentTime = resumePos;
+      } catch {
+        /* noop */
+      }
     }
     try {
       // Only one audio may sound at a time across the whole page.
