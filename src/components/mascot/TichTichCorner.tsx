@@ -41,7 +41,7 @@ export default function TichTichCorner() {
   return (
     <div className="fixed right-6 bottom-[84px] z-40 hidden md:block">
       <TichTichQuiz onMood={setQuizMood} />
-      <TichTich size={96} idleSleep bubbleSide="left" enterLines={TIPS} mood={quizMood ?? "normal"} />
+      <TichTich size={96} idleSleep={!quizMood} bubbleSide="left" enterLines={TIPS} mood={quizMood ?? "normal"} />
     </div>
   );
 }
