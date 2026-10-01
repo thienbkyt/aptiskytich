@@ -1,5 +1,38 @@
 import { Component, ReactNode } from "react";
 import { logClientError } from "@/lib/clientErrorLog";
+import { safeSessionStorage } from "@/lib/safeStorage";
+
+/**
+ * Lỗi do lệch phiên bản sau khi publish: tab đang mở bản cũ nhưng tải phải chunk
+ * của bản mới (hoặc ngược lại) → React văng "Cannot read properties of undefined
+ * (reading 'default')" / lỗi import chunk. Cách xử lý: tự tải lại trang 1 lần để
+ * lấy bundle mới. Không tự tải lại khi đang làm bài (để học viên bấm nút).
+ * Dùng chung khoá "chunk-reload-at" với main.tsx để không lặp reload.
+ */
+function isVersionMismatchError(error: Error | null | undefined): boolean {
+  const msg = String(error?.message ?? "");
+  const stack = String(error?.stack ?? "");
+  return (
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("Importing a module script failed") ||
+    msg.includes("error loading dynamically imported module") ||
+    (msg.includes("reading 'default'") && stack.includes("/assets/"))
+  );
+}
+
+function tryAutoReload(): boolean {
+  try {
+    if ((window as Window & { __ktExamActive?: boolean }).__ktExamActive) return false;
+    const KEY = "chunk-reload-at";
+    const last = Number(safeSessionStorage.getItem(KEY) || 0);
+    if (Date.now() - last <= 10000) return false;
+    safeSessionStorage.setItem(KEY, String(Date.now()));
+    window.location.reload();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** Dedupe identical crash messages within 60s — a 3rd-party script can loop errors. */
 const lastLogged = new Map<string, number>();
@@ -22,6 +55,16 @@ export default class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: unknown) {
     // eslint-disable-next-line no-console
     console.error("[ErrorBoundary]", error, info);
+    if (isVersionMismatchError(error)) {
+      try {
+        logClientError("chunk_version_mismatch", error, {
+          url: typeof window !== "undefined" ? window.location.pathname : null,
+        });
+      } catch {
+        /* ignore */
+      }
+      if (tryAutoReload()) return;
+    }
     try {
       const msg = String(error?.message ?? error ?? "").slice(0, 2000);
       const now = Date.now();
