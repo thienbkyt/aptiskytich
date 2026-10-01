@@ -70,7 +70,7 @@ export async function gradeSpeakingPartV2(
   partType: string,
   questions: Array<{ questionText?: string; question_text?: string; [k: string]: any }>,
   audioBlobs: Array<Blob | null | undefined>,
-  opts?: { sessionId?: string; testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null; /** Recording length per item, in seconds (optional). */ durations?: number[] }
+  opts?: { sessionId?: string; testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null; /** Paths of recordings already saved to storage (reused by the retry queue). */ audioPaths?: Array<string | null>; /** Recording length per item, in seconds (optional). */ durations?: number[] }
 ): Promise<SpeakingPartResultV2> {
   const audios: string[] = [];
   for (const b of audioBlobs) {
@@ -156,7 +156,14 @@ export async function gradeSpeakingPartV2(
     let audioPaths: Array<string | null> = [];
     let missing: number[] = [];
 
-    try {
+    // Reuse recordings already saved to storage (the full test uploads them
+    // before grading) so a flaky re-upload can never block the background retry.
+    const presaved = Array.isArray(opts?.audioPaths) ? opts!.audioPaths! : null;
+    const presavedOk = !!presaved && audioBlobs.every((b, i) => !b || !!presaved[i]);
+
+    if (presavedOk) {
+      audioPaths = audioBlobs.map((b, i) => (b ? presaved![i] ?? null : null));
+    } else try {
       const res = await uploadSpeakingBlobsWithRetry(
         audioBlobs,
         opts?.sessionId || opts?.testResultId || "adhoc",
