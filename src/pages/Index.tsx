@@ -366,7 +366,7 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
             {[
               { num: "01", title: "Làm 1 bài thi thử full test", desc: "Vào Thi thử làm trọn một đề như thi thật để biết mình đang ở đâu.", to: "/thi-thu", cta: "Vào thi thử" },
               { num: "02", title: "Xem band điểm AI chấm", desc: "AI chấm cả Speaking và Writing, trả band từng kỹ năng ngay sau khi nộp." },
@@ -384,9 +384,9 @@ const Index = () => {
                   {s.num}
                 </div>
                 {i < arr.length - 1 && (
-                  <ArrowRight className="hidden md:block absolute top-9 -right-4 w-6 h-6 text-primary/40" aria-hidden />
+                  <ArrowRight className="hidden lg:block absolute top-9 -right-4 w-6 h-6 text-primary/40" aria-hidden />
                 )}
-                <h3 className="font-heading font-extrabold text-base md:text-lg leading-tight mb-2 whitespace-nowrap" style={{ color: "#4D0D0D" }}>
+                <h3 className="font-heading font-extrabold text-base md:text-lg leading-tight mb-2 text-balance" style={{ color: "#4D0D0D" }}>
                   {s.title}
                 </h3>
                 <p className="text-sm leading-relaxed mb-5" style={{ color: "#6b4a4a" }}>{s.desc}</p>
