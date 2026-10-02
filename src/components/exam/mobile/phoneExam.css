@@ -255,3 +255,17 @@ html.kt-phone-exam .justify-between:has(> div:first-child > p.text-secondary-for
   order: 1;
   margin-left: auto;
 }
+
+/* Nút "Báo lỗi chức năng" chung của web: trong bài thi trên điện thoại thì ẩn
+   (đã có nút báo lỗi riêng của từng câu ở thanh dưới) để không che nút danh sách câu */
+html.kt-phone-exam button[aria-label="Báo lỗi chức năng"] {
+  display: none !important;
+}
+
+/* Trang trí Halloween (dây đèn, mạng nhện, ma) không hiện trong bài thi */
+html.kt-phone-exam .hw-decor,
+body.exam-mode .hw-decor,
+body.full-test-active .hw-decor,
+body.exam-fullscreen .hw-decor {
+  display: none !important;
+}
