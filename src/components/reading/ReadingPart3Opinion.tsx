@@ -5,6 +5,7 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingOpinionQuestion } from "@/data/readingQuestions";
 import { personLetterToIndex, type ReadingReviewData } from "@/lib/readingReview";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
 
 interface Props {
   question: ReadingOpinionQuestion;
@@ -45,6 +46,7 @@ const ReadingPart3Opinion = ({
   pageNumber, pageTotal, hideTimer = false,
   lockedIndices, hideBottomNav = false,
 }: Props) => {
+  const isPhone = usePhoneExamUI();
   const globallyRevealed = submitted || !!revealAnswers;
   const revealFor = (si: number) => globallyRevealed || (lockedIndices?.has(si) ?? false);
   const reveal = globallyRevealed || (lockedIndices && lockedIndices.size > 0);
@@ -158,6 +160,34 @@ const ReadingPart3Opinion = ({
                 {stmt.text}
               </span>
 
+              {isPhone ? (
+                <div className="w-full grid grid-cols-2 gap-2">
+                  {question.people.map((person, pi) => {
+                    const on = selected === pi;
+                    const isAns = revealHere && pi === stmt.correctPerson;
+                    const cls = revealHere
+                      ? isAns
+                        ? "border-success bg-success/15 text-success"
+                        : on
+                          ? "border-destructive bg-destructive/15 text-destructive"
+                          : "border-border text-muted-foreground"
+                      : on
+                        ? "border-exam-accent bg-exam-accent-soft/15 text-exam-text font-bold"
+                        : "border-border text-exam-text";
+                    return (
+                      <button
+                        key={pi}
+                        type="button"
+                        disabled={lockedHere}
+                        onClick={() => !lockedHere && onAnswer(si, pi)}
+                        className={`min-h-[44px] rounded-xl border-2 px-3 py-2 text-sm text-left bg-exam-surface transition-colors ${cls}`}
+                      >
+                        {person.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
               <div className="relative shrink-0">
                 <select
                   value={selected !== null && selected !== undefined ? selected : ""}
@@ -186,6 +216,7 @@ const ReadingPart3Opinion = ({
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-muted-foreground" />
               </div>
+              )}
 
               {revealHere && isCorrect && <CheckCircle2 className="w-5 h-5 text-success shrink-0" />}
               {revealHere && selected !== stmt.correctPerson && (
