@@ -27,7 +27,7 @@ import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
 
 import { toast } from "sonner";
-import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import PhoneExamMode from "@/components/exam/mobile/PhoneExamMode";
 import type {
   WritingPart1Data,
   WritingPart2Data,
@@ -487,7 +487,7 @@ const WritingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-exam-surface pl-20 pt-10 font-sans text-exam-text">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {adminControls}
         {hasStarted && (
           <div className="pr-10 pb-3">
@@ -520,7 +520,7 @@ const WritingExamEngine = ({
   if (phase === "writing_intro") {
     return (
       <div className="min-h-screen bg-exam-surface flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {adminControls}
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
         {hasStarted && (
@@ -576,7 +576,7 @@ const WritingExamEngine = ({
     })();
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
           <PausedTimeNotice pausedMs={pausedMs} />
@@ -630,7 +630,7 @@ const WritingExamEngine = ({
   if (phase === "practice" && !reviewMode && missingData) {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <p className="text-base text-foreground max-w-md">
@@ -672,7 +672,7 @@ const WritingExamEngine = ({
       )}
 
 
-      <RotateDeviceOverlay />
+      <PhoneExamMode />
       {adminControls}
       {phase === "practice" && (reviewMode || !submitted) && (
         <>
