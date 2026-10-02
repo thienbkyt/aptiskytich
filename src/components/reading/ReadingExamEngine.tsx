@@ -25,7 +25,7 @@ import type { ReadingReviewData } from "@/lib/readingReview";
 import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
-import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import PhoneExamMode from "@/components/exam/mobile/PhoneExamMode";
 import { Button } from "@/components/ui/button";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
@@ -602,7 +602,7 @@ const ReadingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {adminControls}
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
@@ -629,7 +629,7 @@ const ReadingExamEngine = ({
   if (phase === "reading_intro") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {adminControls}
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
@@ -667,7 +667,7 @@ const ReadingExamEngine = ({
   if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
           <PausedTimeNotice pausedMs={pausedMs} />
@@ -697,7 +697,7 @@ const ReadingExamEngine = ({
   return (
     <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
     <div className="min-h-screen bg-exam-bg flex flex-col">
-      <RotateDeviceOverlay />
+      <PhoneExamMode />
       {adminControls}
       {reportButton}
       {allowReveal && !submitted && !reviewMode && phase === "practice" && (
