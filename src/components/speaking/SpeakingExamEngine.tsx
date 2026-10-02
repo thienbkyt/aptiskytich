@@ -64,7 +64,8 @@ import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 import SpeakingProfileView from "./SpeakingProfileView";
 import ShowcaseSection from "@/components/showcase/ShowcaseSection";
 import ShowcaseInExam from "@/components/showcase/ShowcaseInExam";
-import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import PhoneExamMode from "@/components/exam/mobile/PhoneExamMode";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
@@ -147,6 +148,7 @@ const SpeakingExamEngine = ({
   fullFlow = false, isLastPart, onPartSubmissions,
   allowReveal = false,
 }: SpeakingExamEngineProps) => {
+  const isPhone = usePhoneExamUI();
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prepTimeLeft, setPrepTimeLeft] = useState(0);
@@ -1437,7 +1439,7 @@ const SpeakingExamEngine = ({
   if (phase === "start") {
     return (
       <div className="min-h-screen bg-exam-surface flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 bg-exam-surface pl-[80px] pt-[40px] font-sans text-exam-text">
           <p className="text-sm text-exam-text-muted mb-2">Aptis General Practice Test</p>
@@ -1478,7 +1480,7 @@ const SpeakingExamEngine = ({
   if (phase === "mic-check") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 flex items-start justify-center px-4 pt-6 sm:pt-12 pb-28 sm:pb-24">
           <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm max-w-xl w-full p-8">
@@ -1510,7 +1512,7 @@ const SpeakingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <div className="flex-1 flex items-start justify-center px-4 pt-6 sm:pt-12 pb-28 sm:pb-24">
           <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm max-w-3xl w-full p-8 md:p-12">
             <h2 className="text-xl font-bold text-exam-text mb-4">Aptis General Speaking Test Instructions</h2>
@@ -1569,7 +1571,7 @@ const SpeakingExamEngine = ({
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
           <div className="max-w-3xl mx-auto space-y-6">
@@ -1714,7 +1716,7 @@ const SpeakingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-exam-bg flex flex-col">
-      <RotateDeviceOverlay />
+      <PhoneExamMode />
       {micError && (
         <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center px-4">
           <div role="alertdialog" aria-modal="true" className="bg-exam-surface rounded-2xl border border-exam-border shadow-xl max-w-md w-full p-6 space-y-4">
@@ -1771,9 +1773,9 @@ const SpeakingExamEngine = ({
 
 
 
-      <div className="flex-1 flex px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 gap-6 max-w-6xl mx-auto w-full">
+      <div className={`flex-1 flex px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-6xl mx-auto w-full ${isPhone ? "flex-col gap-3" : "gap-6"}`}>
         {/* Left: Content */}
-        <div className="flex-1">
+        <div className={isPhone ? "min-w-0" : "flex-1"}>
           <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-4 sm:p-8 sm:min-h-[400px]">
             <p className="text-xs text-exam-text-muted mb-1">Speaking</p>
             <p className="text-sm font-bold text-exam-text mb-6">
@@ -1928,8 +1930,8 @@ const SpeakingExamEngine = ({
           )}
         </div>
 
-        {/* Right: Timer panel */}
-        <div className="w-[220px] shrink-0">
+        {/* Right: Timer panel (điện thoại: lên đầu, dính dưới header) */}
+        <div className={isPhone ? "kt-speak-panel order-first sticky top-[52px] z-20 w-full" : "w-[220px] shrink-0"}>
           {isReading ? (
             <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
               <div className="w-16 h-16 rounded-full bg-exam-accent-soft/10 flex items-center justify-center mb-4 animate-pulse">
