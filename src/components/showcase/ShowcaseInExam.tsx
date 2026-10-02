@@ -12,6 +12,7 @@ import {
   type ShowcaseCard,
 } from "@/lib/showcase";
 import ShowcaseDetailDialog from "./ShowcaseDetailDialog";
+import { holdExamClock } from "@/lib/examHold";
 
 interface Props {
   examSetId: string;
@@ -69,6 +70,12 @@ const ShowcaseInExam = ({ examSetId, skill, partType }: Props) => {
       alive = false;
     };
   }, [examSetId, band, seed, skill, partType]);
+
+  // Đang xem bài trên Bảng Kỳ Tích → dừng đồng hồ làm bài
+  useEffect(() => {
+    if (!detailOpen) return;
+    return holdExamClock();
+  }, [detailOpen]);
 
   const total = useMemo(
     () => (counts ? BANDS.reduce((sum, item) => sum + counts[item], 0) : 0),
