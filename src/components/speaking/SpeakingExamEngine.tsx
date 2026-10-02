@@ -66,6 +66,7 @@ import ShowcaseSection from "@/components/showcase/ShowcaseSection";
 import ShowcaseInExam from "@/components/showcase/ShowcaseInExam";
 import PhoneExamMode from "@/components/exam/mobile/PhoneExamMode";
 import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import { isExamClockHeld, onExamClockHold } from "@/lib/examHold";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
@@ -168,7 +169,8 @@ const SpeakingExamEngine = ({
   const activeOutline = partType === "part1" ? part1Data
     : partType === "part2" ? part2Data
     : partType === "part3" ? part3Data : part4Data;
-  const canUseScratchpad = !fullTestSessionId
+  // Điện thoại: bỏ tính năng nháp (chật màn, dễ che đề)
+  const canUseScratchpad = !fullTestSessionId && !isPhone
     && !!(activeOutline?.outlineB1 || activeOutline?.outlineB2);
 
 
@@ -751,7 +753,8 @@ const SpeakingExamEngine = ({
     const prepEndAt = Date.now() + prepTime * 1000;
     prepEndAtRef.current = prepEndAt;
     timerRef.current = setInterval(() => {
-      const remaining = Math.max(0, Math.ceil((prepEndAt - Date.now()) / 1000));
+      if (isExamClockHeld()) return;
+      const remaining = Math.max(0, Math.ceil(((prepEndAtRef.current ?? prepEndAt) - Date.now()) / 1000));
       setPrepTimeLeft(remaining);
       if (remaining <= 0) {
         if (timerRef.current) clearInterval(timerRef.current);
@@ -953,7 +956,8 @@ const SpeakingExamEngine = ({
       const recEndAt = (recordingStartRef.current ?? Date.now()) + speakTime * 1000;
       speakEndAtRef.current = recEndAt;
       timerRef.current = setInterval(() => {
-        const remaining = Math.max(0, Math.ceil((recEndAt - Date.now()) / 1000));
+        if (isExamClockHeld()) return;
+        const remaining = Math.max(0, Math.ceil(((speakEndAtRef.current ?? recEndAt) - Date.now()) / 1000));
         setSpeakTimeLeft(remaining);
         if (remaining <= 0) {
           if (timerRef.current) clearInterval(timerRef.current);
@@ -1038,9 +1042,28 @@ const SpeakingExamEngine = ({
   // Coming back to a hidden tab: recompute the remaining time immediately from
   // the real deadline. If it already elapsed, stop the recording right away so
   // no over-length audio is ever graded.
+  // Đang xem Bảng Kỳ Tích → dừng đồng hồ chuẩn bị/ghi âm (và tạm dừng ghi âm), xem xong chạy tiếp.
+  useEffect(() => {
+    let heldAt: number | null = null;
+    return onExamClockHold((held) => {
+      const rec = mediaRecorderRef.current;
+      if (held) {
+        heldAt = Date.now();
+        try { if (rec && rec.state === "recording") rec.pause(); } catch { /* ignore */ }
+        return;
+      }
+      const delta = heldAt != null ? Date.now() - heldAt : 0;
+      heldAt = null;
+      if (prepEndAtRef.current != null) prepEndAtRef.current += delta;
+      if (speakEndAtRef.current != null) speakEndAtRef.current += delta;
+      try { if (rec && rec.state === "paused") rec.resume(); } catch { /* ignore */ }
+    });
+  }, []);
+
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
+      if (isExamClockHeld()) return;
       const now = Date.now();
       if (speakEndAtRef.current != null) {
         const remaining = Math.max(0, Math.ceil((speakEndAtRef.current - now) / 1000));
