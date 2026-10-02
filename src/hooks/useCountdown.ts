@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useExamClockHeld } from "@/lib/examHold";
 
 export interface UseCountdownOptions {
   /** Full duration of the clock in seconds (used when initialLeft is not given). */
@@ -24,9 +25,12 @@ export function useCountdown({
   totalSeconds,
   initialLeft,
   running,
-  paused = false,
+  paused: pausedProp = false,
   onTick,
 }: UseCountdownOptions): { timeLeft: number; pausedMs: number; restart: (seconds?: number) => void } {
+  // Đồng hồ cũng dừng khi đang "giữ" toàn cục (vd. mở xem bài trên Bảng Kỳ Tích)
+  const held = useExamClockHeld();
+  const paused = pausedProp || held;
   const startLeft = Math.max(0, initialLeft ?? totalSeconds);
   const endAtRef = useRef<number>(Date.now() + startLeft * 1000);
   const pausedAtRef = useRef<number | null>(null);
