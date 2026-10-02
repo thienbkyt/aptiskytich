@@ -5,6 +5,8 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingLongQuestion } from "@/data/readingQuestions";
 import { part4ItemId, part4EvidenceId, type ReadingReviewData } from "@/lib/readingReview";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import PhoneSelect from "@/components/exam/mobile/PhoneSelect";
 
 /** Normalize for tolerant matching: collapse whitespace, straighten quotes, nbsp -> space. */
 const normalizeForMatch = (s: string) =>
@@ -99,6 +101,7 @@ const ReadingPart4Long = ({
   reviewData, reviewDataLoading, hideTimer = false,
   lockedIndices, hideBottomNav = false,
 }: Props) => {
+  const isPhone = usePhoneExamUI();
   const globallyRevealed = submitted || !!revealAnswers;
   const revealFor = (pIdx: number) => globallyRevealed || (lockedIndices?.has(pIdx) ?? false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
@@ -201,11 +204,11 @@ const ReadingPart4Long = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: pIdx * 0.05 }}
-              className="bg-card border border-border rounded-xl p-5"
+              className={`bg-card border border-border rounded-xl ${isPhone ? "p-3.5" : "p-5"}`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-sm font-bold text-foreground min-w-[24px]">{para.index}.</span>
-                <div className="relative flex-1 max-w-sm">
+                <div className={`relative flex-1 ${isPhone ? "min-w-0" : "max-w-sm"}`}>
                   {locked ? (
                     <div
                       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm ${
@@ -222,6 +225,23 @@ const ReadingPart4Long = ({
                       {isCorrect && <CheckCircle2 className="w-4 h-4 shrink-0 ml-2 text-green-500" />}
                       {isWrong && <XCircle className="w-4 h-4 shrink-0 ml-2 text-destructive" />}
                     </div>
+                  ) : isPhone ? (
+                    <PhoneSelect
+                      value={selected}
+                      options={allHeadingTexts.map((h, hIdx) => {
+                        const usedAt = answers.findIndex((a, k) => k !== pIdx && a === hIdx);
+                        return {
+                          value: hIdx,
+                          label: h,
+                          note: usedAt >= 0 ? `đang ở đoạn ${paragraphs[usedAt]?.index ?? usedAt + 1}` : undefined,
+                        };
+                      })}
+                      onChange={(v) => handleSelect(pIdx, v)}
+                      placeholder="Chọn heading…"
+                      className={selected !== null && selected !== undefined ? "border-exam-accent" : "border-dashed border-exam-accent/60"}
+                      title={`Chọn heading cho đoạn ${para.index}`}
+                      context={<span className="line-clamp-3">{para.text}</span>}
+                    />
                   ) : (
                     <>
                       <button
@@ -297,7 +317,7 @@ const ReadingPart4Long = ({
                   {explByPara[pIdx]}
                 </div>
               )}
-              <div className="text-sm text-foreground leading-relaxed whitespace-pre-line pl-9">
+              <div className={`text-sm text-foreground leading-relaxed whitespace-pre-line ${isPhone ? "pl-0 text-[15px]" : "pl-9"}`}>
                 {reveal
                   ? renderParagraph(
                       para.text,
