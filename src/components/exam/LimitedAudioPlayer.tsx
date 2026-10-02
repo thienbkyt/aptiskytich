@@ -1036,7 +1036,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         type="button"
         onClick={togglePlay}
         disabled={disabled || loadingAudio}
-        className={`inline-flex items-center gap-1.5 text-sm underline underline-offset-2 transition-colors ${
+        className={`kt-audio-play inline-flex items-center gap-1.5 text-sm underline underline-offset-2 transition-colors ${
           disabled || loadingAudio
             ? "text-muted-foreground cursor-not-allowed no-underline"
             : "text-foreground hover:text-primary cursor-pointer"
