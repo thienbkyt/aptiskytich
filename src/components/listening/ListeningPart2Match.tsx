@@ -149,8 +149,8 @@ const ListeningPart2Match = ({
                             : isWrong
                               ? "border-destructive bg-destructive/10 text-destructive"
                               : selectedText
-                                ? "border-exam-accent"
-                                : "border-dashed border-exam-accent/60"
+                                ? "border-exam-accent bg-exam-accent-soft/10"
+                                : "border-exam-border"
                         }
                         title={`Speaker ${person.name}`}
                       />
