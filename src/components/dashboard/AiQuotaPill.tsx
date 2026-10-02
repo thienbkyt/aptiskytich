@@ -35,7 +35,7 @@ const AiQuotaPill = ({ className }: { className?: string }) => {
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-3 rounded-2xl border px-4 py-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5",
+        "group relative flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3 rounded-2xl border px-4 py-4 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5",
         out
           ? "border-destructive/40 bg-destructive/5 hover:border-destructive/60"
           : "border-border bg-card/70 hover:border-primary/50 hover:shadow-glow-soft",
@@ -44,7 +44,7 @@ const AiQuotaPill = ({ className }: { className?: string }) => {
     >
       <div
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ring-1 ring-inset ring-border",
+          "flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ring-1 ring-inset ring-border",
           out ? "from-destructive/30 to-destructive/5 text-destructive" : "from-accent/30 to-accent/5 text-accent",
         )}
       >
