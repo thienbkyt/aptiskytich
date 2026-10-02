@@ -91,8 +91,8 @@ const ReadingPart1Sentence = ({
                 ? "border-destructive bg-destructive/10 text-destructive"
                 : "border-border"
             : selectedValue !== null && selectedValue !== undefined
-              ? "border-exam-accent text-foreground"
-              : "border-dashed border-exam-accent/60";
+              ? "border-exam-accent bg-exam-accent-soft/10 text-foreground"
+              : "border-exam-border";
           const ctxText = text.replace(/\{(\d+)\}/g, (_m, n) =>
             Number(n) === gapIndex ? "_____" : (answers[Number(n)] != null ? question.gaps[Number(n)]?.options[answers[Number(n)] as number] ?? "___" : "___"),
           );
