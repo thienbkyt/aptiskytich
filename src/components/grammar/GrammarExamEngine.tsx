@@ -24,7 +24,9 @@ import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
-import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import PhoneExamMode from "@/components/exam/mobile/PhoneExamMode";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import PhoneSelect from "@/components/exam/mobile/PhoneSelect";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
 
@@ -95,6 +97,7 @@ const GrammarExamEngine = ({
   onTogglePause: onTogglePauseProp,
   hideTimer = false,
 }: GrammarExamEngineProps) => {
+  const isPhone = usePhoneExamUI();
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(
@@ -330,7 +333,7 @@ const GrammarExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {!reviewMode && !submitted && (
           <AdminExamControls
             label="Grammar · Hướng dẫn"
@@ -363,7 +366,7 @@ const GrammarExamEngine = ({
   if (phase === "grammar_intro") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {!reviewMode && !submitted && (
           <AdminExamControls
             label="Grammar · Bắt đầu"
@@ -411,7 +414,7 @@ const GrammarExamEngine = ({
     };
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
           <PausedTimeNotice pausedMs={pausedMs} />
@@ -456,7 +459,7 @@ const GrammarExamEngine = ({
 
   return (
     <div className="min-h-screen bg-exam-bg flex flex-col">
-      <RotateDeviceOverlay />
+      <PhoneExamMode />
       {phase === "practice" && !submitted && (
         <AdminExamControls
           label={`Grammar · Câu ${currentGroupIdx + 1}/${groups.length}`}
@@ -559,7 +562,7 @@ const GrammarExamEngine = ({
                 const showExampleRow =
                   gType === "synonym" || (isCollocation && !collocationGroupIsSentence);
                 return (
-                <div className="bg-exam-surface rounded-xl border border-exam-border p-6 mb-6 shadow-sm">
+                <div className={`bg-exam-surface rounded-xl border border-exam-border ${isPhone ? "p-4" : "p-6"} mb-6 shadow-sm`}>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-exam-accent-soft/10 text-exam-accent">
                       {badge}
@@ -572,14 +575,14 @@ const GrammarExamEngine = ({
                   {/* Example row (muted, non-interactive) — only for synonym and word-pair collocation */}
                   {showExampleRow && (
                     <>
-                      <div className="flex items-center gap-3 mb-2 opacity-60">
-                        <div className="w-24 text-xs text-exam-text-muted">Example</div>
-                        <div className="flex-1 flex items-center gap-3">
-                          <div className={`w-32 px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text`}>
+                      <div className={`flex items-center mb-2 opacity-60 ${isPhone ? "gap-2" : "gap-3"}`}>
+                        <div className={`${isPhone ? "w-auto" : "w-24"} text-xs text-exam-text-muted`}>Example</div>
+                        <div className={`flex-1 min-w-0 flex items-center ${isPhone ? "gap-2" : "gap-3"}`}>
+                          <div className={`${isPhone ? "flex-1 min-w-0" : "w-32"} px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text`}>
                             big
                           </div>
                           <span className="text-exam-text-muted whitespace-nowrap">{separator}</span>
-                          <div className="w-40 px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text">
+                          <div className={`${isPhone ? "flex-1 min-w-0" : "w-40"} px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text`}>
                             {isCollocation ? "house" : "large"}
                           </div>
                         </div>
@@ -626,27 +629,43 @@ const GrammarExamEngine = ({
                           {useInlineGap ? (
                             <div className="flex-1 flex items-center gap-2 flex-wrap">
                               <span className="text-sm text-exam-text">{beforeGap}</span>
-                              <div className="w-56">
+                              <div className={isPhone ? "w-full" : "w-56"}>
+                                {isPhone ? (
+                                  <PhoneSelect
+                                    value={userAns}
+                                    options={opts
+                                      .map((opt, oi) => ({ value: oi, label: `${labels[oi]}. ${opt}`, ok: !!(opt && opt.trim()) }))
+                                      .filter((o) => o.ok)
+                                      .map(({ value, label }) => ({ value, label }))}
+                                    onChange={(v) => handleAnswerSelect(idx, v)}
+                                    disabled={effectiveSubmitted}
+                                    placeholder="Chọn…"
+                                    className={triggerCls || (userAns !== null && userAns !== undefined ? "border-exam-accent" : "border-dashed border-exam-accent/60")}
+                                    title="Chọn đáp án"
+                                    context={item.question_text}
+                                  />
+                                ) : (
                                 <Select
-                                  value={userAns !== null ? String(userAns) : undefined}
-                                  onValueChange={(v) =>
-                                    handleAnswerSelect(idx, parseInt(v, 10))
-                                  }
-                                  disabled={effectiveSubmitted}
-                                >
-                                  <SelectTrigger className={`h-10 ${triggerCls}`}>
-                                    <SelectValue placeholder="Select..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {opts.map((opt, oi) =>
-                                      opt && opt.trim() ? (
-                                        <SelectItem key={oi} value={String(oi)}>
-                                          {labels[oi]}. {opt}
-                                        </SelectItem>
-                                      ) : null
-                                    )}
-                                  </SelectContent>
-                                </Select>
+                                    value={userAns !== null ? String(userAns) : undefined}
+                                    onValueChange={(v) =>
+                                      handleAnswerSelect(idx, parseInt(v, 10))
+                                    }
+                                    disabled={effectiveSubmitted}
+                                  >
+                                    <SelectTrigger className={`h-10 ${triggerCls}`}>
+                                      <SelectValue placeholder="Select..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {opts.map((opt, oi) =>
+                                        opt && opt.trim() ? (
+                                          <SelectItem key={oi} value={String(oi)}>
+                                            {labels[oi]}. {opt}
+                                          </SelectItem>
+                                        ) : null
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                )}
                               </div>
                               {afterGap && (
                                 <span className="text-sm text-exam-text">{afterGap}</span>
@@ -659,34 +678,53 @@ const GrammarExamEngine = ({
 
                             </div>
                           ) : (
-                            <div className="flex-1 flex items-center gap-3">
-                              <div className={`${isAnyDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-exam-border bg-exam-surface text-sm font-medium text-exam-text`}>
+                            <div className={isPhone ? "flex-1 flex flex-col items-stretch gap-1.5" : "flex-1 flex items-center gap-3"}>
+                              <div className={`${isPhone ? "w-full" : isAnyDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-exam-border bg-exam-surface text-sm font-medium text-exam-text`}>
                                 {item.question_text}
+                                {isPhone && !isDefinitionMatching && (
+                                  <span className="ml-1.5 text-exam-text-muted font-normal">{separator}</span>
+                                )}
                               </div>
-                              {!isDefinitionMatching && (
+                              {!isDefinitionMatching && !isPhone && (
                                 <span className="text-exam-text-muted whitespace-nowrap">{separator}</span>
                               )}
-                              <div className="w-56">
+                              <div className={isPhone ? "w-full" : "w-56"}>
+                                {isPhone ? (
+                                  <PhoneSelect
+                                    value={userAns}
+                                    options={opts
+                                      .map((opt, oi) => ({ value: oi, label: `${labels[oi]}. ${opt}`, ok: !!(opt && opt.trim()) }))
+                                      .filter((o) => o.ok)
+                                      .map(({ value, label }) => ({ value, label }))}
+                                    onChange={(v) => handleAnswerSelect(idx, v)}
+                                    disabled={effectiveSubmitted}
+                                    placeholder="Chọn…"
+                                    className={triggerCls || (userAns !== null && userAns !== undefined ? "border-exam-accent" : "border-dashed border-exam-accent/60")}
+                                    title="Chọn đáp án"
+                                    context={item.question_text}
+                                  />
+                                ) : (
                                 <Select
-                                  value={userAns !== null ? String(userAns) : undefined}
-                                  onValueChange={(v) =>
-                                    handleAnswerSelect(idx, parseInt(v, 10))
-                                  }
-                                  disabled={effectiveSubmitted}
-                                >
-                                  <SelectTrigger className={`h-10 ${triggerCls}`}>
-                                    <SelectValue placeholder="Select..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {opts.map((opt, oi) =>
-                                      opt && opt.trim() ? (
-                                        <SelectItem key={oi} value={String(oi)}>
-                                          {labels[oi]}. {opt}
-                                        </SelectItem>
-                                      ) : null
-                                    )}
-                                  </SelectContent>
-                                </Select>
+                                    value={userAns !== null ? String(userAns) : undefined}
+                                    onValueChange={(v) =>
+                                      handleAnswerSelect(idx, parseInt(v, 10))
+                                    }
+                                    disabled={effectiveSubmitted}
+                                  >
+                                    <SelectTrigger className={`h-10 ${triggerCls}`}>
+                                      <SelectValue placeholder="Select..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {opts.map((opt, oi) =>
+                                        opt && opt.trim() ? (
+                                          <SelectItem key={oi} value={String(oi)}>
+                                            {labels[oi]}. {opt}
+                                          </SelectItem>
+                                        ) : null
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                )}
                               </div>
                               {effectiveSubmitted && !itemCorrect && (
                                 <span className="text-xs text-success">
@@ -703,7 +741,7 @@ const GrammarExamEngine = ({
                 </div>
                 );
               })() : (
-                <div className="bg-exam-surface rounded-xl border border-exam-border p-6 mb-6 shadow-sm">
+                <div className={`bg-exam-surface rounded-xl border border-exam-border ${isPhone ? "p-4" : "p-6"} mb-6 shadow-sm`}>
                   <div className="flex items-center gap-2 mb-2">
                     {isFillBlank && (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600">
