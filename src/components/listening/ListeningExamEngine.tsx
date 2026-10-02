@@ -28,7 +28,7 @@ import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
 import type { ListeningHighlightData } from "@/lib/listeningReview";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
-import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import PhoneExamMode from "@/components/exam/mobile/PhoneExamMode";
 import { Button } from "@/components/ui/button";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
@@ -564,7 +564,7 @@ const ListeningExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
@@ -586,7 +586,7 @@ const ListeningExamEngine = ({
   if (phase === "listening_intro") {
     return (
       <div className="min-h-screen bg-exam-bg flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 bg-exam-bg pl-[80px] pr-[80px] pt-[40px] font-sans text-exam-text">
@@ -623,7 +623,7 @@ const ListeningExamEngine = ({
   if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <RotateDeviceOverlay />
+        <PhoneExamMode />
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
           <PausedTimeNotice pausedMs={pausedMs} />
@@ -651,7 +651,7 @@ const ListeningExamEngine = ({
   return (
     <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
     <div className="min-h-screen bg-exam-bg flex flex-col">
-      <RotateDeviceOverlay />
+      <PhoneExamMode />
       {adminControls}
       {!submitted && !reviewMode && (
         <ExamReportButton
