@@ -47,16 +47,16 @@ const TierPill = ({ tier, isPro, isPremium, proUntil, className }: TierPillProps
       onClick={goPricing}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goPricing(); } }}
       className={cn(
-        "group relative flex items-center gap-3 rounded-2xl border px-4 py-5 cursor-pointer backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5",
+        "group relative flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3 rounded-2xl border px-4 py-4 sm:py-5 cursor-pointer backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5",
         wrapClass,
         className,
       )}
     >
       <div className={cn(
-        "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset",
+        "flex h-10 w-10 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset",
         iconClass,
       )}>
-        <Icon className="h-7 w-7" />
+        <Icon className="h-5 w-5 sm:h-7 sm:w-7" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-sm text-muted-foreground truncate">Gói hiện tại</div>
