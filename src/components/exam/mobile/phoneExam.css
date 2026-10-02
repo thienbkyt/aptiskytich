@@ -202,3 +202,56 @@ html.kt-phone-exam .exam-fab-reveal svg {
   width: 1.1rem;
   height: 1.1rem;
 }
+
+/* Đưa 2 nút nổi xuống khoảng trống giữa thanh điều hướng dưới (cạnh nút danh sách câu) */
+html.kt-phone-exam .exam-fab-report,
+html.kt-phone-exam .exam-fab-reveal {
+  top: auto !important;
+  right: auto !important;
+  bottom: calc(env(safe-area-inset-bottom) + 11px) !important;
+  box-shadow: none;
+  border-width: 1.5px;
+}
+html.kt-phone-exam .exam-fab-report {
+  left: 64px !important;
+}
+html.kt-phone-exam .exam-fab-reveal {
+  left: 110px !important;
+}
+
+/* Footer Speaking: ẩn 2 nút Info / Accessibility (không dùng trên điện thoại) */
+html.kt-phone-exam .kt-speak-footer > div > div:first-child > button:nth-child(n + 2) {
+  display: none;
+}
+html.kt-phone-exam .kt-speak-footer {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Badge "Còn X lượt chấm AI" nổi góc phải: ẩn trên điện thoại cho khỏi che bài */
+html.kt-phone-exam .fixed.bottom-\[76px\].right-3 {
+  display: none;
+}
+
+/* Màn mở đầu bài (Start Assessment) thụt lề 60px kiểu máy tính */
+html.kt-phone-exam .pl-\[60px\] {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+html.kt-phone-exam .pl-\[60px\] h1 {
+  font-size: 1.35rem;
+  line-height: 1.3;
+}
+
+/* Writing P1/P3: đề dài nằm trong hàng tiêu đề → tách đề xuống dòng riêng, đồng hồ lên trên */
+html.kt-phone-exam .justify-between:has(> div:first-child > p.text-secondary-foreground) {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+}
+html.kt-phone-exam .justify-between:has(> div:first-child > p.text-secondary-foreground) > div:first-child {
+  order: 2;
+  flex: 1 1 100%;
+}
+html.kt-phone-exam .justify-between:has(> div:first-child > p.text-secondary-foreground) > div:last-child {
+  order: 1;
+  margin-left: auto;
+}
