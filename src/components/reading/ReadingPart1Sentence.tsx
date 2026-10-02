@@ -4,6 +4,8 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingSentenceQuestion } from "@/data/readingQuestions";
 import { part1ItemId, buildPart1SentenceForGap, type ReadingReviewData } from "@/lib/readingReview";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import PhoneSelect from "@/components/exam/mobile/PhoneSelect";
 
 interface Props {
   question: ReadingSentenceQuestion;
@@ -44,6 +46,7 @@ const ReadingPart1Sentence = ({
   pageNumber, pageTotal,
   lockedIndices, hideBottomNav = false,
 }: Props) => {
+  const isPhone = usePhoneExamUI();
   const globallyRevealed = submitted || !!revealAnswers;
   const revealFor = (gi: number) => globallyRevealed || (lockedIndices?.has(gi) ?? false);
   const anyRevealed = globallyRevealed || (lockedIndices && lockedIndices.size > 0);
@@ -79,6 +82,35 @@ const ReadingPart1Sentence = ({
         const locked = submitted || (lockedIndices?.has(gapIndex) ?? false);
         const isCorrect = reveal && selectedValue === gap.correct;
         const isWrong = reveal && selectedValue !== null && selectedValue !== undefined && selectedValue !== gap.correct;
+
+        if (isPhone) {
+          const colorCls = reveal
+            ? isCorrect
+              ? "border-success bg-success/10 text-success"
+              : isWrong
+                ? "border-destructive bg-destructive/10 text-destructive"
+                : "border-border"
+            : selectedValue !== null && selectedValue !== undefined
+              ? "border-exam-accent text-foreground"
+              : "border-dashed border-exam-accent/60";
+          const ctxText = text.replace(/\{(\d+)\}/g, (_m, n) =>
+            Number(n) === gapIndex ? "_____" : (answers[Number(n)] != null ? question.gaps[Number(n)]?.options[answers[Number(n)] as number] ?? "___" : "___"),
+          );
+          return (
+            <span key={`${keyPrefix}-gap-${gapIndex}`} data-question-index={gapIndex} className="inline-block mx-0.5 min-w-[96px] max-w-full">
+              <PhoneSelect
+                inline
+                value={selectedValue}
+                options={gap.options.map((opt, oi) => ({ value: oi, label: opt }))}
+                onChange={(v) => onAnswer(gapIndex, v)}
+                disabled={locked}
+                className={colorCls}
+                title="Chọn từ đúng"
+                context={ctxText.trim()}
+              />
+            </span>
+          );
+        }
 
         return (
           <select
