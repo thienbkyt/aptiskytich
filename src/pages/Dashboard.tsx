@@ -684,9 +684,9 @@ const Dashboard = () => {
 
 
           {/* MAIN GRID */}
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* LEFT (2 cols) */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 min-w-0">
 
               {/* STREAK COMMAND CENTER */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
@@ -748,7 +748,7 @@ const Dashboard = () => {
                   <h2 className="font-heading font-bold text-foreground mb-5 flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-primary" /> Tiến bộ theo kỹ năng
                   </h2>
-                  <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                     {skills.map((s) => (
                       <div key={s.label}>
                         <div className="flex items-baseline justify-between mb-2">
@@ -789,7 +789,7 @@ const Dashboard = () => {
             </div>
 
             {/* RIGHT (1 col) */}
-            <div className="space-y-6">
+            <div className="space-y-6 min-w-0">
 
               {/* BLOG - TIPS */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
