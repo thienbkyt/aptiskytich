@@ -238,7 +238,7 @@ const ReadingPart4Long = ({
                       })}
                       onChange={(v) => handleSelect(pIdx, v)}
                       placeholder="Chọn heading…"
-                      className={selected !== null && selected !== undefined ? "border-exam-accent" : "border-dashed border-exam-accent/60"}
+                      className={selected !== null && selected !== undefined ? "border-exam-accent bg-exam-accent-soft/10" : "border-exam-border"}
                       title={`Chọn heading cho đoạn ${para.index}`}
                       context={<span className="line-clamp-3">{para.text}</span>}
                     />
