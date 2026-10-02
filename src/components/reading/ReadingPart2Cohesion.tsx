@@ -7,6 +7,7 @@ import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import type { ReadingCohesionQuestion } from "@/data/readingQuestions";
 import { part2ItemId, type ReadingReviewData } from "@/lib/readingReview";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
 
 interface Props {
   question: ReadingCohesionQuestion;
@@ -49,6 +50,7 @@ const ReadingPart2Cohesion = ({
   pageNumber, pageTotal, pageLabelPrefix, hideTimer = false,
   lockedSections, hideBottomNav = false,
 }: Props) => {
+  const isPhone = usePhoneExamUI();
   const globallyRevealed = submitted || !!revealAnswers;
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
@@ -101,6 +103,13 @@ const ReadingPart2Cohesion = ({
 
   const handlePoolTap = (text: string) => {
     if (reveal) return;
+    if (isPhone) {
+      // Điện thoại: chạm câu → tự xếp vào ô trống đầu tiên
+      const isDoneForYouPos = (pos: number) => !givenText && currentSection === 0 && pos === 1;
+      const empty = [1, 2, 3, 4, 5].find((pos) => !isDoneForYouPos(pos) && !current[pos]);
+      if (empty) placeTextAt(empty, text);
+      return;
+    }
     setSelectedText((prev) => (prev === text ? null : text));
   };
   const handleSlotTap = (pos: number) => {
@@ -109,6 +118,11 @@ const ReadingPart2Cohesion = ({
 
     if (isDoneForYou) return;
     const placed = current[pos];
+    if (isPhone) {
+      // Điện thoại: chạm câu đã xếp → trả về danh sách bên dưới
+      if (placed) removeText(placed);
+      return;
+    }
     if (selectedText) {
       // If tapping the same placed item, deselect (send back to pool)
       if (placed && placed === selectedText) {
@@ -155,6 +169,7 @@ const ReadingPart2Cohesion = ({
   };
 
   const handlePointerDown = (text: string, e: React.PointerEvent<HTMLDivElement>) => {
+    if (isPhone) return; // điện thoại: chỉ chạm, không kéo (để cuộn trang mượt)
     if (reveal || (e.pointerType === "mouse" && e.button !== 0)) return;
     const rect = e.currentTarget.getBoundingClientRect();
     pendingDragRef.current = {
@@ -269,6 +284,11 @@ const ReadingPart2Cohesion = ({
       </div>
 
       <p className="text-sm font-semibold text-foreground mb-1">{question.instruction}</p>
+      {isPhone && !reveal && (
+        <p className="text-xs text-muted-foreground mb-2">
+          Chạm câu ở danh sách bên dưới để xếp vào ô trống tiếp theo. Chạm câu đã xếp để bỏ ra.
+        </p>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -342,7 +362,7 @@ const ReadingPart2Cohesion = ({
                      onPointerMove={handlePointerMove}
                      onPointerUp={handlePointerUp}
                      onPointerCancel={handlePointerCancel}
-                     className={`pl-6 flex items-start gap-2 w-full cursor-grab active:cursor-grabbing touch-none ${
+                     className={`pl-6 flex items-start gap-2 w-full ${isPhone ? "" : "cursor-grab active:cursor-grabbing touch-none"} ${
                        drag?.text === placed ? "opacity-40" : ""
                      }`}
                     >
