@@ -3,7 +3,7 @@ import { MessageCircle, X, Facebook, Users } from "lucide-react";
 import { ZALO_URL, FB_URL } from "@/config/contact";
 
 const COMMUNITY_FB_URL = "https://web.facebook.com/share/g/1HxaRc8JTi/";
-const COMMUNITY_ZALO_URL = "https://zalo.me/g/ejlneoganpxg6mk54whf";
+const COMMUNITY_ZALO_URL = "https://zalo.me/g/rsjbnpu8qnd5e8jhclg1";
 
 const BRAND = "#CC1C01";
 
