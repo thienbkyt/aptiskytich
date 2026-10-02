@@ -21,6 +21,8 @@ export function isPhoneExamUI(): boolean {
     /* ignore */
   }
   try {
+    // Cửa sổ hẹp (< 640px) — kể cả trình duyệt máy tính thu nhỏ — không đủ chỗ cho giao diện thi thật
+    if ((window.innerWidth || 9999) < 640) return true;
     const t = getDeviceType();
     if (t === "mobile") return true;
     if (t === "tablet") return false;
