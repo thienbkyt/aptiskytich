@@ -10,7 +10,7 @@ interface SpeakingFooterProps {
 
 const SpeakingFooter = ({ onNext, nextDisabled = true, onExit, showNext = true }: SpeakingFooterProps) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-exam-surface border-t border-exam-border shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50">
+    <div className="kt-speak-footer fixed bottom-0 left-0 right-0 bg-exam-surface border-t border-exam-border shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50">
       <div className="flex items-center justify-between px-4 py-2.5">
         {/* Left tools */}
         <div className="flex items-center gap-1">
