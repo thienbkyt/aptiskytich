@@ -38,7 +38,7 @@ const PhoneSelect = ({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className={`${inline ? "inline-flex align-middle my-0.5 max-w-full" : "flex w-full"} min-h-[40px] items-center justify-between gap-1.5 rounded-lg border-2 px-3 py-1.5 text-[15px] text-left bg-exam-surface disabled:cursor-default ${
+        className={`${inline ? "inline-flex align-middle my-0.5 max-w-full" : "flex w-full"} min-h-[42px] items-center justify-between gap-1.5 rounded-xl border px-3 py-1.5 text-[15px] text-left bg-exam-surface shadow-sm disabled:cursor-default ${
           has ? "font-semibold" : "text-exam-text-muted"
         } ${className}`}
       >
