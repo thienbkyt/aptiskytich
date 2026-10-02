@@ -640,7 +640,7 @@ const GrammarExamEngine = ({
                                     onChange={(v) => handleAnswerSelect(idx, v)}
                                     disabled={effectiveSubmitted}
                                     placeholder="Chọn…"
-                                    className={triggerCls || (userAns !== null && userAns !== undefined ? "border-exam-accent" : "border-dashed border-exam-accent/60")}
+                                    className={triggerCls || (userAns !== null && userAns !== undefined ? "border-exam-accent bg-exam-accent-soft/10" : "border-exam-border")}
                                     title="Chọn đáp án"
                                     context={item.question_text}
                                   />
@@ -699,7 +699,7 @@ const GrammarExamEngine = ({
                                     onChange={(v) => handleAnswerSelect(idx, v)}
                                     disabled={effectiveSubmitted}
                                     placeholder="Chọn…"
-                                    className={triggerCls || (userAns !== null && userAns !== undefined ? "border-exam-accent" : "border-dashed border-exam-accent/60")}
+                                    className={triggerCls || (userAns !== null && userAns !== undefined ? "border-exam-accent bg-exam-accent-soft/10" : "border-exam-border")}
                                     title="Chọn đáp án"
                                     context={item.question_text}
                                   />
