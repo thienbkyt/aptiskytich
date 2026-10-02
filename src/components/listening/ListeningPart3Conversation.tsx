@@ -7,6 +7,7 @@ import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { ListeningPart3Question } from "@/data/listeningQuestions";
 import ScriptBlock from "@/components/listening/ScriptBlock";
 import { l3Id } from "@/lib/listeningReview";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
 
 interface QuestionSection {
   title: string;
@@ -57,6 +58,7 @@ const ListeningPart3Conversation = ({
   isBookmarked = false, onToggleBookmark, onSubmitTest, isSubmitting,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
+  const isPhone = usePhoneExamUI();
   const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
   if (!q) return null;
@@ -120,6 +122,34 @@ const ListeningPart3Conversation = ({
                 <p className="text-base text-foreground">
                   {i + 1}. {s.text}
                 </p>
+                {isPhone ? (
+                  <div className="w-full grid grid-cols-3 gap-2">
+                    {ANSWER_OPTIONS.map((opt) => {
+                      const on = value === opt.value;
+                      const isAns = reveal && opt.value === s.correctAnswer;
+                      const cls = reveal
+                        ? isAns
+                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                          : on
+                            ? "border-destructive bg-destructive/10 text-destructive"
+                            : "border-border text-muted-foreground"
+                        : on
+                          ? "border-exam-accent bg-exam-accent-soft/15 text-exam-text font-bold"
+                          : "border-border text-exam-text";
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          disabled={reveal}
+                          onClick={() => handleSelect(i, opt.value)}
+                          className={`min-h-[44px] rounded-xl border-2 px-2 py-2 text-sm bg-exam-surface transition-colors ${cls}`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
                 <select
                   value={value}
                   onChange={(e) => handleSelect(i, e.target.value)}
@@ -131,6 +161,7 @@ const ListeningPart3Conversation = ({
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
+                )}
                 {reveal && (
                   <>
                     {isCorrect ? (
