@@ -188,3 +188,17 @@ html.kt-phone-exam .kt-speak-panel button {
   font-size: 0.95rem;
   font-weight: 700;
 }
+
+/* Nút nổi "Báo lỗi" / "Hiện đáp án": chỉ còn icon tròn để không che đề */
+html.kt-phone-exam .exam-fab-report,
+html.kt-phone-exam .exam-fab-reveal {
+  font-size: 0;
+  gap: 0;
+  padding: 0.5rem;
+  opacity: 0.9;
+}
+html.kt-phone-exam .exam-fab-report svg,
+html.kt-phone-exam .exam-fab-reveal svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
