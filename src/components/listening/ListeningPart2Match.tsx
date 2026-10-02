@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { ListeningPart2Question } from "@/data/listeningQuestions";
 import ScriptBlock from "@/components/listening/ScriptBlock";
 import { l2Id } from "@/lib/listeningReview";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import PhoneSelect from "@/components/exam/mobile/PhoneSelect";
 
 interface QuestionSection {
   title: string;
@@ -54,6 +56,7 @@ const ListeningPart2Match = ({
   isBookmarked = false, onToggleBookmark, onSubmitTest, isSubmitting,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
+  const isPhone = usePhoneExamUI();
   const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
   if (!q) return null;
@@ -126,9 +129,33 @@ const ListeningPart2Match = ({
 
               return (
                 <div key={person.name} className="flex items-center gap-3 flex-wrap">
-                  <label className="text-sm text-foreground shrink-0 w-24">
+                  <label className={`text-sm text-foreground shrink-0 ${isPhone ? "w-full font-semibold" : "w-24"}`}>
                     Speaker {person.name} ...
                   </label>
+                  {isPhone ? (
+                    <div className="w-full">
+                      <PhoneSelect
+                        value={selectedText ? q.infoItems.findIndex((it) => it.text === selectedText) : null}
+                        options={q.infoItems.map((item, i) => {
+                          const usedBy = q.persons.find((p) => p.name !== person.name && current[p.name] === item.text);
+                          return { value: i, label: item.text, note: usedBy ? `đang chọn cho ${usedBy.name}` : undefined };
+                        })}
+                        onChange={(i) => handleSelect(person.name, q.infoItems[i]?.text ?? "")}
+                        disabled={reveal}
+                        placeholder="Chọn thông tin…"
+                        className={
+                          isCorrect
+                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                            : isWrong
+                              ? "border-destructive bg-destructive/10 text-destructive"
+                              : selectedText
+                                ? "border-exam-accent"
+                                : "border-dashed border-exam-accent/60"
+                        }
+                        title={`Speaker ${person.name}`}
+                      />
+                    </div>
+                  ) : (
                   <select
                     value={selectedText}
                     onChange={(e) => handleSelect(person.name, e.target.value)}
@@ -144,6 +171,7 @@ const ListeningPart2Match = ({
                       </option>
                     ))}
                   </select>
+                  )}
                   {reveal && (
                     <>
                       {selectedText === correctText ? (
