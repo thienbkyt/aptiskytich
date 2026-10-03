@@ -537,13 +537,15 @@ function tYear(C){
  const grpM={}, groups=[...new Set((D.exp_items||[]).map(x=>x.g))];
  (D.exp_items||[]).forEach(x=>{const m=mk(x.d);(grpM[m]=grpM[m]||{})[x.g]=((grpM[m]||{})[x.g]||0)+ +x.amt;});
  const ms=[...new Set([...Object.keys(C.revByM),...Object.keys(C.expByM),...Object.keys(nuM)])].sort();
+ const dim=m=>{const a=m.split("-").map(Number);return new Date(Date.UTC(a[0],a[1],0)).getUTCDate();};
+ const ngay=m=>m===C.curM?+C.today.slice(8,10):dim(m);
  let run=0; const rows=ms.map(m=>{
-   const r=C.revByM[m]||0, e=C.expByM[m]||0, d=r-e; run+=d;
+   const r=C.revByM[m]||0, e=C.expByM[m]||0, d=r-e; run+=d; const nd=ngay(m);
    return {m, r, o:C.ordByM[m]||0, arpu:(C.ordByM[m]?r/C.ordByM[m]:0), nu:nuM[m]||0,
-           vis:visM[m]||0, buy:buyM[m]||0, e, d, run};
+           vis:visM[m]||0, buy:buyM[m]||0, e, d, run, nd, tb:nd?r/nd:0};
  });
  const T={r:rows.reduce((a,x)=>a+x.r,0), o:rows.reduce((a,x)=>a+x.o,0), e:rows.reduce((a,x)=>a+x.e,0),
-          nu:rows.reduce((a,x)=>a+x.nu,0), vis:rows.reduce((a,x)=>a+x.vis,0), buy:rows.reduce((a,x)=>a+x.buy,0)};
+          nu:rows.reduce((a,x)=>a+x.nu,0), vis:rows.reduce((a,x)=>a+x.vis,0), buy:rows.reduce((a,x)=>a+x.buy,0), nd:rows.reduce((a,x)=>a+x.nd,0)};
  const pnl=T.r-T.e, best=rows.slice().sort((a,b)=>b.r-a.r)[0];
  const gr=(i,k)=>i>0&&rows[i-1][k]?((rows[i][k]-rows[i-1][k])/rows[i-1][k]):null;
  const cell=v=>v==null?'<span class="muted">—</span>':`<span class="${v>=0?"pos":"neg"}">${v>=0?"+":""}${pct(v)}</span>`;
@@ -558,20 +560,21 @@ function tYear(C){
   ${card("Tổng quỹ Kỳ Tích",vnd(C.fundNow),`${vnd(C.fund0)} vốn + thu − đã chi`)}
  </div>
  <div class="sec-h"><h2>Bảng tổng hợp theo tháng</h2><span class="tag">toàn thời gian · luỹ kế là lãi lỗ cộng dồn</span></div>
- <table><thead><tr><th>Tháng</th><th class="n">Doanh thu</th><th class="n">Đơn</th><th class="n">ARPU</th>
+ <table><thead><tr><th>Tháng</th><th class="n">Doanh thu</th><th class="n">TB / ngày</th><th class="n">Đơn</th><th class="n">ARPU</th>
   <th class="n">User mới</th><th class="n">Lượt truy cập</th><th class="n">Người trả phí</th>
   <th class="n">Chi phí</th><th class="n">Lãi/lỗ</th><th class="n">Luỹ kế</th></tr></thead><tbody>
- ${rows.map(x=>`<tr><td><b>${x.m}</b></td><td class="n">${vnd(x.r)}</td><td class="n">${num(x.o)}</td>
+ ${rows.map(x=>`<tr><td><b>${x.m}</b></td><td class="n">${vnd(x.r)}</td><td class="n">${vnd(x.tb)}</td><td class="n">${num(x.o)}</td>
   <td class="n">${x.o?vnd(x.arpu):"–"}</td><td class="n">${num(x.nu)}</td>
   <td class="n">${x.vis?num(x.vis):'<span class="muted">—</span>'}</td><td class="n">${num(x.buy)}</td>
   <td class="n">${vnd(x.e)}</td><td class="n ${x.d>=0?"pos":"neg"}">${vnd(x.d)}</td>
   <td class="n ${x.run>=0?"pos":"neg"}">${vnd(x.run)}</td></tr>`).join("")}
- <tr class="tot"><td>Tổng</td><td class="n">${vnd(T.r)}</td><td class="n">${num(T.o)}</td>
+ <tr class="tot"><td>Tổng</td><td class="n">${vnd(T.r)}</td><td class="n">${vnd(T.nd?T.r/T.nd:0)}</td><td class="n">${num(T.o)}</td>
   <td class="n">${vnd(T.o?T.r/T.o:0)}</td><td class="n">${num(T.nu)}</td><td class="n">${num(T.vis)}</td>
   <td class="n">${num(T.buy)}</td><td class="n">${vnd(T.e)}</td>
   <td class="n ${pnl>=0?"pos":"neg"}">${vnd(pnl)}</td><td class="n"></td></tr>
  </tbody></table>
- <div class="note-box">Lượt truy cập chỉ có số liệu từ tháng 2026-08 trở đi nên các tháng trước để trống. Doanh thu chỉ tính đơn đã thanh toán.</div>
+ <div class="note-box">Lượt truy cập chỉ có số liệu từ tháng 2026-08 trở đi nên các tháng trước để trống. Doanh thu chỉ tính đơn đã thanh toán.
+   Cột TB / ngày = doanh thu tháng chia số ngày của tháng; riêng tháng đang chạy chia theo số ngày đã qua nên so sánh được với các tháng đã xong.</div>
  <div class="sec-h"><h2>Thu · chi · lãi lỗ theo tháng</h2><span class="tag">cột là thu/chi, đường là lãi lỗ từng tháng</span></div>
  <div class="chart"><canvas id="y1"></canvas></div>
  <div class="sec-h"><h2>Cơ cấu chi phí theo tháng</h2><span class="tag">cộng chồng theo 3 nhóm</span></div>
