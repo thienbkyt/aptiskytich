@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getDeviceId, getDeviceType, getDeviceLabel } from "@/lib/deviceInfo";
+import { EXAM_ACTIVE_EVENT, isExamActive, isFullTestActive } from "@/lib/examActive";
 
 const CHECK_INTERVAL_MS = 60_000;
 
@@ -57,6 +58,21 @@ export function useDeviceSession() {
       if (Array.isArray(data) && data.length === 0) {
         kickedRef.current = true;
         if (intervalId) clearInterval(intervalId);
+        // Đang làm bài → KHÔNG đăng xuất ngay (mất bài). Cho làm/nộp nốt, rời bài thi mới đăng xuất.
+        if (isExamActive() || isFullTestActive()) {
+          toast.warning(
+            "Tài khoản của bạn vừa đăng nhập trên một thiết bị cùng loại khác. Bạn cứ làm và nộp nốt bài này — sau khi rời bài thi, phiên này sẽ được đăng xuất.",
+            { duration: 12000 },
+          );
+          const onExamChange = () => {
+            if (isExamActive() || isFullTestActive()) return;
+            window.removeEventListener(EXAM_ACTIVE_EVENT, onExamChange);
+            toast.error("Tài khoản của bạn đã đăng nhập ở nơi khác. Phiên này đã bị đăng xuất.");
+            signOut();
+          };
+          window.addEventListener(EXAM_ACTIVE_EVENT, onExamChange);
+          return;
+        }
         toast.error("Tài khoản của bạn vừa đăng nhập ở nơi khác. Phiên này đã bị đăng xuất.");
         signOut();
       }
