@@ -4,6 +4,8 @@ import { resolveImageUrl, bustImageUrlCache } from "@/lib/imageUrl";
 
 interface SignedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
   src: string;
+  /** Hiện link nhỏ "Không thấy ảnh? Tải lại ảnh" dưới ảnh (dùng trong phòng thi). */
+  showReload?: boolean;
 }
 
 /**
@@ -12,7 +14,7 @@ interface SignedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "sr
  * On a real broken file it shows a visible placeholder + "Thử lại" button
  * instead of an empty box.
  */
-const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
+const SignedImage = ({ src, alt = "", onError, showReload = false, ...rest }: SignedImageProps) => {
   const [resolved, setResolved] = useState<string>("");
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const retryRef = useRef(0);
@@ -107,7 +109,31 @@ const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
     );
   }
 
-  return <img src={resolved} alt={alt} onError={handleError} {...rest} />;
+  const img = (
+    <img
+      src={resolved}
+      alt={alt}
+      onError={handleError}
+      onLoad={(e) => {
+        // Một số trình duyệt (Safari) "load" xong nhưng ảnh rỗng → coi như lỗi để tự tải lại
+        if ((e.currentTarget as HTMLImageElement).naturalWidth === 0) void handleError(e);
+      }}
+      {...rest}
+    />
+  );
+  if (!showReload) return img;
+  return (
+    <div>
+      {img}
+      <button
+        type="button"
+        onClick={() => load(true)}
+        className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
+      >
+        <RefreshCw className="w-3 h-3" /> Không thấy ảnh? Tải lại ảnh
+      </button>
+    </div>
+  );
 };
 
 export default SignedImage;
