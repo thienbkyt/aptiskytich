@@ -31,15 +31,19 @@ const lastKey = (skill: string, part: string) => `kt_marathon_last:${skill}:${pa
 
 export function saveMarathonProgress(skill: string, part: string, data: MarathonProgress) {
   try { localStorage.setItem(key(skill, part), JSON.stringify(data)); } catch { /* noop */ }
+  queueServerSave(key(skill, part), "progress", data);
 }
 export function loadMarathonProgress(skill: string, part: string): MarathonProgress | null {
   try { const r = localStorage.getItem(key(skill, part)); return r ? JSON.parse(r) : null; } catch { return null; }
 }
 export function clearMarathonProgress(skill: string, part: string) {
   try { localStorage.removeItem(key(skill, part)); } catch { /* noop */ }
+  queueServerDelete(key(skill, part));
 }
 export function saveMarathonLast(skill: string, part: string, data: MarathonLast) {
-  try { localStorage.setItem(lastKey(skill, part), JSON.stringify(normalizeMarathonLast(data))); } catch { /* noop */ }
+  const norm = normalizeMarathonLast(data);
+  try { localStorage.setItem(lastKey(skill, part), JSON.stringify(norm)); } catch { /* noop */ }
+  queueServerSave(lastKey(skill, part), "last", norm);
 }
 export function normalizeMarathonLast(l: MarathonLast): MarathonLast {
   const wrongSetIds = l.wrongSetIds || [];
@@ -64,6 +68,7 @@ export function loadMarathonLast(skill: string, part: string): MarathonLast | nu
 }
 export function clearMarathonLast(skill: string, part: string) {
   try { localStorage.removeItem(lastKey(skill, part)); } catch { /* noop */ }
+  queueServerDelete(lastKey(skill, part));
 }
 
 /**
@@ -122,4 +127,112 @@ export function newMarathonSessionId(): string {
     if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   } catch { /* noop */ }
   return `mth_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Đồng bộ tiến độ Marathon lên server (bảng marathon_progress)        */
+/* để đổi máy / đổi trình duyệt / qua ngày vẫn làm tiếp được.          */
+/* localStorage vẫn là nguồn chính (đọc đồng bộ, nhanh); server là bản */
+/* sao lưu. Mọi lỗi mạng đều bỏ qua — không bao giờ chặn luồng làm bài.*/
+/* ------------------------------------------------------------------ */
+type ServerOp = { kind: "progress" | "last"; data: unknown } | { del: true };
+const pendingOps = new Map<string, ServerOp>();
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function getUserId(): Promise<string | null> {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    return data.session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function flushServerOps() {
+  flushTimer = null;
+  if (pendingOps.size === 0) return;
+  const ops = Array.from(pendingOps.entries());
+  pendingOps.clear();
+  const userId = await getUserId();
+  if (!userId) return;
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const sb = supabase as any;
+    const upserts = ops
+      .filter(([, op]) => !("del" in op))
+      .map(([storage_key, op]) => ({
+        user_id: userId,
+        storage_key,
+        kind: (op as any).kind,
+        data: (op as any).data,
+        updated_at: new Date().toISOString(),
+      }));
+    const dels = ops.filter(([, op]) => "del" in op).map(([k]) => k);
+    if (upserts.length) await sb.from("marathon_progress").upsert(upserts, { onConflict: "user_id,storage_key" });
+    if (dels.length) await sb.from("marathon_progress").delete().eq("user_id", userId).in("storage_key", dels);
+  } catch {
+    /* best-effort */
+  }
+}
+
+function scheduleFlush(delay = 1500) {
+  if (typeof window === "undefined") return;
+  if (flushTimer) clearTimeout(flushTimer);
+  flushTimer = setTimeout(() => void flushServerOps(), delay);
+}
+
+function queueServerSave(storageKey: string, kind: "progress" | "last", data: unknown) {
+  pendingOps.set(storageKey, { kind, data });
+  scheduleFlush();
+}
+function queueServerDelete(storageKey: string) {
+  pendingOps.set(storageKey, { del: true });
+  scheduleFlush();
+}
+
+if (typeof window !== "undefined") {
+  // Điện thoại chuyển app / đóng tab → đẩy ngay phần đang chờ
+  const flushNow = () => { if (pendingOps.size) void flushServerOps(); };
+  window.addEventListener("pagehide", flushNow);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushNow();
+  });
+}
+
+/**
+ * Kéo tiến độ Marathon từ server về localStorage (bản nào mới hơn thì lấy).
+ * Trả về true nếu localStorage có thay đổi (để trang vẽ lại nút "Tiếp tục").
+ */
+export async function syncMarathonFromServer(): Promise<boolean> {
+  const userId = await getUserId();
+  if (!userId) return false;
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data, error } = await (supabase as any)
+      .from("marathon_progress")
+      .select("storage_key, data, updated_at")
+      .eq("user_id", userId);
+    if (error || !Array.isArray(data)) return false;
+    let changed = false;
+    for (const row of data as { storage_key: string; data: any; updated_at: string }[]) {
+      if (!row?.storage_key?.startsWith("kt_marathon")) continue;
+      if (pendingOps.has(row.storage_key)) continue; // máy này đang có thay đổi mới hơn chờ gửi
+      const serverAt = Number(row.data?.updatedAt ?? Date.parse(row.updated_at) ?? 0);
+      let localAt = -1;
+      try {
+        const raw = localStorage.getItem(row.storage_key);
+        if (raw) localAt = Number(JSON.parse(raw)?.updatedAt ?? 0);
+      } catch { /* noop */ }
+      if (serverAt > localAt) {
+        try {
+          localStorage.setItem(row.storage_key, JSON.stringify(row.data));
+          changed = true;
+        } catch { /* noop */ }
+      }
+    }
+    return changed;
+  } catch {
+    return false;
+  }
 }
