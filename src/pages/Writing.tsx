@@ -35,6 +35,9 @@ import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
+import { useMarathonServerSync } from "@/hooks/useMarathonServerSync";
+import { useExamDraftRecorder, loadExamDraft, clearExamDraft, type ExamDraft } from "@/lib/examDraft";
+import ExamDraftResumeDialog from "@/components/exam/ExamDraftResumeDialog";
 
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useExamPriorityLabels } from "@/hooks/useExamPriorityLabels";
@@ -93,10 +96,20 @@ const Writing = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
   const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean; priorityLabel?: "high" | "medium" | "low" | null }>({ active: false, partType: "task1", priorityLabel: null });
   const [progressTick, setProgressTick] = useState(0);
+  useMarathonServerSync(() => setProgressTick((t) => t + 1));
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [doneFilter, setDoneFilter] = useState<DoneFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
   const { user: authUser, loading: authLoading } = useAuth();
+  // Tự lưu nháp bài lẻ đang làm → lỡ tải lại / bị out thì hỏi "Làm tiếp bài đang dở?"
+  const [draftOffer, setDraftOffer] = useState<ExamDraft | null>(null);
+  const [restoreDraft, setRestoreDraft] = useState<ExamDraft | null>(null);
+  const draftRec = useExamDraftRecorder(
+    exam.active && exam.examSetId && exam.engineData && !exam.loadingExam
+      ? { skill: "writing", userId: authUser?.id ?? null, examSetId: exam.examSetId, partType: String(exam.partType), title: exam.testTitle }
+      : null,
+  );
+  const restoreFor = restoreDraft && exam.active && restoreDraft.examSetId === exam.examSetId ? restoreDraft : null;
 
   // Rehydrate engineData after remount.
   const rehydratedRef = useRef(false);
@@ -237,7 +250,32 @@ const Writing = () => {
   };
 
   const navigate = useNavigate();
+  useEffect(() => {
+    if (authLoading) return;
+    if (exam.active || marathon.active || fullPractice.active) { setDraftOffer(null); return; }
+    setDraftOffer(loadExamDraft("writing", authUser?.id ?? null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, authUser?.id, exam.active, marathon.active, fullPractice.active]);
+
+  const resumeDraft = () => {
+    const d = draftOffer;
+    if (!d) return;
+    setDraftOffer(null);
+    setRestoreDraft(d);
+    autoStartedRef.current = null;
+    const next = new URLSearchParams(searchParams);
+    next.set("set", d.examSetId);
+    next.set("jump", "1");
+    setSearchParams(next, { replace: true });
+  };
+  const discardDraft = () => {
+    clearExamDraft("writing");
+    setDraftOffer(null);
+  };
+
   const handleExit = () => {
+    draftRec.finish();
+    setRestoreDraft(null);
     if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
     setExam({ active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false });
   };
@@ -308,6 +346,7 @@ const Writing = () => {
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={getWritingTime(exam.partType)}
         examSetId={exam.examSetId ?? null}
         onExit={handleExit} onComplete={async (perQuestion) => {
+          draftRec.finish();
           const timeSpent = exam.startedAt ? Math.floor((Date.now() - exam.startedAt) / 1000) : undefined;
           const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
           // Derive user texts from perQuestion[0].user_answer (engine merges to a single string).
@@ -336,6 +375,10 @@ const Writing = () => {
         }}
         {...exam.engineData} skipIntro={exam.skipIntro}
         allowReveal
+        initialAnswers={restoreFor ? (restoreFor.answers as any) : undefined}
+        externalTimeLeft={restoreFor && restoreFor.timeLeft != null ? restoreFor.timeLeft : undefined}
+        onAnswersChange={draftRec.onAnswersChange as any}
+        onTimeTick={draftRec.onTimeTick}
       />
     );
   }
@@ -345,6 +388,14 @@ const Writing = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
+      {draftOffer && (
+        <ExamDraftResumeDialog
+          draft={draftOffer}
+          partLabel={`Part ${String(draftOffer.partType).replace(/\D/g, "")}`}
+          onResume={resumeDraft}
+          onDiscard={discardDraft}
+        />
+      )}
       <main className="flex-1 pt-16">
         <section className="relative overflow-hidden border-b border-border bg-card">
           <ParticlesBackground className="opacity-60" count={28} />
