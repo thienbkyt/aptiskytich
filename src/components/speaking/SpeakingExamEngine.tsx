@@ -1810,6 +1810,7 @@ const SpeakingExamEngine = ({
               <div className="mb-4">
                 {part2Data?.imageUrl ? (
                   <SignedImage
+                    showReload
                     src={part2Data.imageUrl}
                     alt="Describe this picture"
                     className="w-full max-w-md rounded-lg object-cover"
@@ -1825,6 +1826,7 @@ const SpeakingExamEngine = ({
               <div className="grid grid-cols-2 gap-4 mb-4">
                 {part3Data.imageUrl1 ? (
                   <SignedImage
+                    showReload
                     src={part3Data.imageUrl1}
                     alt="Picture 1"
                     className="w-full rounded-lg object-cover h-[min(30vh,14rem)]"
@@ -1834,6 +1836,7 @@ const SpeakingExamEngine = ({
                 )}
                 {part3Data.imageUrl2 ? (
                   <SignedImage
+                    showReload
                     src={part3Data.imageUrl2}
                     alt="Picture 2"
                     className="w-full rounded-lg object-cover h-[min(30vh,14rem)]"
@@ -1851,6 +1854,7 @@ const SpeakingExamEngine = ({
                 {part4Data.imageUrl ? (
                   <div className="mb-4 rounded-lg overflow-hidden border border-exam-border max-w-md">
                     <SignedImage
+                    showReload
                       src={part4Data.imageUrl}
                       alt="Part 4 topic"
                       className="w-full h-[min(30vh,14rem)] object-cover"
