@@ -193,6 +193,21 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
             p_review_snapshot: opts.reviewSnapshot ?? null,
           } as any);
           if (!finErr) {
+            // Keep per-question detail in sync with the latest submission;
+            // otherwise History shows the first attempt's answers while the
+            // score/snapshot reflect the latest one.
+            const syncRows = (opts.perQuestion || []).filter((r) => !!r.exam_question_id);
+            if (syncRows.length > 0) {
+              try {
+                const { error: syncErr } = await (supabase as any).rpc("sync_question_results", {
+                  p_test_result_id: prev.id,
+                  p_rows: syncRows,
+                });
+                if (syncErr) console.warn("[saveExamResult] sync_question_results failed:", syncErr);
+              } catch (e) {
+                console.warn("[saveExamResult] sync_question_results threw:", e);
+              }
+            }
             try {
               if (typeof window !== "undefined") {
                 window.dispatchEvent(new CustomEvent("exam-result-saved", { detail: { skill: opts.skill, examSetId: opts.examSetId } }));
