@@ -11,7 +11,7 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
 import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId, mergeMarathonLastAfterRetry } from "@/lib/marathonProgress";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId, mergeMarathonLastAfterRetry , hasAnyAnswer } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
@@ -86,7 +86,10 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   }, [sets, partType]);
   const [currentIndex, setCurrentIndex] = useState(() => {
     const byId = savedInit?.currentSetId ? sets.findIndex((s) => s.id === savedInit.currentSetId) : -1;
-    const idx = byId >= 0 ? byId : (savedInit?.currentIndex ?? 0);
+    // Tiến độ khôi phục từ Lịch sử không có currentSetId → mở đề đầu tiên chưa làm
+    const doneIds = new Set((savedInit?.results ?? []).filter(Boolean).map((r: any) => r.examSetId));
+    const firstUndone = !savedInit?.currentSetId && doneIds.size > 0 ? sets.findIndex((s) => !doneIds.has(s.id)) : -1;
+    const idx = byId >= 0 ? byId : firstUndone >= 0 ? firstUndone : (savedInit?.currentIndex ?? 0);
     return Math.min(Math.max(0, idx), Math.max(0, (setsInput?.length ?? 1) - 1));
   });
   const [enterAtLast, setEnterAtLast] = useState(false);
@@ -837,6 +840,8 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     const key = partType === "part1" ? "p1" : partType === "part2" ? "p2" : partType === "part3" ? "p3" : "p4";
     const bag = a?.[key];
     setDrafts((prev) => {
+      // Mới mở đề, chưa điền gì → không lưu (tránh ghi đè tiến độ cũ bằng trạng thái rỗng)
+      if (!hasAnyAnswer(bag) && !(currentSetId in prev)) return prev;
       const next = { ...prev, [currentSetId]: bag };
       if (persist) {
         saveMarathonProgress("reading", progPart, {
