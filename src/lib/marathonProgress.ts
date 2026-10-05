@@ -12,6 +12,8 @@ export interface MarathonProgress {
   sessionId?: string;
   /** test_results.id created for this session on first save; updated thereafter. */
   testResultId?: string | null;
+  /** Thời điểm học viên chủ động làm lại từ đầu / kết thúc lượt — kết quả Lịch sử trước mốc này không được khôi phục. */
+  resetAt?: number;
   updatedAt: number;
 }
 export interface MarathonLast {
@@ -37,8 +39,12 @@ export function loadMarathonProgress(skill: string, part: string): MarathonProgr
   try { const r = localStorage.getItem(key(skill, part)); return r ? JSON.parse(r) : null; } catch { return null; }
 }
 export function clearMarathonProgress(skill: string, part: string) {
-  try { localStorage.removeItem(key(skill, part)); } catch { /* noop */ }
-  queueServerDelete(key(skill, part));
+  // Không xoá hẳn: để lại mốc "đã reset" (results rỗng) để phần đối chiếu Lịch sử
+  // không khôi phục nhầm lượt cũ mà học viên đã chủ động bỏ.
+  const now = Date.now();
+  const marker: MarathonProgress = { currentIndex: 0, results: [], drafts: {}, resetAt: now, updatedAt: now };
+  try { localStorage.setItem(key(skill, part), JSON.stringify(marker)); } catch { /* noop */ }
+  queueServerSave(key(skill, part), "progress", marker);
 }
 export function saveMarathonLast(skill: string, part: string, data: MarathonLast) {
   const norm = normalizeMarathonLast(data);
@@ -235,4 +241,138 @@ export async function syncMarathonFromServer(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Đối chiếu với Lịch sử (test_results) — các đề Marathon đã NỘP luôn  */
+/* được tính là "đã làm", kể cả khi tiến độ trong máy bị mất/ghi đè.   */
+/* Chỉ áp dụng Reading & Listening (Marathon không theo key).          */
+/* ------------------------------------------------------------------ */
+const RECONCILE_SKILLS = new Set(["reading", "listening"]);
+
+function partKeyOf(part: string | null | undefined): string | null {
+  if (!part) return null;
+  const m = String(part).match(/part\s*(\d)/i);
+  return m ? `part${m[1]}` : null;
+}
+
+export async function reconcileMarathonFromHistory(): Promise<boolean> {
+  const userId = await getUserId();
+  if (!userId) return false;
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const sb = supabase as any;
+    const since = new Date(Date.now() - 30 * 86400000).toISOString();
+    const { data: rows, error } = await sb
+      .from("test_results")
+      .select("id, exam_set_id, score, total, skill_scores, created_at")
+      .eq("user_id", userId)
+      .in("skill_scores->>mode", ["marathon-set", "marathon"])
+      .gte("created_at", since)
+      .order("created_at", { ascending: true })
+      .limit(1000);
+    if (error || !Array.isArray(rows) || rows.length === 0) return false;
+
+    type Row = { id: string; exam_set_id: string | null; score: number; total: number; skill_scores: any; created_at: string };
+    // Gom theo skill + part; mỗi nhóm lấy phiên (session) mới nhất
+    const groups = new Map<string, { latestSession: string; latestAt: number; sets: Row[]; summaries: Row[] }>();
+    for (const r of rows as Row[]) {
+      const ss = r.skill_scores || {};
+      const skill = String(ss.skill || "");
+      if (!RECONCILE_SKILLS.has(skill)) continue;
+      const part = ss.mode === "marathon" ? (ss.partType as string) : partKeyOf(ss.part);
+      if (!part) continue;
+      const sess = String(ss.marathonSessionId || "");
+      if (!sess) continue;
+      const gk = `${skill}|${part}`;
+      const at = Date.parse(r.created_at);
+      let g = groups.get(gk);
+      if (!g) { g = { latestSession: sess, latestAt: at, sets: [], summaries: [] }; groups.set(gk, g); }
+      if (ss.mode === "marathon-set" && at >= g.latestAt) { g.latestAt = at; g.latestSession = sess; }
+      if (ss.mode === "marathon-set") g.sets.push(r); else g.summaries.push(r);
+    }
+
+    // Đáp án từng đề (để xem lại / khoá đúng đề đã làm)
+    const setRowIds: string[] = [];
+    groups.forEach((g) => g.sets.filter((r) => r.skill_scores?.marathonSessionId === g.latestSession).forEach((r) => setRowIds.push(r.id)));
+    const qByRow = new Map<string, { exam_question_id: string; user_answer: string | null; is_correct: boolean }[]>();
+    if (setRowIds.length) {
+      const { data: qrows } = await sb
+        .from("exam_question_results")
+        .select("test_result_id, exam_question_id, user_answer, is_correct")
+        .in("test_result_id", setRowIds.slice(0, 500));
+      for (const q of (qrows || []) as any[]) {
+        const arr = qByRow.get(q.test_result_id) || [];
+        arr.push({ exam_question_id: q.exam_question_id, user_answer: q.user_answer, is_correct: !!q.is_correct });
+        qByRow.set(q.test_result_id, arr);
+      }
+    }
+
+    let changed = false;
+    groups.forEach((g, gk) => {
+      const [skill, part] = gk.split("|");
+      const sessSets = g.sets.filter((r) => r.skill_scores?.marathonSessionId === g.latestSession);
+      if (sessSets.length === 0) return;
+      // Lượt đã kết thúc (đủ số đề) → không khôi phục
+      const summary = g.summaries.filter((r) => r.skill_scores?.marathonSessionId === g.latestSession).pop();
+      const sDone = Number(summary?.skill_scores?.done ?? 0);
+      const sTotal = Number(summary?.skill_scores?.totalSets ?? 0);
+      if (sTotal > 0 && sDone >= sTotal) return;
+
+      const local = loadMarathonProgress(skill, part);
+      const last = loadMarathonLast(skill, part);
+      const cutoff = Math.max(Number(local?.resetAt ?? 0), Number(last?.updatedAt ?? 0));
+      if (g.latestAt <= cutoff) return; // học viên đã reset/kết thúc sau lượt này
+
+      // Phiên khác đang chạy trong máy và mới hơn → giữ nguyên
+      const localDone = (local?.results || []).filter(Boolean) as MarathonResultEntry[];
+      if (local && local.sessionId && local.sessionId !== g.latestSession && localDone.length > 0 && Number(local.updatedAt) > g.latestAt) return;
+
+      const byId = new Map<string, any>();
+      if (local && local.sessionId === g.latestSession) localDone.forEach((r) => byId.set(r.examSetId, r));
+      let added = 0;
+      for (const r of sessSets) {
+        if (!r.exam_set_id || byId.has(r.exam_set_id)) continue;
+        const q = qByRow.get(r.id) || [];
+        let answers: any = undefined;
+        try {
+          const parsed = q[0]?.user_answer ? JSON.parse(q[0].user_answer as string) : null;
+          answers = parsed?.answers ?? parsed?.placements ?? parsed?.answer ?? undefined;
+        } catch { /* noop */ }
+        byId.set(r.exam_set_id, {
+          correct: Number(r.score ?? 0),
+          total: Number(r.total ?? 0),
+          examSetId: r.exam_set_id,
+          part: String(r.skill_scores?.part ?? ""),
+          qResults: q,
+          ...(skill === "reading" && answers !== undefined ? { answers } : {}),
+        });
+        added++;
+      }
+      if (added === 0) return;
+      saveMarathonProgress(skill, part, {
+        currentIndex: 0,
+        results: Array.from(byId.values()),
+        drafts: local && local.sessionId === g.latestSession ? (local.drafts ?? {}) : {},
+        sessionId: g.latestSession,
+        testResultId: (local && local.sessionId === g.latestSession ? local.testResultId : null) ?? summary?.id ?? null,
+        updatedAt: Math.max(g.latestAt, Number(local?.updatedAt ?? 0)),
+      });
+      changed = true;
+    });
+    return changed;
+  } catch {
+    return false;
+  }
+}
+
+/** Có đáp án nào thật sự được điền chưa (để không lưu đè tiến độ bằng trạng thái rỗng lúc mới mở). */
+export function hasAnyAnswer(x: unknown): boolean {
+  if (x == null) return false;
+  if (typeof x === "string") return x.trim() !== "";
+  if (typeof x === "number") return Number.isFinite(x) && x >= 0;
+  if (typeof x === "boolean") return x;
+  if (Array.isArray(x)) return x.some(hasAnyAnswer);
+  if (typeof x === "object") return Object.values(x as Record<string, unknown>).some(hasAnyAnswer);
+  return false;
 }
