@@ -196,7 +196,10 @@ const Reading = () => {
     const token = `${mp}|${keyId ?? ""}|${prio ?? ""}`;
     if (marathonAutoRef.current === token) return;
     marathonAutoRef.current = token;
-    setMarathon({ active: true, partType: mp as ReadingPartType, keyId: keyId || null, prio: prio || null });
+    // Mở từ Lịch sử ("Làm lại") mà part này còn tiến độ dở → làm tiếp, không xoá
+    const prevProg = !keyId && !prio ? loadMarathonProgress("reading", mp) : null;
+    const canResume = !!prevProg && (prevProg.results ?? []).some(Boolean);
+    setMarathon({ active: true, partType: mp as ReadingPartType, keyId: keyId || null, prio: prio || null, resume: canResume });
     const next = new URLSearchParams(searchParams);
     next.delete("marathon");
     next.delete("keyId");
