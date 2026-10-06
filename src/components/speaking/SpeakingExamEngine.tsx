@@ -188,6 +188,7 @@ const SpeakingExamEngine = ({
   const [queueTimedOut, setQueueTimedOut] = useState(false);
   // Single-part mode: true while the part is being persisted + recordings uploaded.
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   // Bumped by the "Tải lại ghi âm" button to re-run upload + grading.
   const [uploadRetryTick, setUploadRetryTick] = useState(0);
   // Paths already uploaded during handleFinish, reused by the grading effect.
@@ -863,7 +864,14 @@ const SpeakingExamEngine = ({
 
       const recMime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4;codecs=mp4a.40.2", "audio/mp4"]
         .find((t) => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) || "";
-      const mediaRecorder = new MediaRecorder(stream, recMime ? { mimeType: recMime } : undefined);
+      // 32 kbps Opus is plenty for speech grading and keeps each 30–45s answer
+      // around 150 KB (default bitrate made ~700 KB files → 30s+ uploads on slow networks).
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, recMime ? { mimeType: recMime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 });
+      } catch {
+        mediaRecorder = new MediaRecorder(stream, recMime ? { mimeType: recMime } : undefined);
+      }
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -1099,6 +1107,9 @@ const SpeakingExamEngine = ({
       silentByQuestionRef.current[index] ? null : blob,
     );
     const uploadedPaths: (string | null)[] = [...uploadedPathsRef.current];
+    const toUpload = currentRecordings.filter((b, i) => !!b && !uploadedPaths[i]).length;
+    let uploadedCount = 0;
+    setUploadProgress(toUpload > 0 ? { done: 0, total: toUpload } : null);
 
     try {
       await Promise.all(
@@ -1129,9 +1140,12 @@ const SpeakingExamEngine = ({
             });
           }
           uploadedPaths[idx] = path;
+          uploadedCount += 1;
+          setUploadProgress({ done: uploadedCount, total: toUpload });
         })
       );
     } catch { /* swallow */ }
+    setUploadProgress(null);
 
     uploadedPathsRef.current = uploadedPaths;
 
@@ -2023,7 +2037,12 @@ const SpeakingExamEngine = ({
         <div className="fixed inset-0 z-50 bg-exam-surface/80 flex flex-col items-center justify-center gap-3 px-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-exam-accent" />
           <p className="text-sm font-medium text-exam-accent">
-            Đang lưu bài nói của bạn, vui lòng không tải lại trang...
+            {uploadProgress && uploadProgress.total > 0
+              ? `Đang tải ghi âm lên (${uploadProgress.done}/${uploadProgress.total})...`
+              : "Đang lưu bài nói của bạn..."}
+          </p>
+          <p className="text-xs text-muted-foreground max-w-xs">
+            Vui lòng không tải lại trang. Mạng chậm có thể mất 10–30 giây, bài sẽ tự chuyển tiếp khi xong.
           </p>
         </div>
       )}
