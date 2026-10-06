@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Target, Pencil, Zap, MessageSquareHeart } from "lucide-react";
+import { Target, Pencil, MessageSquareHeart } from "lucide-react";
 import { useUserGoal } from "@/hooks/useUserGoal";
 import { vnDaysUntil } from "@/lib/vnDate";
 import GoalSetupModal from "./GoalSetupModal";
@@ -32,7 +32,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 );
 
 const GoalCountdownCard = () => {
-  const { goal, hasFullTest, todayCount, loading, saveGoal } = useUserGoal();
+  const { goal, todayCount, loading, saveGoal } = useUserGoal();
   const [open, setOpen] = useState(false);
 
   if (loading) return <div className="h-24 rounded-2xl border border-border bg-muted/30 animate-pulse" />;
@@ -41,29 +41,7 @@ const GoalCountdownCard = () => {
     <GoalSetupModal open={open} onOpenChange={setOpen} goal={goal} onSave={saveGoal} />
   );
 
-  // Gate: no goal and no full test yet.
-  if (!goal && !hasFullTest) {
-    return (
-      <Shell>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Zap className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-heading font-extrabold text-base md:text-lg">Bắt đầu đúng cách</h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Làm 1 bài thi thử full test trước để biết band hiện tại của bạn — rồi hãy đặt mục tiêu.
-            </p>
-          </div>
-          <Button asChild className="shrink-0">
-            <Link to="/thi-thu">Vào thi thử</Link>
-          </Button>
-        </div>
-      </Shell>
-    );
-  }
-
-  // Has full test but no goal yet.
+  // No goal yet → invite every learner to set one (no full-test gate).
   if (!goal) {
     return (
       <>
