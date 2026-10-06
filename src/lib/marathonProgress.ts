@@ -226,11 +226,24 @@ export async function syncMarathonFromServer(): Promise<boolean> {
       if (pendingOps.has(row.storage_key)) continue; // máy này đang có thay đổi mới hơn chờ gửi
       const serverAt = Number(row.data?.updatedAt ?? Date.parse(row.updated_at) ?? 0);
       let localAt = -1;
+      let localDone = 0;
+      let localResetAt = 0;
       try {
         const raw = localStorage.getItem(row.storage_key);
-        if (raw) localAt = Number(JSON.parse(raw)?.updatedAt ?? 0);
+        if (raw) {
+          const loc = JSON.parse(raw);
+          localAt = Number(loc?.updatedAt ?? 0);
+          localDone = Array.isArray(loc?.results) ? loc.results.filter(Boolean).length : 0;
+          localResetAt = Number(loc?.resetAt ?? 0);
+        }
       } catch { /* noop */ }
-      if (serverAt > localAt) {
+      const serverDone = Array.isArray(row.data?.results) ? row.data.results.filter(Boolean).length : 0;
+      const serverResetAt = Number(row.data?.resetAt ?? 0);
+      // Máy này có bản mới hơn nhưng ÍT đề đã làm hơn server (không phải do người dùng bấm làm lại)
+      // → coi như bản trong máy bị hỏng/mất, lấy bản server.
+      const localLostProgress =
+        serverDone > localDone && !(localResetAt && localResetAt >= serverAt) && localResetAt <= serverResetAt;
+      if (serverAt > localAt || localLostProgress) {
         try {
           localStorage.setItem(row.storage_key, JSON.stringify(row.data));
           changed = true;
