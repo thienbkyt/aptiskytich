@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Inbox, AlertTriangle, Lightbulb, Loader2, FileSpreadsheet, ExternalLink, Save } from "lucide-react";
+import { Inbox, AlertTriangle, Lightbulb, Loader2, FileSpreadsheet, ExternalLink, Save, Mail, Send } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +41,11 @@ type SuggestionRow = {
   status: string;
   admin_note: string | null;
   created_at: string;
+  replied_at: string | null;
+  reply_subject: string | null;
 };
+
+const DEFAULT_REPLY_SUBJECT = "Phản hồi đề xuất của bạn – Aptis Kỳ Tích";
 
 type UserInfo = { email: string; display_name: string | null };
 
@@ -51,6 +57,7 @@ const REPORT_STATUSES = [
 
 const SUGGESTION_STATUSES = [
   { value: "new", label: "Mới" },
+  { value: "replied", label: "Đã phản hồi" },
   { value: "planned", label: "Đã lên kế hoạch" },
   { value: "done", label: "Đã làm" },
   { value: "rejected", label: "Từ chối" },
@@ -118,6 +125,10 @@ const AdminInbox = () => {
   const [reportSkill, setReportSkill] = useState("all");
   const [reportCategory, setReportCategory] = useState("all");
   const [suggestionStatus, setSuggestionStatus] = useState("all");
+  const [replyFor, setReplyFor] = useState<SuggestionRow | null>(null);
+  const [replySubject, setReplySubject] = useState(DEFAULT_REPLY_SUBJECT);
+  const [replyBody, setReplyBody] = useState("");
+  const [replySending, setReplySending] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,7 +139,7 @@ const AdminInbox = () => {
         .order("created_at", { ascending: false }),
       supabase
         .from("feature_suggestions")
-        .select("id,user_id,content,attachments,status,admin_note,created_at")
+        .select("id,user_id,content,attachments,status,admin_note,created_at,replied_at,reply_subject")
         .order("created_at", { ascending: false }),
     ]);
 
@@ -230,6 +241,41 @@ const AdminInbox = () => {
     }
     setSuggestions((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
     toast({ title: "Đã lưu" });
+  };
+
+  const openReply = (s: SuggestionRow) => {
+    setReplyFor(s);
+    setReplySubject(DEFAULT_REPLY_SUBJECT);
+    setReplyBody("");
+  };
+
+  const sendReply = async () => {
+    if (!replyFor) return;
+    const subject = replySubject.trim();
+    const body = replyBody.trim();
+    if (!subject || !body) {
+      toast({ title: "Nhập đủ tiêu đề và nội dung mail", variant: "destructive" });
+      return;
+    }
+    setReplySending(true);
+    const { error } = await (supabase as any).rpc("admin_reply_suggestion", {
+      p_suggestion_id: replyFor.id,
+      p_subject: subject,
+      p_body: body,
+    });
+    setReplySending(false);
+    if (error) {
+      toast({ title: "Không gửi được mail", description: error.message, variant: "destructive" });
+      return;
+    }
+    const now = new Date().toISOString();
+    setSuggestions((prev) =>
+      prev.map((s) =>
+        s.id === replyFor.id ? { ...s, status: "replied", replied_at: now, reply_subject: subject } : s
+      )
+    );
+    toast({ title: "Đã gửi mail", description: personLabel(replyFor.user_id) });
+    setReplyFor(null);
   };
 
   const openAttachment = async (a: Attachment) => {
@@ -437,6 +483,11 @@ const AdminInbox = () => {
                         <span>{fmtDate(s.created_at)}</span>
                         <span>·</span>
                         <span className="text-foreground font-medium">{personLabel(s.user_id)}</span>
+                        {s.replied_at && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Mail className="w-3 h-3" /> Đã gửi mail {fmtDate(s.replied_at)}
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-foreground whitespace-pre-wrap">{s.content}</p>
                       {s.attachments.length > 0 && (
@@ -485,6 +536,16 @@ const AdminInbox = () => {
                           )}
                           Lưu ghi chú
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1"
+                          disabled={!people[s.user_id]?.email}
+                          onClick={() => openReply(s)}
+                        >
+                          <Mail className="w-4 h-4" />
+                          {s.replied_at ? "Gửi lại mail" : "Gửi mail"}
+                        </Button>
                       </div>
                     </Card>
                   ))}
@@ -494,6 +555,46 @@ const AdminInbox = () => {
           )}
         </div>
       </div>
+      <Dialog open={!!replyFor} onOpenChange={(o) => { if (!o && !replySending) setReplyFor(null); }}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Gửi mail phản hồi đề xuất</DialogTitle>
+            <DialogDescription>
+              Gửi tới <span className="font-medium text-foreground">{replyFor ? personLabel(replyFor.user_id) : ""}</span>.
+              Mail sẽ tự trích lại đề xuất gốc ở cuối.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Tiêu đề</label>
+              <Input value={replySubject} onChange={(e) => setReplySubject(e.target.value)} maxLength={200} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Nội dung</label>
+              <Textarea
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                rows={8}
+                placeholder="Chào bạn, cảm ơn bạn đã góp ý..."
+                maxLength={5000}
+              />
+            </div>
+            {replyFor && (
+              <div className="rounded-md border border-border bg-muted/40 p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Đề xuất gốc (đính kèm trong mail)</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap line-clamp-6">{replyFor.content}</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReplyFor(null)} disabled={replySending}>Huỷ</Button>
+            <Button onClick={sendReply} disabled={replySending || !replyBody.trim() || !replySubject.trim()} className="gap-1">
+              {replySending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Gửi mail
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Footer />
     </div>
   );
