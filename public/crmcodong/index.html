@@ -701,16 +701,18 @@ function tHR(C){
  const TH=["CN","T2","T3","T4","T5","T6","T7"];
  const tongLuong=P.reduce((a,x)=>a+x.luong,0);
  const expM=(D.exp_items||[]).filter(x=>x.d.slice(0,7)===HRM);
- const chiM=expM.reduce((a,x)=>a+ +x.amt,0);
- const tyTrong=chiM?tongLuong/chiM:0;
+ const chiKhac=expM.filter(x=>x.c!=="Lương nhân sự").reduce((a,x)=>a+ +x.amt,0);
+ const mauSo=chiKhac+tongLuong;
+ const tyTrong=mauSo?tongLuong/mauSo:0;
  const monthSalary=MS.map(m=>{const pp=hrCalc(m);
-  const tot=(D.exp_items||[]).filter(x=>x.d.slice(0,7)===m).reduce((a,x)=>a+ +x.amt,0);
-  return{m:m,l:pp.reduce((a,x)=>a+x.luong,0),tot:tot};});
+  const lm=pp.reduce((a,x)=>a+x.luong,0);
+  const ok=(D.exp_items||[]).filter(x=>x.d.slice(0,7)===m&&x.c!=="Lương nhân sự").reduce((a,x)=>a+ +x.amt,0);
+  return{m:m,l:lm,tot:ok+lm};});
 
  b.innerHTML=
  '<div class="insight">Tháng <b>'+HRM.slice(5)+'/'+HRM.slice(0,4)+'</b>: '+
   '<b>'+P.length+'</b> nhân sự · quỹ lương <b>'+vnd(tongLuong)+'</b>'+
-  (chiM?' · chiếm <b>'+pct(tyTrong)+'</b> tổng chi phí tháng':'')+
+  (mauSo?' · chiếm <b>'+pct(tyTrong)+'</b> tổng chi phí tháng'+(HRM===C.curM?' (tháng đang chạy, chi phí khác mới ghi tới hôm nay)':''):'')+
   ' · công chuẩn <b>'+hrWd(HRM).wd+'</b> ngày làm việc.</div>'
 
  +'<div class="chips"><label style="font-size:11.5px;color:var(--muted);font-weight:600;margin-right:4px">Tháng</label>'
