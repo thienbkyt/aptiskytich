@@ -661,12 +661,13 @@ function hrCalc(m){
   const khoan=s.unit==="khoan";
   const cc=khoan?0:W.wd*(s.spd||1);
   const rateAt=d=>(s.prob&&d<=s.prob)?(+s.rate||1):1;
-  const unit=d=>cc?((+s.base)*rateAt(d)+(+s.allow||0))/cc:0;
+  const unit=d=>cc?((+s.base)*rateAt(d))/cc:0;
   let luong=0,done=0,plan=0,oc=0;
   rows.forEach(a=>{luong+=unit(a.d);if(a.st==="da_lam")done++;else plan++;if(a.k==="tang_ca")oc++;});
+  if(rows.length)luong+=(+s.allow||0);
   const on=khoan?!!(s.start&&s.start.slice(0,7)<=m):rows.length>0;
   if(khoan)luong=on?+s.base:0;
-  const dg=cc?Math.round(((+s.base)*rateAt(m+"-28")+(+s.allow||0))/cc):0;
+  const dg=cc?Math.round(((+s.base)*rateAt(m+"-28"))/cc):0;
   const byDay={};rows.forEach(a=>{(byDay[a.d]=byDay[a.d]||[]).push(a);});
   return{s:s,khoan:khoan,cc:cc,done:done,plan:plan,oc:oc,tong:done+plan,
    luong:Math.round(luong),dg:dg,on:on,byDay:byDay,last:W.last,wd:W.wd};
@@ -753,6 +754,9 @@ function tHR(C){
  +'<tr class="tot"><td>TỔNG QUỸ LƯƠNG</td><td class="n"></td><td class="n"></td><td class="n"></td>'
  +'<td class="n"></td><td class="n"></td><td class="n"></td><td class="n">'
  + vnd(PF.reduce((a,x)=>a+x.luong,0))+'</td></tr></tbody></table>'
+ +'<div class="note-box" style="background:var(--soft);border-color:var(--line);color:var(--muted)">'
+ +'Thành tiền = đơn giá × công tính + phụ cấp. Đơn giá chỉ tính trên lương cơ bản (đã nhân hệ số thử việc); '
+ +'phụ cấp bảo hiểm trả <b>nguyên cả tháng</b>, không chia theo công.</div>'
  + (P.some(x=>x.plan)?'<div class="note-box">Có buổi ở trạng thái <b>kế hoạch</b> (chưa chốt công). Số lương tháng này là <b>dự kiến</b>, sẽ chốt lại cuối tháng theo công thực tế.</div>':"")
 
  +'<div class="split s11" style="margin-top:22px">'
