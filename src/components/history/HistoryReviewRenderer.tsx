@@ -67,7 +67,13 @@ interface Props {
 const reviewRowsCache = new Map<string, ExamQuestionRow[]>();
 
 const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults, snapshotQuestions }: Props) => {
-  const hasSnapshot = Array.isArray(snapshotQuestions) && snapshotQuestions.length > 0;
+  // Some older snapshots (e.g. Full Test Writing) stored questions as plain strings,
+  // not question rows → treat those as "no snapshot" and load the rows from the DB,
+  // otherwise question labels render empty.
+  const hasSnapshot =
+    Array.isArray(snapshotQuestions) &&
+    snapshotQuestions.length > 0 &&
+    snapshotQuestions.every((q: any) => q && typeof q === "object" && typeof q.question_text === "string");
   const baseKey = skill === "grammar" ? `grammar:${examSetId}` : examSetId;
   // Snapshot-backed rows must never share a cache slot with DB-fetched rows.
   const cacheKey = hasSnapshot ? `snap:${testResultId || examSetId}:${baseKey}` : baseKey;
