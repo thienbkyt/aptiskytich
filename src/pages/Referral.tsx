@@ -184,6 +184,15 @@ export default function Referral() {
   const discount = Number(info?.discount_percent ?? 0);
   const referrerPct = Number(info?.referrer_percent ?? 0);
   const available = Number(info?.available_vnd ?? 0);
+  // Hoa hồng dự kiến: các khoản đang chờ 7 ngày, chưa rút được.
+  const pendingRows = (history ?? []).filter((r) => r.status === "pending");
+  const pendingTotal = pendingRows.length
+    ? pendingRows.reduce((sum, r) => sum + Number(r.commission_vnd || 0), 0)
+    : Number(info?.pending_vnd ?? 0);
+  const nextReleaseAt = pendingRows
+    .map((r) => r.available_at)
+    .filter(Boolean)
+    .sort()[0] ?? null;
   const referred = Number(info?.referred_count ?? 0);
   const tierKey = discount < 10 ? "free" : referred < 5 ? "t1" : referred < 20 ? "t2" : "t3";
   const tierIdx = TIERS.findIndex((t) => t.key === tierKey);
@@ -390,6 +399,16 @@ export default function Referral() {
                   {available < 50000 ? `Cần thêm ${vnd(50000 - available)} để rút` : "Đủ điều kiện rút"}
                 </p>
               </>
+            )}
+            {pendingTotal > 0 && (
+              <div className="mt-3 inline-flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] dark:border-amber-500/30 dark:bg-amber-500/10">
+                <span className="[font-family:system-ui]" aria-hidden="true">⏳</span>
+                <span className="text-muted-foreground">Hoa hồng dự kiến:</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400">{vnd(pendingTotal)}</span>
+                {nextReleaseAt && (
+                  <span className="text-muted-foreground">· khoản sớm nhất rút được từ {vnDate(nextReleaseAt)}</span>
+                )}
+              </div>
             )}
             {payoutMsg && (
               <p className={`mt-3 text-[13px] font-medium ${payoutMsg.ok ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
