@@ -364,10 +364,10 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const raw = qResults[0]?.user_answer || "";
     const init: any = {};
     if (taskKey === "task1") {
-      const matches = [...raw.matchAll(/A:\s*([\s\S]*?)(?=\n\nQ\d+:|$)/g)];
+      const matches = [...raw.matchAll(/A:[ \t]*([\s\S]*?)(?=\n\nQ\d+:|$)/g)];
       init.shortAnswers = matches.map((mm) => mm[1].trim());
     } else if (taskKey === "task3") {
-      const matches = [...raw.matchAll(/A:\s*([\s\S]*?)(?=\n\nQ\d+:|$)/g)];
+      const matches = [...raw.matchAll(/A:[ \t]*([\s\S]*?)(?=\n\nQ\d+:|$)/g)];
       init.part3Answers = matches.map((mm) => mm[1].trim());
     } else if (taskKey === "task4") {
       const im = raw.match(/Informal Email:\s*\n?([\s\S]*?)(?=\n\nFormal Email:|$)/);
