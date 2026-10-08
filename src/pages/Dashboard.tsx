@@ -13,6 +13,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import TichTich from "@/components/mascot/TichTich";
+import KyKy from "@/components/mascot/KyKy";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
@@ -546,7 +547,7 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-1 shrink-0">
-                  <div className="hidden md:block -mb-4"><TichTich size={124} /></div>
+                  <div className="hidden md:flex items-end gap-1 -mb-4"><KyKy size={118} enterLines={["Hôm nay làm 1 đề với mình nha!", "Giữ chuỗi ngày nè 🔥", "Kỳ Kỳ cổ vũ cậu! 💪"]} /><TichTich size={124} /></div>
                   <Button asChild variant="glow" size="lg" className="shrink-0">
                     <Link to="/thi-thu">
                       <Zap className="w-4 h-4 mr-2" /> Thi thử ngay
