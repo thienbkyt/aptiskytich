@@ -107,7 +107,7 @@ const NUDGES = [
 const NUDGE_1_MS = 10_000;
 const NUDGE_2_MS = 20_000;
 
-export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => void }) {
+export default function TichTichQuiz({ onMood, name = "Tích Tích" }: { onMood?: (m: QuizMood) => void; name?: string }) {
   const [bank, setBank] = useState<QuizBank | null>(null);
   const [q, setQ] = useState<Question | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
@@ -152,7 +152,7 @@ export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => voi
   const armIdle = useCallback(() => {
     clearTimeout(idleTimer.current);
     clearNudges();
-    const lines = shuffle(NUDGES);
+    const lines = shuffle(NUDGES).map((l) => l.replace(/Tích Tích/g, name));
     nudgeTimers.current.push(window.setTimeout(() => { setNudge(lines[0]); onMood?.("worry"); }, NUDGE_1_MS));
     nudgeTimers.current.push(window.setTimeout(() => { setNudge(lines[1]); onMood?.("sad"); }, NUDGE_2_MS));
     idleTimer.current = window.setTimeout(() => hide(true), IDLE_HIDE_MS);
@@ -232,7 +232,7 @@ export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => voi
     <div
       className="absolute right-[108px] bottom-0 w-[300px] rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_18px_40px_-12px_rgba(0,0,0,0.35)] p-3.5 animate-in fade-in slide-in-from-right-2"
       role="dialog"
-      aria-label="Tích Tích đố từ vựng"
+      aria-label={`${name} đố từ vựng`}
       onMouseEnter={() => {
         clearTimeout(idleTimer.current);
         if (nudge) { clearNudges(); if (!picked) onMood?.("think"); }
@@ -245,7 +245,7 @@ export default function TichTichQuiz({ onMood }: { onMood?: (m: QuizMood) => voi
         </div>
       )}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[12px] font-bold text-primary">🧠 Tích Tích đố nè · {q.title}</span>
+        <span className="text-[12px] font-bold text-primary">🧠 {name} đố nè · {q.title}</span>
         <button
           type="button"
           onClick={() => hide(true)}
