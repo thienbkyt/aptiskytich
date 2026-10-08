@@ -101,6 +101,9 @@ export default function ShadowPanel({
       try {
         const res = await fetch(url);
         setBlob(await res.blob());
+        // Thu âm mới → bỏ kết quả cũ để hiện lại nút "Phân tích bài nói" (chấm lại được).
+        setResult(null);
+        setGate(null);
       } catch {
         setBlob(null);
       }
