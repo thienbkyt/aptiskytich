@@ -3,8 +3,11 @@
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
+
+const AW_ID = "AW-18413343499";
 
 export function trackPixel(
   event: string,
@@ -19,6 +22,28 @@ export function trackPixel(
         params ?? {},
         ...(eventId ? [{ eventID: eventId }] : []),
       );
+    }
+  } catch {
+    /* ignore */
+  }
+  // Google Ads: same business outcomes, mapped to this account's conversion
+  // actions. Any other event is not sent to Google.
+  try {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      if (event === "PageView") {
+        window.gtag("event", "page_view", { send_to: AW_ID });
+      } else if (event === "CompleteRegistration") {
+        window.gtag("event", "conversion", {
+          send_to: `${AW_ID}/HlaGCKuuz5UdEIumlcxE`,
+        });
+      } else if (event === "Purchase") {
+        window.gtag("event", "conversion", {
+          send_to: `${AW_ID}/xoQjCK6uz5UdEIumlcxE`,
+          value: Number(params?.value ?? 0),
+          currency: "VND",
+          transaction_id: eventId ?? "",
+        });
+      }
     }
   } catch {
     /* ignore */
