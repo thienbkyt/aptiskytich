@@ -15,6 +15,7 @@ import {
 
 import Navbar from "@/components/layout/Navbar";
 import TichTich from "@/components/mascot/TichTich";
+import KyKy from "@/components/mascot/KyKy";
 import Footer from "@/components/layout/Footer";
 import LatestBlogSection from "@/components/blog/LatestBlogSection";
 
@@ -293,7 +294,7 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="hidden lg:block absolute -bottom-12 -right-8 z-20"><TichTich size={130} /></div>
+              <div className="hidden lg:flex items-end gap-1 absolute -bottom-12 -right-8 z-20"><KyKy size={128} /><TichTich size={130} /></div>
             </motion.div>
           </div>
         </div>
