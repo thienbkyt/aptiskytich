@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParticlesBackground from "@/components/ui/particles-background";
 import TichTich from "@/components/mascot/TichTich";
+import KyKy from "@/components/mascot/KyKy";
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -250,7 +251,8 @@ const Auth = () => {
         </div>
 
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">
-          <div className="hidden md:flex justify-center -mt-2 mb-2">
+          <div className="hidden md:flex justify-center items-end gap-2 -mt-2 mb-2">
+            <KyKy size={100} shy={pwFocused} lookAt={emailCaret} />
             <TichTich size={96} shy={pwFocused} lookAt={emailCaret} />
           </div>
           <div className="text-center mb-6">
