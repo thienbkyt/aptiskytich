@@ -213,6 +213,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_admin_notify_20261006: {
+        Row: {
+          backed_up_at: string | null
+          def: string | null
+          name: unknown
+        }
+        Insert: {
+          backed_up_at?: string | null
+          def?: string | null
+          name?: unknown
+        }
+        Update: {
+          backed_up_at?: string | null
+          def?: string | null
+          name?: unknown
+        }
+        Relationships: []
+      }
       backup_auth_confirm_20260905: {
         Row: {
           email: string | null
@@ -351,6 +369,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_de_thi_0510_q: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_de_thi_2809_q: {
         Row: {
           audio_url: string | null
@@ -464,6 +533,57 @@ export type Database = {
           skill?: string | null
           time_limit?: number | null
           title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_de_thi_3009_q: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -861,6 +981,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_de37_q4_teacher_20261006: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_de39_s3_20260909: {
         Row: {
           audio_url: string | null
@@ -1191,6 +1362,120 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_email_funcs_20261001: {
+        Row: {
+          def: string | null
+          proname: unknown
+          saved_at: string | null
+        }
+        Insert: {
+          def?: string | null
+          proname?: unknown
+          saved_at?: string | null
+        }
+        Update: {
+          def?: string | null
+          proname?: unknown
+          saved_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_eq_de30_r3_20261006: {
+        Row: {
+          audio_url: string | null
+          backed_up_at: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_eqr_resync_20261005: {
+        Row: {
+          backed_up_at: string | null
+          created_at: string | null
+          exam_question_id: string | null
+          id: string | null
+          is_correct: boolean | null
+          new_answer: string | null
+          new_ok: boolean | null
+          skill: string | null
+          test_result_id: string | null
+          user_answer: string | null
+          user_id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          exam_question_id?: string | null
+          id?: string | null
+          is_correct?: boolean | null
+          new_answer?: string | null
+          new_ok?: boolean | null
+          skill?: string | null
+          test_result_id?: string | null
+          user_answer?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          exam_question_id?: string | null
+          id?: string | null
+          is_correct?: boolean | null
+          new_answer?: string | null
+          new_ok?: boolean | null
+          skill?: string | null
+          test_result_id?: string | null
+          user_answer?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_exam_review_items_20260817: {
         Row: {
           id: string | null
@@ -1317,6 +1602,75 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_examset_de07_p4_20261006: {
+        Row: {
+          access_tier: string | null
+          backed_up_at: string | null
+          clone_of: string | null
+          clone_source_label: string | null
+          created_at: string | null
+          description: string | null
+          exam_type: string | null
+          full_test_category: string | null
+          full_test_id: string | null
+          full_test_title: string | null
+          id: string | null
+          is_published: boolean | null
+          key_date: string | null
+          new_until: string | null
+          part: string | null
+          question_count: number | null
+          skill: string | null
+          time_limit: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_tier?: string | null
+          backed_up_at?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_tier?: string | null
+          backed_up_at?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_examsets_title_20261001: {
         Row: {
           access_tier: string | null
@@ -1422,6 +1776,141 @@ export type Database = {
           full_test_id?: string | null
           id?: string | null
           position?: number | null
+        }
+        Relationships: []
+      }
+      backup_funcs_device_20261004: {
+        Row: {
+          backed_up_at: string | null
+          def: string | null
+          proname: unknown
+        }
+        Insert: {
+          backed_up_at?: string | null
+          def?: string | null
+          proname?: unknown
+        }
+        Update: {
+          backed_up_at?: string | null
+          def?: string | null
+          proname?: unknown
+        }
+        Relationships: []
+      }
+      backup_gon_de43_44_20261001: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_gon_de43_44_sets_20261001: {
+        Row: {
+          access_tier: string | null
+          clone_of: string | null
+          clone_source_label: string | null
+          created_at: string | null
+          description: string | null
+          exam_type: string | null
+          full_test_category: string | null
+          full_test_id: string | null
+          full_test_title: string | null
+          id: string | null
+          is_published: boolean | null
+          key_date: string | null
+          new_until: string | null
+          part: string | null
+          question_count: number | null
+          skill: string | null
+          time_limit: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_tier?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_tier?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1542,6 +2031,36 @@ export type Database = {
           test_result_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_grading_jobs_requeue_20261006: {
+        Row: {
+          attempts: number | null
+          backed_up_at: string | null
+          finished_at: string | null
+          id: string | null
+          last_error: string | null
+          next_run_at: string | null
+          status: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          backed_up_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          next_run_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          backed_up_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          next_run_at?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -1677,6 +2196,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_key0810_keo_club_20261007: {
+        Row: {
+          created_at: string | null
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          priority: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       backup_key1709_bump_20260916: {
         Row: {
           created_at: string | null
@@ -1701,6 +2247,57 @@ export type Database = {
           key_id?: string | null
           priority?: string | null
           sort_order?: number | null
+        }
+        Relationships: []
+      }
+      backup_l_0510_q: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2220,6 +2817,93 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_mountain_v3_20261005: {
+        Row: {
+          access_tier: string | null
+          clone_of: string | null
+          clone_source_label: string | null
+          created_at: string | null
+          description: string | null
+          exam_type: string | null
+          full_test_category: string | null
+          full_test_id: string | null
+          full_test_title: string | null
+          id: string | null
+          is_published: boolean | null
+          key_date: string | null
+          new_until: string | null
+          part: string | null
+          question_count: number | null
+          skill: string | null
+          time_limit: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_tier?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_tier?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_mountain_v3_links_20261005: {
+        Row: {
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          t: string | null
+        }
+        Insert: {
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          t?: string | null
+        }
+        Update: {
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          t?: string | null
+        }
+        Relationships: []
+      }
       backup_musician_20260909: {
         Row: {
           audio_url: string | null
@@ -2463,6 +3147,39 @@ export type Database = {
           data?: Json | null
           row_id?: string | null
           src?: string | null
+        }
+        Relationships: []
+      }
+      backup_policies_hasrole_20261006: {
+        Row: {
+          backed_up_at: string | null
+          cmd: string | null
+          policyname: unknown
+          qual: string | null
+          roles: string | null
+          schemaname: unknown
+          tablename: unknown
+          with_check: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          cmd?: string | null
+          policyname?: unknown
+          qual?: string | null
+          roles?: string | null
+          schemaname?: unknown
+          tablename?: unknown
+          with_check?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          cmd?: string | null
+          policyname?: unknown
+          qual?: string | null
+          roles?: string | null
+          schemaname?: unknown
+          tablename?: unknown
+          with_check?: string | null
         }
         Relationships: []
       }
@@ -2922,6 +3639,36 @@ export type Database = {
           response_time?: number | null
           set_title?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_rp2_singer_20261007: {
+        Row: {
+          backed_up_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+          set_title: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+          set_title?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+          set_title?: string | null
         }
         Relationships: []
       }
@@ -4035,6 +4782,90 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_sub_lethuytrang_20261005: {
+        Row: {
+          ai_daily_cap: number | null
+          backed_up_at: string | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          backed_up_at?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          backed_up_at?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sub_thuyha_20261003: {
+        Row: {
+          ai_daily_cap: number | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sub_tranngocanh_20261008: {
+        Row: {
+          ai_daily_cap: number | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_sync_lab_20260922: {
         Row: {
           audio_url: string | null
@@ -4083,6 +4914,24 @@ export type Database = {
           question_type?: string | null
           response_time?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_tr_skillscores_20261005: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          skill_scores: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          skill_scores?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          skill_scores?: Json | null
         }
         Relationships: []
       }
@@ -4492,6 +5341,57 @@ export type Database = {
         Relationships: []
       }
       backup_writing_30bo_20260917: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_writing_p1_mau_20261002: {
         Row: {
           audio_url: string | null
           correct_answer: number | null
@@ -5451,6 +6351,9 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          replied_at: string | null
+          reply_body: string | null
+          reply_subject: string | null
           status: string
           updated_at: string
           user_id: string
@@ -5461,6 +6364,9 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          replied_at?: string | null
+          reply_body?: string | null
+          reply_subject?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -5471,6 +6377,9 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          replied_at?: string | null
+          reply_body?: string | null
+          reply_subject?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -5710,6 +6619,7 @@ export type Database = {
           attempts: number
           claimed_at: string | null
           created_at: string
+          failure_notified_at: string | null
           finished_at: string | null
           id: string
           last_error: string | null
@@ -5729,6 +6639,7 @@ export type Database = {
           attempts?: number
           claimed_at?: string | null
           created_at?: string
+          failure_notified_at?: string | null
           finished_at?: string | null
           id?: string
           last_error?: string | null
@@ -5748,6 +6659,7 @@ export type Database = {
           attempts?: number
           claimed_at?: string | null
           created_at?: string
+          failure_notified_at?: string | null
           finished_at?: string | null
           id?: string
           last_error?: string | null
@@ -5772,6 +6684,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hr_attendance: {
+        Row: {
+          id: number
+          kind: string
+          note: string | null
+          slot: string
+          staff_id: string
+          status: string
+          work_date: string
+        }
+        Insert: {
+          id?: number
+          kind?: string
+          note?: string | null
+          slot?: string
+          staff_id: string
+          status?: string
+          work_date: string
+        }
+        Update: {
+          id?: number
+          kind?: string
+          note?: string | null
+          slot?: string
+          staff_id?: string
+          status?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_attendance_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "hr_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hr_staff: {
+        Row: {
+          active: boolean
+          allowance_vnd: number
+          base_salary_vnd: number
+          contract_type: string | null
+          full_name: string
+          id: string
+          note: string | null
+          position: string | null
+          probation_rate: number
+          probation_until: string | null
+          schedule_note: string | null
+          slots_per_day: number
+          sort_order: number
+          start_date: string | null
+          unit: string
+        }
+        Insert: {
+          active?: boolean
+          allowance_vnd?: number
+          base_salary_vnd?: number
+          contract_type?: string | null
+          full_name: string
+          id: string
+          note?: string | null
+          position?: string | null
+          probation_rate?: number
+          probation_until?: string | null
+          schedule_note?: string | null
+          slots_per_day?: number
+          sort_order?: number
+          start_date?: string | null
+          unit?: string
+        }
+        Update: {
+          active?: boolean
+          allowance_vnd?: number
+          base_salary_vnd?: number
+          contract_type?: string | null
+          full_name?: string
+          id?: string
+          note?: string | null
+          position?: string | null
+          probation_rate?: number
+          probation_until?: string | null
+          schedule_note?: string | null
+          slots_per_day?: number
+          sort_order?: number
+          start_date?: string | null
+          unit?: string
+        }
+        Relationships: []
       }
       internal_service_tokens: {
         Row: {
@@ -5857,6 +6861,30 @@ export type Database = {
           created_at?: string
           data?: Json
           exam_set_id?: string
+        }
+        Relationships: []
+      }
+      marathon_progress: {
+        Row: {
+          data: Json
+          kind: string
+          storage_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data: Json
+          kind: string
+          storage_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          kind?: string
+          storage_key?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -7940,6 +8968,19 @@ export type Database = {
         Args: { p_note: string; p_payout_id: string; p_status: string }
         Returns: undefined
       }
+      admin_notify_email: {
+        Args: {
+          p_body_html: string
+          p_label: string
+          p_link: string
+          p_msgid: string
+          p_rows: Json
+          p_subject: string
+          p_text: string
+          p_title: string
+        }
+        Returns: undefined
+      }
       admin_online_users: {
         Args: { p_window_seconds?: number }
         Returns: number
@@ -7950,6 +8991,10 @@ export type Database = {
       }
       admin_outcomes: { Args: { p_from: string; p_to: string }; Returns: Json }
       admin_referral_overview: { Args: { p_days?: number }; Returns: Json }
+      admin_reply_suggestion: {
+        Args: { p_body: string; p_subject: string; p_suggestion_id: string }
+        Returns: number
+      }
       admin_search_users: {
         Args: { p_query: string }
         Returns: {
@@ -7991,6 +9036,7 @@ export type Database = {
           attempts: number
           claimed_at: string | null
           created_at: string
+          failure_notified_at: string | null
           finished_at: string | null
           id: string
           last_error: string | null
@@ -8109,6 +9155,7 @@ export type Database = {
         }
         Returns: string
       }
+      finance_hr: { Args: { p_token: string }; Returns: Json }
       finance_report: { Args: { p_token: string }; Returns: Json }
       finish_dictation_session: {
         Args: {
@@ -8352,6 +9399,7 @@ export type Database = {
           skill: string
         }[]
       }
+      html_esc: { Args: { p: string }; Returns: string }
       insert_test_result: {
         Args: {
           p_correct_answers?: number
@@ -8418,6 +9466,7 @@ export type Database = {
         Args: { p_review_snapshot: Json; p_test_result_id: string }
         Returns: undefined
       }
+      notify_admin_grading_failures: { Args: never; Returns: number }
       open_sets_bulk: { Args: { p_set_ids: string[] }; Returns: boolean }
       promo_active: { Args: never; Returns: boolean }
       public_stats: { Args: never; Returns: Json }
@@ -8478,6 +9527,10 @@ export type Database = {
           p_token: string
         }
         Returns: Json
+      }
+      sync_question_results: {
+        Args: { p_rows: Json; p_test_result_id: string }
+        Returns: number
       }
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }
