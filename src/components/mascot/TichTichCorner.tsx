@@ -8,6 +8,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import TichTich from "./TichTich";
+import KyKy from "./KyKy";
+import { mascotForPath, MASCOT_NAME } from "./mascotForPath";
 import TichTichQuiz, { type QuizMood } from "./TichTichQuiz";
 
 const HIDE_BODY_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
@@ -37,11 +39,16 @@ export default function TichTichCorner() {
   }, []);
 
   if (examHidden || HIDE_PATHS.some((r) => r.test(pathname))) return null;
+  const who = mascotForPath(pathname);
 
   return (
     <div className="fixed right-6 bottom-[84px] z-40 hidden md:block">
-      <TichTichQuiz onMood={setQuizMood} />
-      <TichTich size={96} idleSleep={!quizMood} bubbleSide="left" enterLines={TIPS} mood={quizMood ?? "normal"} />
+      <TichTichQuiz onMood={setQuizMood} name={MASCOT_NAME[who]} />
+      {who === "kyky" ? (
+        <KyKy size={96} idleSleep={!quizMood} bubbleSide="left" enterLines={TIPS} mood={quizMood ?? "normal"} />
+      ) : (
+        <TichTich size={96} idleSleep={!quizMood} bubbleSide="left" enterLines={TIPS} mood={quizMood ?? "normal"} />
+      )}
     </div>
   );
 }
