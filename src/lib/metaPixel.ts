@@ -3,8 +3,11 @@
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
+
+const AW_ID = "AW-18413343499";
 
 export function trackPixel(
   event: string,
