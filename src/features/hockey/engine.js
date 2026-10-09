@@ -232,27 +232,49 @@ function openL4Script(s, m){
   wirePlayer(path);
 }
 // ===================== ADMIN EDIT =====================
-async function editNote(spec){
+function hkToast(msg){ const t=document.createElement("div"); t.className="hktoast"; t.textContent=msg; ROOT.appendChild(t); setTimeout(()=>t.classList.add("on"),10); setTimeout(()=>{ t.classList.remove("on"); setTimeout(()=>t.remove(),300); },2200); }
+function editModal({title, sub, fields, validate, onSave}){
+  const canAll = !!(OPTS.isAdmin && OPTS.onEditNote), canMe = !!OPTS.onEditUserNote;
+  const m=document.createElement("div"); m.className="hkm";
+  m.innerHTML=`<div class="hkm-box" role="dialog" aria-modal="true"><div class="hkm-h"><b>${esc(title)}</b><button class="hkm-x" data-mx="1" aria-label="Đóng">✕</button></div>${sub?`<p class="hkm-sub">${sub}</p>`:""}
+    ${fields.map((f,i)=>`<label class="hkm-f"><span>${esc(f.label)}</span><input data-mf="${i}" value="${esc(f.value||"")}" placeholder="${esc(f.placeholder||"")}"></label>`).join("")}
+    ${canAll?`<div class="hkm-scope"><span>Lưu cho</span><label><input type="radio" name="hksc" value="all" checked> Tất cả học viên</label>${canMe?`<label><input type="radio" name="hksc" value="me"> Chỉ tài khoản của tôi</label>`:""}</div>`:""}
+    <p class="hkm-err"></p><div class="hkm-a"><button class="hkm-c" data-mx="1">Huỷ</button><button class="hkm-s">Lưu</button></div></div>`;
+  ROOT.appendChild(m);
+  const inputs=[...m.querySelectorAll("[data-mf]")]; setTimeout(()=>{ inputs[0]&&inputs[0].focus(); inputs[0]&&inputs[0].select(); },30);
+  const close=()=>m.remove();
+  const err=m.querySelector(".hkm-err"), btn=m.querySelector(".hkm-s");
+  const doSave=async()=>{
+    const vals=inputs.map(x=>x.value.trim()); const v=validate&&validate(vals); if(v){ err.textContent=v; return; }
+    const all = canAll && (m.querySelector('input[name="hksc"]:checked')||{}).value==="all";
+    btn.disabled=true; btn.textContent="Đang lưu…"; err.textContent="";
+    try{ await onSave(vals, async (kind,ref,data)=>{ if(all) await OPTS.onEditNote(kind,ref,data); else await OPTS.onEditUserNote(kind,ref,data); }); close(); hkToast(all?"Đã lưu cho tất cả học viên ✓":"Đã lưu vào tài khoản của bạn ✓"); }
+    catch(e){ err.textContent="Lưu không thành công: "+(e&&e.message||e); btn.disabled=false; btn.textContent="Lưu"; }
+  };
+  m.addEventListener("click",e=>{ if(e.target===m||e.target.closest("[data-mx]")){ close(); return; } if(e.target.closest(".hkm-s")) doSave(); });
+  m.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); doSave(); } if(e.key==="Escape") close(); });
+}
+function editNote(spec){
   if(!OPTS.onEditUserNote && !OPTS.onEditNote) return;
-  const save = async (kind, ref, data) => { const all = OPTS.isAdmin && OPTS.onEditNote && window.confirm("Lưu cho TẤT CẢ học viên?\nOK = tất cả · Huỷ = chỉ tài khoản của bạn"); if(all) await OPTS.onEditNote(kind, ref, data); else await OPTS.onEditUserNote(kind, ref, data); };
   const [kind, a, b2] = spec.split("§");
-  try{
   if(kind==="l3"){
     const sets = L3ROWS.filter(r=>r.g.topic===a).flatMap(r=>r.b.sets); const cur=(sets.find(s=>s.code.join("")===b2)||{}).mn||"";
     const g = L3.find(x=>x.topic===a);
-    const text = window.prompt(`Câu nhớ cho "${a}" · mã ${b2.split("").join("-")}\n(chữ đầu mỗi từ viết hoa: M = M, W = V/W, B = B)`, cur); if(text==null) return;
-    const vi = window.prompt("Gợi ý tiếng Việt cho chủ đề (vd: lên mạng):", (g&&g.vi)||""); if(vi==null) return;
-    await save("l3_mnemonic", `${a}|${b2}`, {text:text.trim(), vi:vi.trim()});
-    L3ROWS.forEach(r=>{ if(r.g.topic===a){ r.g.vi=vi.trim(); r.b.sets.forEach(s=>{ if(s.code.join("")===b2) s.mn=text.trim(); }); if(r.b.nam.join("")===b2) r.b.mnNam=text.trim(); if(r.b.nu.join("")===b2) r.b.mnNu=text.trim(); } });
-    renderShell(); return;
+    editModal({ title:`Sửa câu nhớ · ${a}`, sub:`Mã <b>${esc(b2.split("").join("-"))}</b> — chữ đầu mỗi từ viết hoa theo mã (M = M, W = V/W, B = B).`,
+      fields:[{label:"Câu nhớ",value:cur,placeholder:"vd: Mua Bán Với Bạn"},{label:"Gợi ý tiếng Việt cho chủ đề",value:(g&&g.vi)||"",placeholder:"vd: lên mạng"}],
+      validate:v=>!v[0]?"Nhập câu nhớ trước đã.":"",
+      onSave: async (v, save)=>{ const [text,vi]=v; await save("l3_mnemonic", `${a}|${b2}`, {text, vi});
+        L3ROWS.forEach(r=>{ if(r.g.topic===a){ r.g.vi=vi; r.b.sets.forEach(s=>{ if(s.code.join("")===b2) s.mn=text; }); if(r.b.nam.join("")===b2) r.b.mnNam=text; if(r.b.nu.join("")===b2) r.b.mnNu=text; } });
+        renderShell(); } });
+    return;
   }
   if(kind==="r5"){
     const s = R5.find(x=>x.id===a); if(!s) return; const p=+b2;
-    const text = window.prompt(`Câu tín hiệu cho đoạn ${p} (copy y nguyên 1 cụm trong đoạn):`, s.key[p-1]||""); if(text==null) return;
-    if(text && !s.p[p-1].includes(text)){ window.alert("Cụm này không có nguyên văn trong đoạn — hãy copy đúng từng chữ."); return; }
-    const keys = s.p.map((_,i)=> i===p-1 ? text : (s.key[i]||"")); await save("r5_signal", a, {keys}); s.key = keys; renderShell();
+    editModal({ title:`Sửa câu tín hiệu · đoạn ${p}`, sub:"Copy y nguyên 1 cụm có trong đoạn để tô vàng.",
+      fields:[{label:"Câu tín hiệu",value:s.key[p-1]||""}],
+      validate:v=>v[0]&&!s.p[p-1].includes(v[0])?"Cụm này không có nguyên văn trong đoạn — hãy copy đúng từng chữ.":"",
+      onSave: async (v, save)=>{ const keys = s.p.map((_,i)=> i===p-1 ? v[0] : (s.key[i]||"")); await save("r5_signal", a, {keys}); s.key = keys; renderShell(); } });
   }
-  }catch(e){ window.alert("Lưu không thành công: "+(e&&e.message||e)); }
 }
 
 // ===================== L3 =====================
@@ -276,7 +298,7 @@ function L3Table(b){
   };
   draw(); $("#q").oninput=draw;
   $("#tb").onclick = e=>{ const sc=e.target.closest("[data-sc]"); if(sc){ const x=L3SETS[+sc.dataset.sc]; openL3Script(x.r, x.si); return; }
-    const r=e.target.closest("tr.row"); if(!r||e.target.closest("[data-learn]")) return; const d=$("#d"+r.dataset.x); d.hidden=!d.hidden; };
+    const r=e.target.closest("tr.row"); if(!r||e.target.closest("[data-learn],[data-edit],[data-nb],[data-do],.showd")) return; const d=$("#d"+r.dataset.x); d.hidden=!d.hidden; };
 }
 function l3Cards(){ return L3ROWS.filter(okRow).flatMap(r=>r.b.st.map((t,k)=>["M","W"].map(f=>({r,t,k,f})))).flat(); }
 function flashShell(b, n, front, back, redraw){
