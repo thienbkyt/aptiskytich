@@ -1614,6 +1614,33 @@ Formal email:
 ${partsIn.formalText ?? ""}`;
       }
 
+      // Số từ do APP đếm (LLM hay đếm sai → từng chê "hơi dài" bài 28/20-30 từ).
+      // Đưa số chính xác vào prompt + cấm nhận xét độ dài khi đã đạt khung.
+      {
+        const lenStatus = (w: number, mn: number, mx: number) =>
+          w === 0 ? "BỎ TRỐNG" : w < mn ? `THIẾU TỪ (dưới ${mn})` : w > mx * 1.3 ? `VƯỢT NHIỀU (trên ${Math.round(mx * 1.3)})` : "ĐẠT KHUNG";
+        let lenLines: string[] = [];
+        if (pt === "task2") {
+          const w = wc(studentText);
+          lenLines = [`Bài viết: ${w} từ (yêu cầu 20–30) → ${lenStatus(w, 20, 30)}`];
+        } else if (pt === "task3") {
+          lenLines = (partsIn.threeAnswers || []).slice(0, 3).map((a: string, i: number) => {
+            const w = wc(a || "");
+            return `Câu ${i + 1}: ${w} từ (yêu cầu 30–40) → ${lenStatus(w, 30, 40)}`;
+          });
+        } else if (pt === "task4") {
+          const wi = wc(String(partsIn.informalText ?? "")), wf = wc(String(partsIn.formalText ?? ""));
+          lenLines = [
+            `Informal: ${wi} từ (yêu cầu 40–50) → ${lenStatus(wi, 40, 50)}`,
+            `Formal: ${wf} từ (yêu cầu 120–150) → ${lenStatus(wf, 120, 150)}`,
+          ];
+        }
+        if (lenLines.length) {
+          userText += `\n\nSỐ TỪ (APP ĐÃ ĐẾM CHÍNH XÁC — dùng đúng số này, KHÔNG tự đếm lại):\n${lenLines.join("\n")}`;
+          systemPromptV2 += `\n\nQUY TẮC SỐ TỪ (bắt buộc): KHÔNG tự đếm từ — chỉ dùng số từ app cung cấp trong tin nhắn. Phần nào "ĐẠT KHUNG" thì TUYỆT ĐỐI KHÔNG nhận xét bài dài/ngắn, KHÔNG khuyên rút gọn hay viết thêm cho đủ số từ. Chỉ được nhắc độ dài khi app ghi "THIẾU TỪ" hoặc "VƯỢT NHIỀU", và phải nêu đúng con số app đưa.`;
+        }
+      }
+
       // Experimental stricter rubric (v3) — internal calibration only. Never
       // applied to a real student request (isInternal === false).
       if (isInternal && String((body as any).rubricVersion || "") === "v3") {
