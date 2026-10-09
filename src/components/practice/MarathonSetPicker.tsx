@@ -120,15 +120,15 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-5 pt-5 pb-3 text-left">
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden flex flex-col max-h-[90dvh]">
+          <DialogHeader className="px-5 pt-5 pb-3 text-left shrink-0">
             <DialogTitle>Chọn đề Marathon · {partLabel}</DialogTitle>
             <DialogDescription>
               Tick các đề muốn làm liên tục. Kết quả từng đề vẫn được lưu vào ô đề như bình thường.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
+          <div className="px-5 pb-3 flex flex-wrap items-center gap-2 shrink-0">
             <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => selectOnly(sets.map((s) => s.id))}>
               Chọn tất cả ({sets.length})
             </Button>
@@ -144,7 +144,7 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
             </Button>
           </div>
           {hasPrio && (
-            <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
+            <div className="px-5 pb-3 flex flex-wrap items-center gap-2 shrink-0">
               {(["high", "medium", "low"] as Prio[]).filter((p) => prioCounts[p] > 0).map((p) => {
                 const on = prioOn.has(p);
                 return (
@@ -168,7 +168,7 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
               })}
             </div>
           )}
-          <div className="px-5 pb-3 flex items-center gap-2 text-sm">
+          <div className="px-5 pb-3 flex items-center gap-2 text-sm shrink-0">
             <span className="text-muted-foreground">Chọn nhanh</span>
             <Input
               type="number" inputMode="numeric" min={1} max={sets.length}
@@ -182,7 +182,7 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
             <span className="text-xs text-muted-foreground/80 hidden sm:inline">(ưu tiên đề chưa làm)</span>
           </div>
 
-          <div className="border-y border-border max-h-[50vh] overflow-y-auto">
+          <div className="border-y border-border flex-1 min-h-[96px] overflow-y-auto overscroll-contain">
             {sets.map((s) => {
               const on = selected.has(s.id);
               return (
@@ -211,7 +211,7 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
             })}
           </div>
 
-          <div className="px-5 py-3 flex items-center justify-between gap-3">
+          <div className="px-5 py-3 flex items-center justify-between gap-3 shrink-0 bg-background">
             <span className="text-sm text-muted-foreground">
               Đã chọn <b className="text-foreground">{orderedSel.length}</b>/{sets.length} đề
             </span>
