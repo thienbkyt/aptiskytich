@@ -270,7 +270,7 @@ const MarathonNavigator = ({
               onClick={() => onRetrySet(activeSetIndex)}
               className="text-[11px] font-semibold text-primary hover:underline whitespace-nowrap shrink-0"
             >
-              {isWriting ? "Làm lại đề này" : "Làm lại câu này"}
+              {isWriting || chipLabelMode === "set" ? "Làm lại đề này" : "Làm lại câu này"}
             </button>
           </div>
         )}
