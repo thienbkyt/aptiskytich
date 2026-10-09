@@ -121,6 +121,7 @@ const H="Hạ tầng & Tool",M="Marketing & Vận hành",P="Nhân sự / CTV";
 /* ---------- tiện ích ---------- */
 const vnd=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN")+"đ");
 const dm=d=>d?d.split("-").reverse().join("/"):"";
+const short=a=>(a>=1e6&&a%1e5===0)?(a/1e6).toLocaleString("vi-VN")+"tr":((a<1e6&&a%1e3===0)?(a/1e3)+"k":vnd(a));
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const TH=["CN","T2","T3","T4","T5","T6","T7"];
 const thu=d=>{const p=d.split("-").map(Number);return TH[new Date(Date.UTC(p[0],p[1]-1,p[2])).getUTCDay()];};
@@ -244,7 +245,7 @@ function renderForm(){
     <datalist id="dl">${[...new Set(ITEMS.map(x=>x.t))].slice(0,120).map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
     <div class="hint" id="catHint">${catHint}</div>
     <select id="fcat" style="display:none;margin-top:6px">${catOpts}</select>
-    ${!F.id&&picks.length?`<div class="chips">${picks.map((p,i)=>`<button type="button" class="chip" data-pick="${i}">${esc(p.t)}${p.a?" · "+(p.a>=1e6?(p.a/1e6).toLocaleString("vi-VN")+"tr":(p.a/1e3)+"k"):""}</button>`).join("")}</div>`:""}
+    ${!F.id&&picks.length?`<div class="chips">${picks.map((p,i)=>`<button type="button" class="chip" data-pick="${i}">${esc(p.t)}${p.a?" · "+short(p.a):""}</button>`).join("")}</div>`:""}
    </div>
    <div class="two">
     <div class="f"><label>Số tiền</label>
