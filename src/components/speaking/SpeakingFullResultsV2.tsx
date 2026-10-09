@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BandCelebration from "@/components/mascot/BandCelebration";
 import { Sparkles, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import SpeakingHeader from "./SpeakingHeader";
 import SpeakingProfileView from "./SpeakingProfileView";
@@ -77,6 +78,7 @@ const SpeakingFullResultsV2 = ({
               </div>
             )}
 
+            <BandCelebration cefr={cefr} skillLabel="Speaking" />
             <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-3">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Tổng điểm Speaking
