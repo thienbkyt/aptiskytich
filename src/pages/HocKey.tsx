@@ -55,7 +55,7 @@ const HocKey = () => {
     let cancelled = false;
     (async () => {
       try {
-        const [raw, notesRes, prioRes, learnedRes] = await Promise.all([
+        const [raw, notesRes, prioRes, learnedRes, userNotesRes, nbRes] = await Promise.all([
           allowed
             ? Promise.all(Object.entries(PARTS).map(async ([k, [skill, like]]) => [k, await loadPart(skill, like)] as const))
                 .then((rows) => Object.fromEntries(rows))
@@ -63,7 +63,20 @@ const HocKey = () => {
           sb.from("key_notes").select("kind,ref,data"),
           sb.rpc("get_current_key_labels"),
           sb.from("key_learned").select("exam_set_id,part").eq("user_id", user.id),
+          sb.from("key_user_notes").select("kind,ref,data").eq("user_id", user.id),
+          sb.from("key_notebook").select("exam_set_id,part").eq("user_id", user.id),
         ]);
+        // Gợi ý sổ key: đề trong 4 dạng mà lần làm gần nhất (luyện đề thường) chưa đúng hết
+        const allIds = Object.values(raw as any).flat().map((s: any) => s.id);
+        const latest = new Map<string, { score: number; total: number }>();
+        if (allIds.length) {
+          const { data: trs } = await sb.from("test_results").select("exam_set_id,score,total,created_at")
+            .eq("user_id", user.id).in("exam_set_id", allIds).order("created_at", { ascending: false }).limit(1000);
+          (trs || []).forEach((r: any) => { if (r.exam_set_id && !latest.has(r.exam_set_id)) latest.set(r.exam_set_id, r); });
+        }
+        const practiceWrong = [...latest.entries()].filter(([, r]) => r.total > 0 && r.score < r.total).map(([id]) => id);
+        const userNotes: Record<string, any> = {};
+        (userNotesRes.data || []).forEach((n: any) => { userNotes[`${n.kind}::${n.ref}`] = n.data; });
         const notes: Record<string, any> = {};
         (notesRes.data || []).forEach((n: any) => { notes[`${n.kind}::${n.ref}`] = n.data; });
         const prio: Record<string, string> = {};
@@ -73,7 +86,7 @@ const HocKey = () => {
           if (!r.exam_set_id || !p) return;
           if (!prio[r.exam_set_id] || rank(p) < rank(prio[r.exam_set_id])) prio[r.exam_set_id] = p;
         });
-        if (!cancelled) setPayload({ raw, notes, prio, learned: learnedRes.data || [] });
+        if (!cancelled) setPayload({ raw, notes, prio, learned: learnedRes.data || [], userNotes, notebook: nbRes.data || [], practiceWrong });
       } catch (e: any) {
         if (!cancelled) setErr(e?.message || "Không tải được dữ liệu");
       }
@@ -95,13 +108,26 @@ const HocKey = () => {
         if (on) await sb.from("key_learned").upsert({ user_id: user.id, exam_set_id: setId, part }, { onConflict: "user_id,exam_set_id" });
         else await sb.from("key_learned").delete().eq("user_id", user.id).eq("exam_set_id", setId);
       },
-      onEditNote: async (kind: string, ref: string, data: any) => {
+      onToggleNotebook: async (part: string, setId: string, on: boolean, source: string) => {
+        if (!user) return;
+        if (on) await sb.from("key_notebook").upsert({ user_id: user.id, exam_set_id: setId, part, source }, { onConflict: "user_id,exam_set_id" });
+        else await sb.from("key_notebook").delete().eq("user_id", user.id).eq("exam_set_id", setId);
+      },
+      onEditUserNote: async (kind: string, ref: string, data: any) => {
+        if (!user) return;
+        const { error } = await sb.from("key_user_notes").upsert(
+          { user_id: user.id, kind, ref, data, updated_at: new Date().toISOString() },
+          { onConflict: "user_id,kind,ref" },
+        );
+        if (error) throw error;
+      },
+      onEditNote: isAdmin ? async (kind: string, ref: string, data: any) => {
         const { error } = await sb.from("key_notes").upsert(
           { kind, ref, data, updated_at: new Date().toISOString(), updated_by: user?.id ?? null },
           { onConflict: "kind,ref" },
         );
         if (error) throw error;
-      },
+      } : undefined,
     });
     return () => inst.destroy();
   }, [payload, allowed, isAdmin, navigate, user]);
