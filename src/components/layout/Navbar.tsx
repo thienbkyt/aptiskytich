@@ -277,7 +277,7 @@ const Navbar = () => {
             Đề Key Dự Đoán
           </Link>
 
-          {/* Học Key Siêu Tốc — top-level (Lịch sử học tập đã chuyển vào More) */}
+          {/* Học Key Thần Tốc — top-level (Lịch sử học tập đã chuyển vào More) */}
           <Link
             to="/hoc-key"
             className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
@@ -287,7 +287,7 @@ const Navbar = () => {
             }`}
           >
             <Rocket className="w-4 h-4" />
-            Học Key Siêu Tốc
+            Học Key Thần Tốc
           </Link>
 
           {/* More dropdown */}
@@ -724,7 +724,7 @@ const Navbar = () => {
                 Đề Key Dự Đoán
               </Link>
 
-              {/* Học Key Siêu Tốc — top-level */}
+              {/* Học Key Thần Tốc — top-level */}
               <Link
                 to="/hoc-key"
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
@@ -732,7 +732,7 @@ const Navbar = () => {
                 }`}
               >
                 <Rocket className="w-4 h-4 text-primary" />
-                Học Key Siêu Tốc
+                Học Key Thần Tốc
               </Link>
 
               {/* More accordion */}
