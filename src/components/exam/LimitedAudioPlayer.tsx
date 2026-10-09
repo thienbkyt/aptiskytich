@@ -120,6 +120,12 @@ const writeCount = (key: string, val: number) => {
   safeSessionStorage.setItem(SS_PREFIX + key, String(val));
 };
 
+// Players đang mount đăng ký ở đây để nhận lệnh reset. Cần thiết vì state
+// playCount của player được khởi tạo TRƯỚC khi effect reset của engine cha chạy
+// (effect con chạy trước effect cha) → nếu không báo lại, player giữ số lượt cũ
+// của lần làm trước: vừa vào đã "hết 2 lượt", hoặc nghe 1 lần đã hết.
+const resetListeners = new Set<() => void>();
+
 export const resetLimitedAudioPlays = () => {
   // Clear sessionStorage entries too so a new attempt truly starts fresh.
   try {
@@ -133,6 +139,9 @@ export const resetLimitedAudioPlays = () => {
     /* ignore */
   }
   playCountStore.clear();
+  resetListeners.forEach((fn) => {
+    try { fn(); } catch { /* noop */ }
+  });
 };
 
 const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 400, reviewMode = false }: LimitedAudioPlayerProps) => {
@@ -356,6 +365,18 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       audioRef.current.currentTime = 0;
     }
   }, [questionKey, src]);
+
+  // Nhận lệnh reset (lần làm mới) → đưa số lượt nghe về 0 ngay.
+  useEffect(() => {
+    const onReset = () => {
+      setPlayCount(0);
+      countedRef.current = false;
+      playedMsRef.current = 0;
+      lastCurrentTimeRef.current = 0;
+    };
+    resetListeners.add(onReset);
+    return () => { resetListeners.delete(onReset); };
+  }, []);
 
   // Hard stop on unmount (e.g. navigating to the next question).
   useEffect(() => {
