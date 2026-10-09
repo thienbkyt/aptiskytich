@@ -492,3 +492,23 @@
 .hk .sugtg{border:1px solid #EBD8C8;background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;color:#8a6a5b;cursor:pointer;white-space:nowrap}
 .hk .sugtg:hover{color:#3b1a14;border-color:#D9BBA5}
 .hk .sugoff{margin-bottom:12px}
+.hk .hkm{position:fixed;inset:0;background:#2a120c66;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+.hk .hkm-box{background:#fff;border-radius:18px;width:100%;max-width:440px;padding:18px 18px 16px;box-shadow:0 24px 60px -20px #3b1a1480}
+.hk .hkm-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hk .hkm-h b{font-size:16px}
+.hk .hkm-x{border:0;background:#F7EFE8;border-radius:8px;width:28px;height:28px;cursor:pointer;color:#7a5a4b}
+.hk .hkm-sub{font-size:13px;color:#8a6a5b;margin:6px 0 12px;line-height:1.45}
+.hk .hkm-f{display:block;margin-bottom:10px}
+.hk .hkm-f span{display:block;font-size:12px;font-weight:700;color:#8a6a5b;margin-bottom:4px}
+.hk .hkm-f input{width:100%;border:1px solid #EBD8C8;border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;color:#3b1a14}
+.hk .hkm-f input:focus{outline:none;border-color:#CC1C01;box-shadow:0 0 0 3px #CC1C011a}
+.hk .hkm-scope{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:13px;margin:4px 0 2px;color:#5a3a20}
+.hk .hkm-scope>span{font-weight:700;color:#8a6a5b;font-size:12px}
+.hk .hkm-scope label{display:flex;gap:5px;align-items:center;cursor:pointer}
+.hk .hkm-err{min-height:16px;font-size:12.5px;color:#CC1C01;margin:6px 0}
+.hk .hkm-a{display:flex;justify-content:flex-end;gap:8px}
+.hk .hkm-c{border:1px solid #EBD8C8;background:#fff;border-radius:10px;padding:8px 16px;font:inherit;font-weight:700;color:#6b4a3b;cursor:pointer}
+.hk .hkm-s{border:0;background:linear-gradient(135deg,#CC1C01,#E9561E);color:#fff;border-radius:10px;padding:8px 20px;font:inherit;font-weight:800;cursor:pointer}
+.hk .hkm-s:disabled{opacity:.6;cursor:wait}
+.hk .hktoast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:#3b1a14;color:#fff;font-size:13.5px;font-weight:700;border-radius:999px;padding:10px 18px;opacity:0;transition:.25s;z-index:90;pointer-events:none}
+.hk .hktoast.on{opacity:1;transform:translate(-50%,0)}
