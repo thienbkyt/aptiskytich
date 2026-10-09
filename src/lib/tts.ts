@@ -245,10 +245,12 @@ export function speakAsync(
     let settled = false;
     let fellBack = false;
     let playWatchdog: ReturnType<typeof setTimeout> | null = null;
+    let progressTimer: ReturnType<typeof setInterval> | null = null;
     const finish = () => {
       if (settled) return;
       settled = true;
       if (playWatchdog) { clearTimeout(playWatchdog); playWatchdog = null; }
+      if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
       resolve();
     };
     const fallback = () => {
@@ -282,7 +284,22 @@ export function speakAsync(
       setStage("play");
 
       let playing = false;
-      audio.onplaying = () => { playing = true; };
+      let lastT = -1;
+      let lastMove = Date.now();
+      audio.onplaying = () => { playing = true; lastMove = Date.now(); };
+      // Có máy không bắn sự kiện "ended" (audio bị tạm dừng / kẹt buffer cuối file)
+      // → đề Speaking đứng tới 20–60s chờ timeout. Tự kết thúc khi đã chạy tới cuối
+      // file hoặc đứng yên > 3.5s sau khi đã phát.
+      progressTimer = setInterval(() => {
+        if (settled || fellBack) { if (progressTimer) { clearInterval(progressTimer); progressTimer = null; } return; }
+        if (token !== playToken) { finish(); return; }
+        if (!playing) return;
+        const t = audio.currentTime;
+        const d = audio.duration;
+        if (Number.isFinite(d) && d > 0 && t >= d - 0.2) { setStage("ended"); finish(); return; }
+        if (t !== lastT) { lastT = t; lastMove = Date.now(); return; }
+        if (Date.now() - lastMove > 3500) { setStage("ended"); finish(); }
+      }, 500);
       audio.onended = () => {
         if (fellBack) return;
         setStage("ended");
