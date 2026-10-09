@@ -80,6 +80,9 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(() => reviewRowsCache.get(cacheKey) ?? null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
   const [writingRefetch, setWritingRefetch] = useState(0);
+  // Bài viết lưu trong test_results (review_snapshot.raw.text / grade_payload.text)
+  // — dùng khi exam_question_results thiếu dòng hoặc user_answer rỗng.
+  const [writingFallbackText, setWritingFallbackText] = useState("");
 
   // Writing parts can still be in the AI grading queue minutes after submit.
   // Display-only: poll while the grading for THIS part is missing.
@@ -198,7 +201,11 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       const gr = (wqg || []) as any[];
       const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
       const match = gr.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) || gr[0];
-      const { data: trRow } = await supabase.from("test_results").select("full_test_session_id,review_snapshot").eq("id", testResultId).maybeSingle();
+      const { data: trRow } = await supabase.from("test_results").select("full_test_session_id,review_snapshot,grade_payload").eq("id", testResultId).maybeSingle();
+      if (!cancelled) {
+        const tr: any = trRow;
+        setWritingFallbackText(String(tr?.review_snapshot?.raw?.text || tr?.grade_payload?.text || ""));
+      }
       const sessionId = (trRow as any)?.full_test_session_id ?? null;
       const snapshotAi = ((trRow as any)?.review_snapshot as any)?.items?.[0]?.ai ?? null;
       let q = supabase.from("writing_skill_results").select("parts,created_at").eq("user_id", userId);
@@ -367,7 +374,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const m = part.match(/(\d)/);
     const num = m ? parseInt(m[1], 10) : 1;
     const taskKey = (`task${num}`) as WritingPartType;
-    const raw = qResults[0]?.user_answer || "";
+    const raw = qResults[0]?.user_answer || writingFallbackText || "";
     const init: any = {};
     if (taskKey === "task1") {
       const matches = [...raw.matchAll(/A:[ \t]*([\s\S]*?)(?=\n\nQ\d+:|$)/g)];
@@ -410,7 +417,8 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
             />
           </div>
         )}
-        <WritingExamEngine {...props} />
+        {/* key đổi khi bài viết dự phòng tải xong → engine nhận lại initialAnswers */}
+        <WritingExamEngine key={!qResults[0]?.user_answer && writingFallbackText ? "w-fallback" : "w-main"} {...props} />
       </>
     );
 
