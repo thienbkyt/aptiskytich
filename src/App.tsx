@@ -64,6 +64,7 @@ const GrammarVocabulary = lazy(() => import("./pages/GrammarVocabulary"));
 const FullTest = lazy(() => import("./pages/FullTest"));
 const KeyPrediction = lazy(() => import("./pages/KeyPrediction"));
 const History = lazy(() => import("./pages/History"));
+const HocKey = lazy(() => import("./pages/HocKey"));
 const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
 const FullTestHistoryDetail = lazy(() => import("./pages/FullTestHistoryDetail"));
 const MarathonHistoryDetail = lazy(() => import("./pages/MarathonHistoryDetail"));
@@ -139,6 +140,7 @@ const EXAM_ROUTE_PREFIXES = [
   "/key-du-doan",
   "/nghe-chep",
   "/history",
+  "/hoc-key",
 ];
 
 // SPA PageView tracking: index.html fires the first PageView; this fires on
@@ -210,6 +212,7 @@ const App = () => (
                       <Route path="/my-sets" element={<WithDict><MySets /></WithDict>} />
                       <Route path="/key-du-doan" element={<WithDict><KeyPrediction /></WithDict>} />
                       <Route path="/history" element={<History />} />
+                      <Route path="/hoc-key" element={<HocKey />} />
                       <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
                       <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
                       <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
