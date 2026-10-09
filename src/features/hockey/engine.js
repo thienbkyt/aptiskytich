@@ -263,10 +263,10 @@ function L3Table(b){
       const cell = `${seq(code)}<div class="mn">${s.mn?`<span class="mnv">${esc(r.g.vi)}</span> <b>${esc(s.mn)}</b>`:`<span class="mnv">chưa có câu nhớ</span>`}${editBtn(`l3§${r.g.topic}§${code.join("")}`)}</div>${s.firstUnknown?`<div class="mnv">(chưa rõ ai nói trước)</div>`:""}`;
       return `<tr class="row" data-x="${i}"><td><b>${short(s.title)}</b></td>
        <td><div class="tp">${esc(r.g.topic)}</div>${prioBadge(s.prio)}</td>
-       <td class="cnam">${M?cell:`<span class="dash">—</span>`}</td>
-       <td class="cnu">${M?`<span class="dash">—</span>`:cell}</td>
-       <td><button class="showd" data-sc="${i}">Hiện đề</button></td>
-       <td><div class="acts">${learnBtn("l3",s.id)}${nbBtn("l3",s.id)}</div></td></tr>
+       <td class="cnam ${M?"":"empty"}" data-l="👨 Nam nói trước">${M?cell:`<span class="dash">—</span>`}</td>
+       <td class="cnu ${M?"empty":""}" data-l="👩 Nữ nói trước">${M?`<span class="dash">—</span>`:cell}</td>
+       <td class="tdshow"><button class="showd" data-sc="${i}">Hiện đề</button></td>
+       <td class="tdacts"><div class="acts">${learnBtn("l3",s.id)}${nbBtn("l3",s.id)}</div></td></tr>
        <tr class="detail" id="d${i}" hidden><td></td><td colspan="5">${r.b.st.map((t,k)=>`<div class="stmt"><span class="s s${code[k]}">${code[k]}</span>${esc(t)}</div>`).join("")}</td></tr>`; }).join("");
   };
   draw(); $("#q").oninput=draw;
@@ -485,14 +485,17 @@ function bubbleGame(root, cfg, onlyRounds){
     const r=rounds[i]; $("#gtop",root).innerHTML=`Lượt ${i+1}/${rounds.length} · ${r.top}`; $("#gp",root).innerHTML=esc(r.prompt).replace(/&lt;/g,"<").replace(/&gt;/g,">");
     $$(".bub",ar).forEach(e=>e.remove());
     const W=ar.clientWidth, H=ar.clientHeight-130;
+    const n=r.opts.length, bandOrder=shuffle([...Array(n)].map((_,i)=>i)), bh=(H-6)/n;
     bubbles=r.opts.map((o,k)=>{ const el=document.createElement("button"); el.className=`bub ${o.cls}`; el.innerHTML=`<span class="bn">${k+1}</span>${esc(o.label)}`; ar.appendChild(el);
-      const w=el.offsetWidth, h=el.offsetHeight; const cols=r.opts.length; const x=Math.max(8,Math.min(W-w-8,(W/cols)*k+(W/cols-w)/2+(Math.random()*30-15))); const y=20+Math.random()*Math.max(10,H-h-30);
-      const sp=cfg.wide?.25:.55; const bb={el,o,k,x,y,w,h,vx:(Math.random()<.5?-1:1)*sp*(0.6+Math.random()*.6),vy:(Math.random()<.5?-1:1)*sp*(0.5+Math.random()*.6)};
+      if(el.offsetWidth>W-16) el.style.maxWidth=(W-16)+"px";
+      const w=el.offsetWidth, h=el.offsetHeight; const band=bandOrder[k]; const y0=6+band*bh, y1=Math.max(y0, y0+bh-h);
+      const x=6+Math.random()*Math.max(1,W-w-12); const y=y0+Math.random()*(y1-y0);
+      const sp=(cfg.wide?.25:.55)*(W<600?.7:1); const bb={el,o,k,x,y,w,h,y0,y1,vx:(Math.random()<.5?-1:1)*sp*(0.6+Math.random()*.6),vy:(Math.random()<.5?-1:1)*sp*0.35};
       el.onclick=()=>shoot(bb); return bb; });
     tLeft=cfg.time; tick(); busy=false;
   }
   function frame(){ const W=ar.clientWidth, H=ar.clientHeight-130;
-    bubbles.forEach(b=>{ if(b.dead) return; b.x+=b.vx; b.y+=b.vy; if(b.x<6||b.x+b.w>W-6) b.vx*=-1; if(b.y<6||b.y+b.h>H) b.vy*=-1; b.x=Math.max(6,Math.min(W-b.w-6,b.x)); b.y=Math.max(6,Math.min(H-b.h,b.y)); b.el.style.transform=`translate(${b.x}px,${b.y}px)`; });
+    bubbles.forEach(b=>{ if(b.dead) return; b.x+=b.vx; b.y+=b.vy; if(b.x<6||b.x+b.w>W-6) b.vx*=-1; if(b.y<b.y0||b.y>b.y1) b.vy*=-1; b.x=Math.max(6,Math.min(W-b.w-6,b.x)); b.y=Math.max(b.y0,Math.min(b.y1,b.y)); b.el.style.transform=`translate(${b.x}px,${b.y}px)`; });
     raf=requestAnimationFrame(frame); }
   let lowSaid=false;
   function tick(){ lowSaid=false; clearInterval(tmr); const gt=$("#gt",root); gt.style.width="100%"; const t0=Date.now();
