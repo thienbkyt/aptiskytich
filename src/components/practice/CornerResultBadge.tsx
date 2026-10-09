@@ -7,10 +7,24 @@ interface Props {
   label?: string;
   /** Đánh dấu đã làm bài (dù chưa có điểm chính thức từ skill_results). */
   done?: boolean;
+  /** Ghi rõ trạng thái: "Đã làm · đúng 3/4" (correct) hoặc "Đã làm · 25/30 điểm" (points). */
+  verbose?: "correct" | "points";
 }
 
-const CornerResultBadge = ({ item, label, done }: Props) => {
+const CornerResultBadge = ({ item, label, done, verbose }: Props) => {
   const value = label ?? (item && item.total > 0 ? `${item.bestScore}/${item.total}` : null);
+
+  if (value && verbose) {
+    const text = label
+      ? `Đã làm · ${label}`
+      : verbose === "points" ? `Đã làm · ${value} điểm` : `Đã làm · đúng ${value}`;
+    return (
+      <span className="inline-flex items-center gap-1 select-none whitespace-nowrap text-[11px] font-bold px-2 py-[3px] rounded-full bg-success/15 text-success border border-success/30">
+        <CheckCircle2 style={{ width: 12, height: 12 }} strokeWidth={2.25} />
+        {text}
+      </span>
+    );
+  }
 
   if (value) {
     return (
