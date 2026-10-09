@@ -103,6 +103,12 @@ const HocKey = () => {
       isAdmin,
       getAudio: (p: string) => resolveAudioUrl(p),
       onUpgrade: () => navigate("/pricing"),
+      initial: (() => { try { return JSON.parse(sessionStorage.getItem("hk_state") || "null"); } catch { return null; } })(),
+      onState: (st: { cur: string; tab: number }) => { try { sessionStorage.setItem("hk_state", JSON.stringify(st)); } catch { /* ignore */ } },
+      onDoSet: (part: string, setId: string) => {
+        const skill = part === "l3" || part === "l4" ? "listening" : "reading";
+        navigate(`/${skill}?set=${encodeURIComponent(setId)}&jump=1&from=hockey`);
+      },
       onToggleLearned: async (part: string, setId: string, on: boolean) => {
         if (!user) return;
         if (on) await sb.from("key_learned").upsert({ user_id: user.id, exam_set_id: setId, part }, { onConflict: "user_id,exam_set_id" });
