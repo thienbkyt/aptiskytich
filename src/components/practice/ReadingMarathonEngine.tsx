@@ -930,6 +930,12 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   // Đề cuối: "Nộp & xem kết quả" (trước đây nút Sau bị khoá, không có cách kết thúc marathon).
   const finishMarathon = () => {
     const undone = sets.length - results.filter(Boolean).length - (results[currentIndex] ? 0 : (currentAnswered.some(Boolean) ? 1 : 0));
+    const nothingDone = !results.some(Boolean) && !(!results[currentIndex] && !midReview && currentAnswered.some(Boolean));
+    // Chưa làm đề nào → không có kết quả để xem, xác nhận rồi thoát hẳn (trước đây bấm OK không có gì xảy ra).
+    if (nothingDone) {
+      if (window.confirm("Bạn chưa làm đề nào trong marathon này. Thoát marathon?")) handleExitMarathon();
+      return;
+    }
     if (undone > 0 && !window.confirm(`Còn ${undone} đề chưa làm. Kết thúc marathon và xem kết quả?`)) return;
     if (!results[currentIndex] && !midReview && currentAnswered.some(Boolean)) {
       pendingJumpRef.current = null;
