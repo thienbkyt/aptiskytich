@@ -830,6 +830,12 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const finishMarathon = () => {
     const curInProgress = !results[currentIndex] && !midReview;
     const undone = sets.length - results.filter(Boolean).length - (curInProgress && currentAnswered.some(Boolean) ? 1 : 0);
+    const nothingDone = !results.some(Boolean) && !(curInProgress && currentAnswered.some(Boolean));
+    // Chưa làm đề nào → không có kết quả để xem, xác nhận rồi thoát hẳn (trước đây bấm OK không có gì xảy ra).
+    if (nothingDone) {
+      if (window.confirm("Bạn chưa làm đề nào trong marathon này. Thoát marathon?")) handleExitMarathon();
+      return;
+    }
     if (undone > 0 && !window.confirm(`Còn ${undone} đề chưa làm. Kết thúc marathon và xem kết quả?`)) return;
     if (curInProgress && currentAnswered.some(Boolean)) {
       pendingJumpRef.current = null;
