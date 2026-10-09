@@ -420,6 +420,26 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             Dùng ← → để chuyển đề
           </div>
         )}
+        {/* Trước/Sau hiện rõ (trước đây chỉ có phím ← → và mục lục — trên điện thoại không chuyển đề được) */}
+        {phase === "exam" && !!engineData && (
+          <div className="sticky bottom-0 z-30 bg-background/95 backdrop-blur border-t border-border">
+            <div className="flex items-center justify-between max-w-3xl mx-auto w-full px-4 py-3">
+              <Button type="button" variant="outline" className="rounded-full border-primary text-primary" onClick={() => goToSet(activeSetIndex - 1)} disabled={activeSetIndex === 0}>
+                ← Đề trước
+              </Button>
+              <span className="text-sm text-muted-foreground">Đề {activeSetIndex + 1}/{sets.length}</span>
+              {activeSetIndex < sets.length - 1 ? (
+                <Button type="button" className="rounded-full bg-primary text-primary-foreground" onClick={() => goToSet(activeSetIndex + 1)}>
+                  Đề sau →
+                </Button>
+              ) : (
+                <Button type="button" className="rounded-full bg-primary text-primary-foreground" onClick={handleExit}>
+                  Lưu & thoát ✓
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
 
