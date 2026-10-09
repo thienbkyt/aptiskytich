@@ -10,6 +10,8 @@ renderer.outputEncoding=T.sRGBEncoding;
 renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=0.92;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
 wrap.appendChild(renderer.domElement);
+// setSize(...,false) không đặt kích thước CSS → máy màn Retina (DPR 2) canvas bị phóng gấp đôi. Ép theo khung.
+renderer.domElement.style.width='100%';renderer.domElement.style.height='100%';renderer.domElement.style.display='block';
 const scene=new T.Scene();
 const BG_DAY=new T.Color('#FFF3EA'),BG_NIGHT=new T.Color('#1d1236');
 scene.background=opts.transparent?null:BG_DAY.clone();
