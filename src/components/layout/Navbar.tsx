@@ -6,7 +6,7 @@ import {
   BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
-  MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare, Bell, Sun, Moon, Ghost, UserRound, LogOut,
+  MoreHorizontal, Lightbulb, Rocket, Star, Newspaper, MessageSquare, Bell, Sun, Moon, Ghost, UserRound, LogOut,
   Trophy, Gift,
   type LucideIcon } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
@@ -40,6 +40,7 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
 ];
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
+  { label: "Lịch sử học tập", path: "/history", icon: History, desc: "Xem lại các bài đã làm" },
   { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đề thi các bạn chia sẻ lại" },
   { label: "Mẹo thi Aptis", path: "/meo-thi-aptis", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
 ];
@@ -79,7 +80,7 @@ const Navbar = () => {
   const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
-  const isHistoryActive = isActive("/history");
+  const isHocKeyActive = isActive("/hoc-key");
   const isMoreActive = moreLinks.some((l) => isActive(l.path)) || isActive("/bang-ky-tich");
 
   // Close mobile menu on route change
@@ -276,18 +277,17 @@ const Navbar = () => {
             Đề Key Dự Đoán
           </Link>
 
-          {/* Lịch sử — top-level */}
+          {/* Học Key Siêu Tốc — top-level (Lịch sử học tập đã chuyển vào More) */}
           <Link
-            to="/history"
-            {...prefetchHandlers("/history")}
+            to="/hoc-key"
             className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
-              isHistoryActive
+              isHocKeyActive
                 ? "bg-primary/10 text-primary"
                 : "text-foreground hover:bg-muted"
             }`}
           >
-            <History className="w-4 h-4" />
-            Lịch sử học tập
+            <Rocket className="w-4 h-4" />
+            Học Key Siêu Tốc
           </Link>
 
           {/* More dropdown */}
@@ -724,15 +724,15 @@ const Navbar = () => {
                 Đề Key Dự Đoán
               </Link>
 
-              {/* Lịch sử — top-level */}
+              {/* Học Key Siêu Tốc — top-level */}
               <Link
-                to="/history"
+                to="/hoc-key"
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                  isHistoryActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                  isHocKeyActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                 }`}
               >
-                <History className="w-4 h-4 text-primary" />
-                Lịch sử học tập
+                <Rocket className="w-4 h-4 text-primary" />
+                Học Key Siêu Tốc
               </Link>
 
               {/* More accordion */}
