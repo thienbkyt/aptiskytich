@@ -40,7 +40,6 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
 ];
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
-  { label: "Lịch sử học tập", path: "/history", icon: History, desc: "Xem lại các bài đã làm" },
   { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đề thi các bạn chia sẻ lại" },
   { label: "Mẹo thi Aptis", path: "/meo-thi-aptis", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
 ];
@@ -81,7 +80,7 @@ const Navbar = () => {
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
   const isHocKeyActive = isActive("/hoc-key");
-  const isMoreActive = moreLinks.some((l) => isActive(l.path)) || isActive("/bang-ky-tich");
+  const isMoreActive = moreLinks.some((l) => isActive(l.path)) || isActive("/bang-ky-tich") || isActive("/history");
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -319,7 +318,21 @@ const Navbar = () => {
                   className="absolute top-full left-0 pt-2 z-50"
                 >
                   <div className="w-64 bg-popover border border-border rounded-xl shadow-lg p-2">
-                    {/* Bảng Kỳ Tích — đầu danh sách */}
+                    {/* Lịch sử học tập — đầu danh sách */}
+                    <Link
+                      to="/history"
+                      {...prefetchHandlers("/history")}
+                      className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-muted"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <History className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold leading-tight">Lịch sử học tập</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Xem lại các bài đã làm</p>
+                      </div>
+                    </Link>
+                    {/* Bảng Kỳ Tích */}
                     <Link
                       to="/bang-ky-tich"
                       className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-muted"
@@ -758,7 +771,14 @@ const Navbar = () => {
                     className="overflow-hidden"
                   >
                     <div className="pl-6 space-y-0.5">
-                      {/* Bảng Kỳ Tích — đầu danh sách */}
+                      <Link
+                        to="/history"
+                        className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <History className="w-4 h-4 text-primary shrink-0" />
+                        <span className="font-semibold text-foreground">Lịch sử học tập</span>
+                      </Link>
+                      {/* Bảng Kỳ Tích */}
                       <Link
                         to="/bang-ky-tich"
                         className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
