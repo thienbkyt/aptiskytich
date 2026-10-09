@@ -628,7 +628,7 @@ const Writing = () => {
                           partLabel={activeTaskInfo?.label ?? "Part"}
                           sets={pickerSets.map((s) => {
                             const g = gradedProgress.get(s.id);
-                            return { id: s.id, title: s.title, done: progress.has(s.id), status: g && g.total > 0 ? `Đã làm · ${g.bestScore}/${g.total} điểm` : null };
+                            return { id: s.id, title: s.title, done: progress.has(s.id), status: g && g.total > 0 ? `Đã làm · ${g.bestScore}/${g.total} điểm` : null, priority: priorityLabels.get(s.id)?.label ?? null };
                           })}
                           initialSelected={hasPicked ? picked : null}
                           inProgress={hasResume ? { done: doneCount, total: totalSets } : null}
