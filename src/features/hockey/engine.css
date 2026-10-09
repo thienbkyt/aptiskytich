@@ -371,3 +371,64 @@
 .hk .nbt{flex:1;font-size:14px;font-weight:600}
 .hk .nbpart{font-size:11px;font-weight:800;color:#9a7b6b;background:#f6f1ec;border-radius:6px;padding:2px 7px;white-space:nowrap}
 .hk .pfc:disabled{opacity:.4;cursor:not-allowed}
+/* ---- mobile (v4) ---- */
+@media(max-width:760px){
+ .hk .hk-wrap{padding:14px 12px 60px}
+ .hk .hk-head h1{font-size:22px}.hk .hk-head .sub{font-size:13px;margin-bottom:12px}
+ .hk .parts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -12px 10px;padding:0 12px 4px;-webkit-overflow-scrolling:touch}
+ .hk .parts::-webkit-scrollbar,.hk .pfbar::-webkit-scrollbar,.hk .tabs::-webkit-scrollbar{display:none}
+ .hk .parts .chip{flex:none;padding:7px 12px;font-size:13px}.hk .parts .grp{flex:none;font-size:10px}
+ .hk .pfbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -12px 10px;padding:0 12px 4px}
+ .hk .pfbar .pfc{flex:none;padding:5px 10px;font-size:12px}.hk .pfbar .muted{flex:none}
+ .hk .prog{padding:9px 12px;gap:8px;font-size:13px}
+ .hk .tab{font-size:14px;padding:9px 11px}
+ .hk .tools .muted{display:none}
+ /* bảng mã câu 15 → dạng thẻ */
+ .hk .l3t thead{display:none}
+ .hk .l3t,.hk .l3t tbody{display:block}
+ .hk .l3t tr.row{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:12px 12px 10px;border-bottom:1px solid #f3ebe4}
+ .hk .l3t tr.row td{display:block;padding:0;border:0}
+ .hk .l3t tr.row td:first-child{grid-row:1;align-self:center}
+ .hk .l3t tr.row td:nth-child(2){grid-row:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+ .hk .l3t tr.row td:nth-child(2) .pb{margin-top:0}
+ .hk .l3t tr.row td.empty{display:none}
+ .hk .l3t tr.row td.cnam,.hk .l3t tr.row td.cnu{grid-column:1/-1;margin-top:4px}
+ .hk .l3t tr.row td.cnam::before,.hk .l3t tr.row td.cnu::before{content:attr(data-l);display:block;font-size:11px;font-weight:700;color:#a8917f;margin-bottom:4px}
+ .hk .l3t tr.row td.tdshow,.hk .l3t tr.row td.tdacts{grid-column:1/-1;display:inline-block}
+ .hk .l3t tr.row td.tdshow{margin-top:6px}
+ .hk .l3t tr.row td.tdacts .acts{gap:6px}
+ .hk .l3t tr.detail td{display:block;padding:8px 12px}
+ .hk .l3t tr.detail td:first-child{display:none}
+ .hk .showd{padding:6px 12px;font-size:12px}
+ .hk .lbtn,.hk .nbb{padding:5px 10px;font-size:11.5px}
+ /* Part 5 bảng tra → xếp dọc */
+ .hk .r2c table thead{display:none}
+ .hk .r2c table,.hk .r2c tbody{display:block}
+ .hk .r2c tr.row{display:grid;grid-template-columns:34px 1fr;gap:4px 8px;padding:10px 0;border-bottom:1px solid #f3ebe4}
+ .hk .r2c tr.row td{display:block;padding:0;border:0}
+ .hk .r2c tr.row td.sig{grid-column:2}
+ .hk .r2c .l4h{flex-wrap:wrap}
+ .hk .l4c,.hk .r2c,.hk .quiz{padding:14px 12px}
+ .hk .qrow{gap:8px}.hk .qt{min-width:100%;font-size:14px}.hk .mwb{width:100%}.hk .mb{flex:1;min-width:0}
+ /* game */
+ .hk .game{padding:12px;border-radius:18px}
+ .hk .ghead{flex-wrap:wrap;gap:8px}.hk .gname{font-size:14px;flex-basis:calc(100% - 50px)}.hk .gstat{margin-left:0;font-size:12.5px;padding:4px 10px}
+ .hk .ghead .gico{width:32px;height:32px}
+ .hk .gq{padding:10px}.hk .gprompt{font-size:17px}
+ .hk .arena{height:360px}.hk .arena.wide{height:420px}
+ .hk .bub{font-size:15px;padding:10px 14px 10px 10px}
+ .hk .arena.wide .bub{font-size:13px;line-height:1.25;padding:8px 12px 8px 8px;max-width:calc(100% - 16px)}
+ .hk .cannon{width:96px}
+ .hk .ghint{display:none}
+ .hk .gend h3{font-size:28px}
+ /* ná */
+ .hk .slots{gap:5px;flex-wrap:nowrap}.hk .slot2{min-width:0;flex:1;padding:6px 4px;font-size:11px}
+ .hk .slot2 span{display:none}.hk .slot2.done span{display:block;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .hk .otp{padding:10px}.hk .otp .given{font-size:13px}
+ .hk .loaded{font-size:13px}
+ .hk .ammo{gap:6px}.hk .am{font-size:12.5px;padding:8px 12px;max-width:100%}
+ .hk .r2item{min-width:0}
+ .hk .nbsug .l4h{flex-direction:column;align-items:flex-start;gap:10px}.hk .nbsug .l4h .btn{white-space:nowrap}
+ .hk .l3t tr.row td.tdshow{margin-right:6px}
+ .hk .nbrow{flex-wrap:wrap}.hk .nbt{flex-basis:100%}
+}
