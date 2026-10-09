@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
+import MarathonSetPicker from "@/components/practice/MarathonSetPicker";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useUserGradedProgress } from "@/hooks/useUserGradedProgress";
 import { saveExamResult } from "@/lib/saveExamResult";
@@ -94,9 +95,10 @@ const Writing = () => {
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean; priorityLabel?: "high" | "medium" | "low" | null }>({ active: false, partType: "task1", priorityLabel: null });
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({ active: false, partType: "task1", priorityLabel: null });
   const [progressTick, setProgressTick] = useState(0);
   useMarathonServerSync(() => setProgressTick((t) => t + 1));
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [doneFilter, setDoneFilter] = useState<DoneFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
@@ -202,6 +204,24 @@ const Writing = () => {
       return (a.title || "").localeCompare(b.title || "");
     });
   }, [partSets, priorityFilter, priorityLabels, doneFilter, progress]);
+  // Danh sách đề cho popup "Chọn đề Marathon" (cả Part theo nhãn ưu tiên, không theo ô tìm kiếm / lọc Đã làm).
+  const pickerSets = useMemo(() => {
+    if (activeTab === "full") return [] as ExamSetRow[];
+    let list = examSets.filter((s) => normalizePart(s.part) === activePartKey);
+    if (priorityFilter !== "all") list = list.filter((s) => priorityLabels.get(s.id)?.label === priorityFilter);
+    const rank = (id: string) => { const l = priorityLabels.get(id)?.label; return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
+    const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
+    return [...list].sort((a, b) => {
+      const ga = a.access_tier === "free" ? 0 : isNewSet(a) ? 1 : 2;
+      const gb = b.access_tier === "free" ? 0 : isNewSet(b) ? 1 : 2;
+      if (ga !== gb) return ga - gb;
+      const ra = rank(a.id), rb = rank(b.id);
+      if (ra !== rb) return ra - rb;
+      const na = num(a.title), nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [activeTab, activePartKey, examSets, priorityFilter, priorityLabels]);
 
   const { tier: userTier, proUntil } = useIsPro();
   const [planExpiredOpen, setPlanExpiredOpen] = useState(false);
@@ -309,9 +329,12 @@ const Writing = () => {
     const targetPartKey = marathon.partType === "task1" ? "part1"
       : marathon.partType === "task2" ? "part2"
       : marathon.partType === "task3" ? "part3" : "part4";
-    const sets = examSets
-      .filter((s) => normalizePart(s.part) === targetPartKey)
-      .filter((s) => !marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel);
+    const byId = new Map(examSets.map((s) => [s.id, s] as const));
+    const sets = marathon.setIds && marathon.setIds.length
+      ? marathon.setIds.map((id) => byId.get(id)).filter((s): s is ExamSetRow => !!s)
+      : examSets
+        .filter((s) => normalizePart(s.part) === targetPartKey)
+        .filter((s) => !marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel);
     return (
       <WritingMarathonEngine
         sets={sets}
@@ -510,13 +533,18 @@ const Writing = () => {
                     const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
                     const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
                     const savedProg = !activePrio ? loadMarathonProgress("writing", activePartKey) : null;
+                    const pickerIdSet = new Set(pickerSets.map((s) => s.id));
+                    const picked = (savedProg?.pickedSetIds ?? []).filter((id) => pickerIdSet.has(id));
+                    const hasPicked = picked.length > 0;
+                    const runIds = hasPicked ? picked : null;
+                    const totalSets = hasPicked ? picked.length : filteredSets.length;
                     const doneCount = Object.values((savedProg?.drafts as any) ?? {}).filter((a: any) => {
                       const anyStr = (s?: string) => !!(s && s.trim());
                       if (!a) return false;
                       return (a.shortAnswers?.some(anyStr)) || (a.part3Answers?.some(anyStr))
                         || anyStr(a.textAnswer) || anyStr(a.informalAnswer) || anyStr(a.formalAnswer);
                     }).length;
-                    const hasResume = doneCount > 0 && doneCount < filteredSets.length;
+                    const hasResume = doneCount > 0 && doneCount < totalSets;
                     // Marathon Writing luôn yêu cầu PRO.
                     const fakeSet = { access_tier: "pro" } as any;
                     const marathonLocked = isLocked(fakeSet) || isFeatureLocked("marathon");
@@ -537,18 +565,18 @@ const Writing = () => {
                             <ExamTierBadge tier="pro" locked={marathonLocked} />
                           </div>
                           <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
-                            {prioName ? `Luyện đề ${prioName} ${activeTaskInfo?.label}` : `Luyện tất cả đề ${activeTaskInfo?.label}`}
+                            {hasPicked ? `Luyện ${totalSets} đề đã chọn ${activeTaskInfo?.label}` : prioName ? `Luyện đề ${prioName} ${activeTaskInfo?.label}` : `Luyện tất cả đề ${activeTaskInfo?.label}`}
                           </h3>
                           <p className="text-sm text-muted-foreground mb-1">
-                            Viết liên tục {filteredSets.length} đề{prioName ? ` (${prioName})` : ""} — không giới hạn giờ, không chấm AI
+                            Viết liên tục {totalSets} đề{hasPicked ? " đã chọn" : prioName ? ` (${prioName})` : ""} — không giới hạn giờ, không chấm AI
                           </p>
                           {hasResume && (
                             <>
                               <p className="text-xs text-primary font-semibold mt-2 mb-1.5">
-                                Đang làm dở: đã viết {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
+                                Đang làm dở: đã viết {doneCount}/{totalSets} đề ({Math.round((doneCount / totalSets) * 100)}%)
                               </p>
                               <div className="w-full h-1.5 rounded-full bg-primary/15 overflow-hidden mb-3">
-                                <div className="h-full bg-primary transition-all" style={{ width: `${Math.round((doneCount / filteredSets.length) * 100)}%` }} />
+                                <div className="h-full bg-primary transition-all" style={{ width: `${Math.round((doneCount / totalSets) * 100)}%` }} />
                               </div>
                             </>
                           )}
@@ -556,26 +584,37 @@ const Writing = () => {
                           {hasResume ? (
                             <div className="flex flex-col gap-2">
                               <Button
-                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true, priorityLabel: activePrio }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true, priorityLabel: activePrio, setIds: runIds }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
                                 className="w-full gap-1.5 font-semibold bg-primary hover:bg-brand-brown text-primary-foreground"
                               >
-                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
+                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{totalSets}) <ArrowRight className="w-4 h-4" /></>}
                               </Button>
                               <div className="flex items-center justify-center gap-4 text-xs pt-1">
                                 <button
                                   type="button"
-                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }); }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
+                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey, hasPicked ? picked : null); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio, setIds: runIds }); }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                   className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                                 >
                                   Làm lại từ đầu
                                 </button>
+                                {!marathonLocked && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPickerOpen(true)}
+                                    className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
+                                  >
+                                    Chọn đề khác
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ) : (
                             <div className="flex flex-wrap justify-end gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
+                                onClick={() => (marathonLocked
+                                  ? guard(fakeSet, () => setPickerOpen(true), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id), noCharge: true })
+                                  : setPickerOpen(true))}
                                 className="gap-1.5 font-semibold"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -583,6 +622,22 @@ const Writing = () => {
                             </div>
                           )}
                         </div>
+                        <MarathonSetPicker
+                          open={pickerOpen}
+                          onOpenChange={setPickerOpen}
+                          partLabel={activeTaskInfo?.label ?? "Part"}
+                          sets={pickerSets.map((s) => {
+                            const g = gradedProgress.get(s.id);
+                            return { id: s.id, title: s.title, done: progress.has(s.id), status: g && g.total > 0 ? `Đã làm · ${g.bestScore}/${g.total} điểm` : null };
+                          })}
+                          initialSelected={hasPicked ? picked : null}
+                          inProgress={hasResume ? { done: doneCount, total: totalSets } : null}
+                          onStart={(ids, isAll) => guard(fakeSet, () => {
+                            clearMarathonProgress("writing", activePartKey, isAll && !activePrio ? null : ids);
+                            setProgressTick((t) => t + 1);
+                            setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio, setIds: ids });
+                          }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: ids })}
+                        />
                       </motion.div>
 
                     );
@@ -592,8 +647,8 @@ const Writing = () => {
                     return (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
-                        <div className="absolute top-3 right-3"><CornerResultBadge item={gradedProgress.get(set.id) ?? (progress.get(set.id)?.total === 30 ? progress.get(set.id) : undefined)} done={progress.has(set.id)} /></div>
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="absolute top-3 right-3"><CornerResultBadge item={gradedProgress.get(set.id) ?? (progress.get(set.id)?.total === 30 ? progress.get(set.id) : undefined)} done={progress.has(set.id)} verbose="points" /></div>
+                        <div className={`flex flex-wrap items-center gap-2 mb-3 ${progress.has(set.id) ? "pr-32" : "pr-16"}`}>
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary border-0">{activeTaskInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />
                           <PriorityBadge label={priorityLabels.get(set.id)?.label} />
