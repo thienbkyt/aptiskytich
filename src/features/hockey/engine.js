@@ -8,6 +8,8 @@ const _SWAP={M:"W",W:"M",B:"B"};
 function _splitExp(exp){ const s=String(exp||""); const m=s.match(/\n\s*-{2,}\s*GIẢI THÍCH[^\n]*\n?/i); return m ? [s.slice(0,m.index).trim(), s.slice(m.index+m[0].length)] : [s.trim(), ""]; }
 function _quotes(line){ const out=[]; const re=/"([^"]{5,})"|“([^”]{5,})”/g; let m; while((m=re.exec(line))){ (m[1]||m[2]).split(/\.\.\.|…/).map(x=>x.trim().replace(/^[,;:]\s*/,"")).filter(x=>x.length>=5).forEach(x=>out.push(x)); } return out; }
 function _letter(opt, idx){ const t=String(opt||"").trim().toLowerCase(); if(t.startsWith("both")) return "B"; if(t.startsWith("wom")) return "W"; if(t.startsWith("man")||t.startsWith("men")) return "M"; return ["M","W","B"][idx]||"B"; }
+function _dedupe(list, keyFn){ const seen=new Map(); const rk=p=>p==="high"?0:p==="medium"?1:p==="low"?2:3; const out=[];
+  list.forEach(x=>{ const k=keyFn(x); const d=seen.get(k); if(d){ d.dups=(d.dups||[]).concat(x.title); if(rk(x.prio)<rk(d.prio)) d.prio=x.prio; return; } seen.set(k,x); out.push(x); }); return out; }
 function buildData(raw, notes, prio){
   const note=(k,r)=>notes[k+"::"+r];
   const pr=id=>prio[id]||null;
@@ -26,6 +28,8 @@ function buildData(raw, notes, prio){
     const topic=_topic(set.title);
     let g=groups.find(x=>x.topic.toLowerCase()===topic.toLowerCase()); if(!g){ g={topic, vi:"", bans:[]}; groups.push(g); }
     const sk=st.map(_norm).join("|"); let b=g.bans.find(x=>x.sk===sk); if(!b){ b={sk, st, nam, sets:[]}; g.bans.push(b); }
+    const ck=code.join(""); const dup=b.sets.find(x=>x.code.join("")===ck);
+    if(dup){ dup.dups=(dup.dups||[]).concat(set.title); const rk=p=>p==="high"?0:p==="medium"?1:p==="low"?2:3; if(rk(pr(set.id))<rk(dup.prio)) dup.prio=pr(set.id); if(!dup.script&&lines.length>1){ dup.script=lines; dup.ev=ev; dup.audio=q0.audio_url||dup.audio; } return; }
     b.sets.push({id:set.id, title:set.title, n:_num(set.title), first:first||"M", firstUnknown:!first, prio:pr(set.id), script:lines.length>1?lines:null, ev, audio:q0.audio_url||null, code});
   });
   groups.forEach(g=>{ g.bans.forEach(b=>{ const nam=b.nam.join(""), nu=b.nam.map(c=>_SWAP[c]).join(""); b.nu=nu.split("");
@@ -46,6 +50,7 @@ function buildData(raw, notes, prio){
     });
     return {id:set.id, title:set.title, prio:pr(set.id), qs:qs.map(q=>({t:q.question_text, o:q.options||[], a:q.correct_answer})), scripts, audio, ev}; }).filter(Boolean)
     .sort((a,b)=>+_num(a.title) - +_num(b.title));
+  const L4u=_dedupe(L4, s=>s.qs.map(q=>_norm(q.t)+"="+_norm(q.o[q.a])).join("|"));
   // ---- R2 ----
   const R2=(raw.r2||[]).map(set=>{ const q=(set.qs||[])[0]; const ex=q&&q.extra_data||{}; const ss=(ex.sentences||[]).slice().sort((a,b)=>a.correctPosition-b.correctPosition); if(!ss.length) return null;
     const titles=ex.sectionTitles||["Đoạn 1","Đoạn 2"]; const half=Math.ceil(ss.length/2); const given=ex.givenSentences;
@@ -53,16 +58,18 @@ function buildData(raw, notes, prio){
       if(Array.isArray(given)) return {t:titles[k]||"", given:given[k]||null, order:part};
       return {t:titles[k]||"", given:part[0]||null, order:part.slice(1)}; }).filter(s=>s.order.length);
     return {id:set.id, title:set.title, prio:pr(set.id), sec}; }).filter(Boolean).sort((a,b)=>+_num(a.title) - +_num(b.title));
+  const R2u=_dedupe(R2, s=>s.sec.map(x=>[x.given||"",...x.order].map(_norm).join(">")).join("||"));
   // ---- R5 ----
   const R5=(raw.r5||[]).map(set=>{ const q=(set.qs||[])[0]; const ex=q&&q.extra_data||{}; const ps=(ex.paragraphs||[]).slice().sort((a,b)=>a.index-b.index); if(!ps.length) return null;
     const h=(ex.headings||[]).map(x=>[x.text, x.paragraphIndex==null?null:+x.paragraphIndex]); const nk=note("r5_signal", set.id);
     return {id:set.id, title:set.title, prio:pr(set.id), h, p:ps.map(x=>x.text), key:(nk&&nk.keys)||[]}; }).filter(Boolean).sort((a,b)=>+_num(a.title) - +_num(b.title));
-  return {L3:groups, L4, R2, R5};
+  const R5u=_dedupe(R5, s=>s.p.map(_norm).join("|")+"#"+s.h.map(h=>_norm(h[0])+h[1]).join("|"));
+  return {L3:groups, L4:L4u, R2:R2u, R5:R5u};
 }
 
 export function mountHocKey(ROOT, OPTS){
 ROOT.classList.add('hk');
-ROOT.innerHTML = "<div class=\"hk-wrap\">\n <div class=\"hk-head\"><h1>🚀 Học Key Siêu Tốc</h1><p class=\"sub\">Thuộc đáp án theo từng dạng câu — Listening câu 15, 16–17 · Reading Part 2–3, Part 5. Mỗi dạng một cách học riêng + game.</p></div>\n <div class=\"parts\" id=\"parts\"></div>\n <div class=\"how\" id=\"how\"></div>\n <div class=\"pfbar\" id=\"pf\"></div><div class=\"prog\" id=\"prog\"></div>\n <div class=\"tabs\" id=\"tabs\"></div>\n <div id=\"body\"></div>\n <div class=\"lockbar\"><div style=\"font-size:30px\">🔒</div><b style=\"font-size:18px\">Học Key Siêu Tốc dành cho Pro</b><div class=\"muted\">Nâng cấp Pro để mở bảng key, flashcard, kiểm tra và game cho Listening câu 15–17, Reading Part 2–3 & 5.</div><button class=\"btn b-main\" data-upgrade=\"1\">Nâng cấp Pro</button></div>\n</div>\n<div id=\"scrim\"></div><aside id=\"drawer\"></aside>\n";
+ROOT.innerHTML = "<div class=\"hk-wrap\">\n <div class=\"hk-head\"><h1>🚀 Học Key Thần Tốc</h1><p class=\"sub\">Thuộc đáp án theo từng dạng câu — Listening câu 15, 16–17 · Reading Part 2–3, Part 5. Mỗi dạng một cách học riêng + game.</p></div>\n <div class=\"parts\" id=\"parts\"></div>\n <div class=\"pfbar\" id=\"pf\"></div><div class=\"prog\" id=\"prog\"></div>\n <div class=\"tabs\" id=\"tabs\"></div>\n <div id=\"body\"></div>\n <div class=\"lockbar\"><div style=\"font-size:30px\">🔒</div><b style=\"font-size:18px\">Học Key Thần Tốc dành cho Pro</b><div class=\"muted\">Nâng cấp Pro để mở bảng key, flashcard, kiểm tra và game cho Listening câu 15–17, Reading Part 2–3 & 5.</div><button class=\"btn b-main\" data-upgrade=\"1\">Nâng cấp Pro</button></div>\n</div>\n<div id=\"scrim\"></div><aside id=\"drawer\"></aside>\n";
 const D = buildData(OPTS.raw, OPTS.notes||{}, OPTS.prio||{});
 const L3 = D.L3, L4 = D.L4, R2 = D.R2, R5 = D.R5;
 const $ = (s, el=ROOT) => el.querySelector(s);
@@ -101,7 +108,6 @@ function renderShell(){
   PARTS.forEach(x=>{ if(x.grp!==lastG){ chips+=`<span class="grp">${x.grp}</span>`; lastG=x.grp; }
     chips+=`<button class="chip ${x.id===cur?"on":""}" data-part="${x.id}">${x.name}<span class="csub">${x.sub}</span></button>`; });
   $("#parts").innerHTML = chips;
-  $("#how").innerHTML = HOW[cur];
   const items = p.items(), cnt = k => items.filter(i=>i.prio===k).length;
   $("#pf").innerHTML = `<span class="muted">Lọc:</span>` + [["all",`Tất cả (${items.length})`],["high",`🔥 Ưu tiên cao (${cnt("high")})`],["medium",`Ưu tiên vừa (${cnt("medium")})`],["low",`Ưu tiên thấp (${cnt("low")})`]]
     .filter(([k])=>k==="all"||cnt(k)>0).map(([k,l])=>`<button class="pfc ${prioF===k?"on":""} pf-${k}" data-pf="${k}">${l}</button>`).join("");
@@ -148,7 +154,7 @@ async function wirePlayer(path){
 const xBtn = `<button class="x" data-close="1">✕</button>`;
 function openL3Script(row, si){
   const s = row.b.sets[si], use = s.code;
-  const head = `<div class="dh"><div><div class="lbl">${short(s.title)}${row.multi?` · Bản 0${row.bi+1}`:""}</div><h3>${esc(row.g.topic)}</h3></div>${xBtn}</div>
+  const head = `<div class="dh"><div><div class="lbl">${short(s.title)}</div><h3>${esc(row.g.topic)}</h3></div>${xBtn}</div>
    <div class="who ${s.first}">${s.firstUnknown?"Chưa rõ ai nói trước":s.first==="M"?"👨 NAM nói trước":"👩 NỮ nói trước"} → mã ${seq(use)}${s.mn?` <span class="mnx">“${esc(s.mn)}”</span>`:""}</div>`;
   const legend = row.b.st.map((t,k)=>`<div class="lgr"><span class="cn c${k}">${CIRC[k]}</span><span class="s s${use[k]}">${use[k]}</span>${esc(t)}</div>`).join("");
   if(!s.script){ openDrawer(head + `<div class="lgbox lgtop">${legend}</div>` + playerHtml(s.audio) + `<div class="noscript">Đề này chưa có script.</div>`); wirePlayer(s.audio); return; }
@@ -204,7 +210,7 @@ function L3Table(b){
     $("#tb").innerHTML = rows.filter(x=>x.s.title.toLowerCase().includes(q)).map(x=>{ const i=L3SETS.indexOf(x), r=x.r, s=x.s, M=s.first==="M", code=s.code;
       const cell = `${seq(code)}<div class="mn">${s.mn?`<span class="mnv">${esc(r.g.vi)}</span> <b>${esc(s.mn)}</b>`:`<span class="mnv">chưa có câu nhớ</span>`}${editBtn(`l3§${r.g.topic}§${code.join("")}`)}</div>${s.firstUnknown?`<div class="mnv">(chưa rõ ai nói trước)</div>`:""}`;
       return `<tr class="row" data-x="${i}"><td><b>${short(s.title)}</b></td>
-       <td><div class="tp">${esc(r.g.topic)}${r.multi?` <span class="ban">Bản 0${r.bi+1}</span>`:""}</div>${prioBadge(s.prio)}</td>
+       <td><div class="tp">${esc(r.g.topic)}</div>${prioBadge(s.prio)}</td>
        <td class="cnam">${M?cell:`<span class="dash">—</span>`}</td>
        <td class="cnu">${M?`<span class="dash">—</span>`:cell}</td>
        <td><button class="showd" data-sc="${i}">Hiện đề</button></td>
@@ -229,7 +235,7 @@ function L3Flash(b){
   if(!l3cards || fcI===0) l3cards = shuffle(l3Cards()); if(!l3cards.length){ b.innerHTML=empty; return; }
   const x=l3cards[fcI%l3cards.length], code = x.f==="M"?x.r.b.nam:x.r.b.nu;
   flashShell(b, l3cards.length,
-   `<div class="lbl">${esc(x.r.g.topic)}${x.r.multi?` · Bản 0${x.r.bi+1}`:""} · nhận định ${x.k+1}/4</div><div class="who ${x.f}">${x.f==="M"?"👨 Nam nói trước":"👩 Nữ nói trước"}</div><h3>${esc(x.t)}</h3><div class="muted">Man, Woman hay Both?</div>`,
+   `<div class="lbl">${esc(x.r.g.topic)} · nhận định ${x.k+1}/4</div><div class="who ${x.f}">${x.f==="M"?"👨 Nam nói trước":"👩 Nữ nói trước"}</div><h3>${esc(x.t)}</h3><div class="muted">Man, Woman hay Both?</div>`,
    `<div class="lbl">Đáp án (${x.f==="M"?"nam":"nữ"} nói trước)</div><div class="huge s${code[x.k]}t">${MWBVI[code[x.k]]}</div><div>Cả mã: ${seq(code)}</div><div class="mn" style="margin-top:8px">${mnHtml(x.r, x.f==="M"?"nam":"nu")}</div>`, L3Flash);
 }
 function L3Quiz(b){
@@ -237,7 +243,7 @@ function L3Quiz(b){
   if(!qz){ qz={list:shuffle(rows.flatMap(r=>r.b.sets.map((s,si)=>({r,s,si})))), i:0, score:0, ans:{}, checked:false}; }
   const {r,s}=qz.list[qz.i%qz.list.length], c = s.code;
   b.innerHTML = `<div class="quiz card"><div class="qhead"><span>Đề ${qz.i+1}/${qz.list.length} · Điểm: <b>${qz.score}</b></span>${prioBadge(r.b.prio)}</div>
-   <h3>${esc(r.g.topic)}${r.multi?` <span class="ban">Bản 0${r.bi+1}</span>`:""}</h3><div class="who ${s.first}">${s.first==="M"?"👨 Câu đầu tiên NAM nói":"👩 Câu đầu tiên NỮ nói"}</div>
+   <h3>${esc(r.g.topic)}</h3><div class="who ${s.first}">${s.first==="M"?"👨 Câu đầu tiên NAM nói":"👩 Câu đầu tiên NỮ nói"}</div>
    ${r.b.st.map((t,k)=>`<div class="qrow"><div class="qt">${k+1}. ${esc(t)}</div><div class="mwb">${["M","W","B"].map(m=>{ let cls=qz.ans[k]===m?"pick":""; if(qz.checked){ if(m===c[k]) cls="right"; else if(qz.ans[k]===m) cls="wrong"; }
      return `<button class="mb ${cls}" data-k="${k}" data-m="${m}" ${qz.checked?"disabled":""}>${MWBVI[m]}</button>`; }).join("")}</div></div>`).join("")}
    <div class="qfoot">${qz.checked?`<span>Mã đúng: ${seq(c)} <span class="mn">${mnHtml(r, s.first==="M"?"nam":"nu")}</span> · ${short(s.title)}</span><button class="btn b-main" id="nx">Đề tiếp →</button>`:`<span class="muted">Chọn đủ 4 câu</span><button class="btn b-main" id="ck" ${Object.keys(qz.ans).length<4?"disabled":""}>Kiểm tra</button>`}</div></div>`;
@@ -306,15 +312,33 @@ function r2Sections(){ return R2.filter(s=>passP(s.prio)).flatMap(s=>s.sec.map((
 function R2Order(b){
   const secs=r2Sections(); if(!secs.length){ b.innerHTML=empty; return; }
   if(!ro){ ro={i:0}; }
-  const x=secs[ro.i%secs.length];
-  if(!ro.pool){ ro.pool=shuffle(x.sec.order); ro.placed=[]; ro.checked=false; }
-  const N=x.sec.order.length;
-  b.innerHTML=`<div class="quiz card"><div class="qhead"><span><b>${esc(x.s.title)}</b> · ${esc(x.sec.t)}</span><span class="muted">Bấm câu theo đúng thứ tự · bấm câu đã xếp để gỡ</span></div>
-   <ol class="ord big2">${x.sec.given?`<li class="given">${esc(x.sec.given)}</li>`:""}${ro.placed.map((t,i)=>{ const ok=ro.checked?(t===x.sec.order[i]):null; return `<li class="pl ${ok===true?"right":ok===false?"wrong":""}" data-un="${i}">${ro.checked?hl(t):esc(t)}</li>`; }).join("")}${Array.from({length:N-ro.placed.length},()=>`<li class="slot">…</li>`).join("")}</ol>
-   <div class="pool">${ro.pool.map((t,i)=>`<button class="pc" data-p="${i}">${esc(t)}</button>`).join("")}</div>
-   <div class="qfoot"><button class="btn b-ghost" id="rs">Làm lại</button>${ro.checked?`<button class="btn b-main" id="nx">Đoạn tiếp →</button>`:`<button class="btn b-main" id="ck" ${ro.placed.length<N?"disabled":""}>Kiểm tra</button>`}</div></div>`;
-  $$(".pc",b).forEach(e=>e.onclick=()=>{ ro.placed.push(ro.pool.splice(+e.dataset.p,1)[0]); R2Order(b); });
-  $$("[data-un]",b).forEach(e=>e.onclick=()=>{ if(ro.checked) return; ro.pool.push(ro.placed.splice(+e.dataset.un,1)[0]); R2Order(b); });
+  const x=secs[ro.i%secs.length], N=x.sec.order.length;
+  if(!ro.pool){ ro.pool=shuffle(x.sec.order); ro.slots=Array(N).fill(null); ro.checked=false; }
+  const filled=ro.slots.filter(Boolean).length;
+  b.innerHTML=`<div class="quiz card"><div class="qhead"><span><b>${esc(x.s.title)}</b> · ${esc(x.sec.t)}</span><span class="muted">Bấm hoặc kéo câu vào ô · bấm câu đã xếp để gỡ</span></div>
+   ${x.sec.given?`<div class="r2given"><span class="r2n">0</span>${esc(x.sec.given)}<span class="tag0">câu cho sẵn</span></div>`:""}
+   <div class="r2slots">${ro.slots.map((t,i)=>{ const ok=ro.checked&&t?(t===x.sec.order[i]):null;
+     return `<div class="r2slot ${t?"has":""} ${ok===true?"right":ok===false?"wrong":""}" data-slot="${i}"><span class="r2n">${i+1}</span>${t?`<div class="r2item" data-from="s${i}">${ro.checked?hl(t):esc(t)}</div>`:`<span class="r2ph">Kéo hoặc bấm 1 câu bên dưới</span>`}${ok===false?`<div class="r2fix">→ ${esc(x.sec.order[i])}</div>`:""}</div>`; }).join("")}</div>
+   <div class="pool">${ro.pool.map((t,i)=>`<div class="pc r2item" data-from="p${i}">${esc(t)}</div>`).join("")}</div>
+   <div class="qfoot"><button class="btn b-ghost" id="rs">Làm lại</button>${ro.checked?`<button class="btn b-main" id="nx">Đoạn tiếp →</button>`:`<button class="btn b-main" id="ck" ${filled<N?"disabled":""}>Kiểm tra</button>`}</div></div>`;
+  const take = from => from[0]==="p" ? ro.pool.splice(+from.slice(1),1)[0] : (()=>{ const k=+from.slice(1); const t=ro.slots[k]; ro.slots[k]=null; return t; })();
+  const putToSlot = (from, k) => { if(from===`s${k}`) return;
+    if(from[0]==="s"){ const a=+from.slice(1); const t=ro.slots[a]; ro.slots[a]=ro.slots[k]; ro.slots[k]=t; return; }
+    const t=take(from); if(ro.slots[k]) ro.pool.push(ro.slots[k]); ro.slots[k]=t; };
+  const clickItem = from => { if(ro.checked) return;
+    if(from[0]==="p"){ const k=ro.slots.indexOf(null); if(k<0) return; ro.slots[k]=take(from); }
+    else { ro.pool.push(take(from)); } R2Order(b); };
+  $$(".r2item",b).forEach(el=>{
+    el.addEventListener("pointerdown", ev=>{ if(ro.checked||ev.button>0) return; const from=el.dataset.from, sx=ev.clientX, sy=ev.clientY; let ghost=null;
+      const move=e=>{ if(!ghost && Math.hypot(e.clientX-sx,e.clientY-sy)>6){ ghost=el.cloneNode(true); ghost.className="r2ghost"; ghost.style.width=el.offsetWidth+"px"; document.body.appendChild(ghost); el.classList.add("dragging"); }
+        if(ghost){ e.preventDefault(); ghost.style.transform=`translate(${e.clientX-20}px,${e.clientY-18}px)`; $$(".r2slot",b).forEach(s=>s.classList.remove("over")); const t=document.elementFromPoint(e.clientX,e.clientY); const sl=t&&t.closest(".r2slot"); if(sl&&b.contains(sl)) sl.classList.add("over"); } };
+      const up=e=>{ document.removeEventListener("pointermove",move); document.removeEventListener("pointerup",up);
+        if(!ghost){ clickItem(from); return; }
+        ghost.remove(); const t=document.elementFromPoint(e.clientX,e.clientY); const sl=t&&t.closest(".r2slot"); const pl=t&&t.closest(".pool");
+        if(sl&&b.contains(sl)) putToSlot(from, +sl.dataset.slot); else if(pl&&from[0]==="s") ro.pool.push(take(from));
+        R2Order(b); };
+      document.addEventListener("pointermove",move); document.addEventListener("pointerup",up); });
+  });
   $("#rs").onclick=()=>{ ro.pool=null; R2Order(b); };
   const ck=$("#ck"); if(ck) ck.onclick=()=>{ ro.checked=true; R2Order(b); };
   const nx=$("#nx"); if(nx) nx.onclick=()=>{ ro.i++; ro.pool=null; R2Order(b); };
