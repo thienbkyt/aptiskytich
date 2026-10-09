@@ -97,6 +97,8 @@ interface ListeningExamEngineProps {
   onNavPrevSet?: () => void;
   /** Marathon: go to the next exam set (used at the last question). */
   onNavNextSet?: () => void;
+  /** Marathon: đề cuối, câu cuối → "Nộp & xem kết quả". */
+  onNavFinish?: () => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -125,6 +127,7 @@ const ListeningExamEngine = ({
   unlockSignal,
   onNavPrevSet,
   onNavNextSet,
+  onNavFinish,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -525,8 +528,9 @@ const ListeningExamEngine = ({
   }, [currentIndex, onNavPrevSet]);
   const arrowNext = useCallback(() => {
     if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
-    else onNavNextSet?.();
-  }, [currentIndex, totalQuestions, onNavNextSet]);
+    else if (onNavNextSet) onNavNextSet();
+    else onNavFinish?.();
+  }, [currentIndex, totalQuestions, onNavNextSet, onNavFinish]);
   useMarathonArrowKeys({
     enabled: hideBottomNav && phase === "practice",
     onPrev: arrowPrev,
@@ -765,7 +769,7 @@ const ListeningExamEngine = ({
           />
         )}
 
-        {hideBottomNav && phase === "practice" && (
+        {hideBottomNav && phase === "practice" && !reviewMode && (
           <div className="flex items-center justify-between max-w-3xl mx-auto w-full mt-6">
             <Button
               type="button"
@@ -783,9 +787,9 @@ const ListeningExamEngine = ({
               type="button"
               className="rounded-full bg-primary text-primary-foreground"
               onClick={arrowNext}
-              disabled={currentIndex === totalQuestions - 1 && !onNavNextSet}
+              disabled={currentIndex >= totalQuestions - 1 && !onNavNextSet && !onNavFinish}
             >
-              Sau →
+              {currentIndex >= totalQuestions - 1 && !onNavNextSet && onNavFinish ? "Nộp & xem kết quả ✓" : "Sau →"}
             </Button>
           </div>
         )}
