@@ -14,6 +14,8 @@ export interface MarathonProgress {
   testResultId?: string | null;
   /** Thời điểm học viên chủ động làm lại từ đầu / kết thúc lượt — kết quả Lịch sử trước mốc này không được khôi phục. */
   resetAt?: number;
+  /** Bộ đề học viên tự chọn khi bắt đầu marathon (null/không có = tất cả đề của Part). */
+  pickedSetIds?: string[] | null;
   updatedAt: number;
 }
 export interface MarathonLast {
@@ -32,17 +34,23 @@ const key = (skill: string, part: string) => `kt_marathon:${skill}:${part}`;
 const lastKey = (skill: string, part: string) => `kt_marathon_last:${skill}:${part}`;
 
 export function saveMarathonProgress(skill: string, part: string, data: MarathonProgress) {
+  // Giữ nguyên bộ đề đã chọn qua mọi lần lưu (các engine không biết tới trường này).
+  if (data.pickedSetIds === undefined) {
+    const prev = loadMarathonProgress(skill, part);
+    if (prev?.pickedSetIds?.length) data = { ...data, pickedSetIds: prev.pickedSetIds };
+  }
   try { localStorage.setItem(key(skill, part), JSON.stringify(data)); } catch { /* noop */ }
   queueServerSave(key(skill, part), "progress", data);
 }
 export function loadMarathonProgress(skill: string, part: string): MarathonProgress | null {
   try { const r = localStorage.getItem(key(skill, part)); return r ? JSON.parse(r) : null; } catch { return null; }
 }
-export function clearMarathonProgress(skill: string, part: string) {
+export function clearMarathonProgress(skill: string, part: string, pickedSetIds?: string[] | null) {
   // Không xoá hẳn: để lại mốc "đã reset" (results rỗng) để phần đối chiếu Lịch sử
   // không khôi phục nhầm lượt cũ mà học viên đã chủ động bỏ.
   const now = Date.now();
   const marker: MarathonProgress = { currentIndex: 0, results: [], drafts: {}, resetAt: now, updatedAt: now };
+  if (pickedSetIds?.length) marker.pickedSetIds = pickedSetIds;
   try { localStorage.setItem(key(skill, part), JSON.stringify(marker)); } catch { /* noop */ }
   queueServerSave(key(skill, part), "progress", marker);
 }
