@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
-import TichTich from "@/components/mascot/TichTich";
+import HeroMascots3D from "@/components/mascot/HeroMascots3D";
 import Footer from "@/components/layout/Footer";
 import LatestBlogSection from "@/components/blog/LatestBlogSection";
 
@@ -293,7 +293,7 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="hidden lg:block absolute -bottom-12 -right-8 z-20"><TichTich size={130} /></div>
+              <HeroMascots3D />
             </motion.div>
           </div>
         </div>
