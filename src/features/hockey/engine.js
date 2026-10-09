@@ -99,7 +99,7 @@ const okSet = (part,s) => passP(s.prio) && (!NBMODE || NB.has(s.id)) && passL(pa
 const okRow = r => passP(r.b.prio) && r.b.sets.some(s=>(!NBMODE||NB.has(s.id)) && passL("l3",s.id));
 const noteWrong = (part,id) => { if(id) SESSION_WRONG.add(id); };
 const doBtn = (part,id) => OPTS.onDoSet ? `<button class="dob" data-do="${part}|${esc(id)}" title="Vào làm đề này theo đúng Part">▶ Làm đề</button>` : "";
-const nbBtn = (part,id,big) => `<button class="nbb ${NB.has(id)?"on":""} ${big?"big":""}" data-nb="${part}|${esc(id)}">${NB.has(id)?"✓ Trong sổ key":"＋ Sổ key"}</button>`;
+const nbBtn = (part,id,big) => `<button class="nbb ${NB.has(id)?"on":""} ${big?"big":""}" data-nb="${part}|${esc(id)}">${NB.has(id)?"✓ Đã lưu":"＋ Sổ key"}</button>`;
 function toggleNB(part,id,force,source){ const on = force==null ? !NB.has(id) : force; if(on===NB.has(id)) return; on?NB.add(id):NB.delete(id); OPTS.onToggleNotebook&&OPTS.onToggleNotebook(part,id,on,source||"manual"); }
 
 const PARTS = [
@@ -172,7 +172,7 @@ ROOT.addEventListener("click", e=>{
   const dz=e.target.closest("[data-do]"); if(dz){ e.stopPropagation(); if(locked){ OPTS.onUpgrade&&OPTS.onUpgrade(); return; } const [p,id]=dz.dataset.do.split("|"); OPTS.onDoSet&&OPTS.onDoSet(p,id); return; }
   const up=e.target.closest("[data-upgrade]"); if(up){ OPTS.onUpgrade&&OPTS.onUpgrade(); return; }
   const ed=e.target.closest("[data-edit]"); if(ed){ e.stopPropagation(); editNote(ed.dataset.edit); return; }
-  const nb=e.target.closest("[data-nb]"); if(nb){ e.stopPropagation(); const [p,id]=nb.dataset.nb.split("|"); toggleNB(p,id,null,"manual"); const on=NB.has(id); $$(`[data-nb="${p}|${id}"]`).forEach(x=>{ x.classList.toggle("on",on); if(!x.closest(".nbmain")) x.textContent=on?"✓ Trong sổ key":"＋ Sổ key"; }); const nc=$(".nbcard .csub"); if(nc) nc.textContent=`${NB.size} đề đã lưu · ôn Flashcard / Game`; if(cur==="nb"&&tab===0) renderShell(); return; }
+  const nb=e.target.closest("[data-nb]"); if(nb){ e.stopPropagation(); const [p,id]=nb.dataset.nb.split("|"); toggleNB(p,id,null,"manual"); const on=NB.has(id); $$(`[data-nb="${p}|${id}"]`).forEach(x=>{ x.classList.toggle("on",on); if(!x.closest(".nbmain")) x.textContent=on?"✓ Đã lưu":"＋ Sổ key"; }); const nc=$(".nbcard .csub"); if(nc) nc.textContent=`${NB.size} đề đã lưu · ôn Flashcard / Game`; if(cur==="nb"&&tab===0) renderShell(); return; }
   const sg=e.target.closest("[data-sugtg]"); if(sg){ HIDE_SUG = sg.dataset.sugtg==="1"; try{ localStorage.setItem("hk_hide_sug", HIDE_SUG?"1":"0"); }catch{} renderShell(); return; }
   const na=e.target.closest("[data-nball]"); if(na){ [...new Set([...SESSION_WRONG, ...PRACTICE_WRONG])].filter(id=>PARTOF.has(id)&&!NB.has(id)).forEach(id=>toggleNB(PARTOF.get(id),id,true,"suggest")); renderShell(); return; }
   const np=e.target.closest("[data-nbp]"); if(np){ nbPart=np.dataset.nbp; resetState(); renderShell(); return; }
