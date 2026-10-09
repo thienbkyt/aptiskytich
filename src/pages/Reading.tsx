@@ -904,7 +904,7 @@ const Reading = () => {
                         partLabel={activePartInfo?.label ?? "Part"}
                         sets={pickerSets.map((s) => {
                           const it = progress.get(s.id);
-                          return { id: s.id, title: s.title, done: progress.has(s.id), status: it && it.total > 0 ? `Đã làm · đúng ${it.bestScore}/${it.total}` : null };
+                          return { id: s.id, title: s.title, done: progress.has(s.id), status: it && it.total > 0 ? `Đã làm · đúng ${it.bestScore}/${it.total}` : null, priority: priorityLabels.get(s.id)?.label ?? null };
                         })}
                         initialSelected={hasPicked ? picked : null}
                         inProgress={hasResume ? { done: doneCount, total: totalSets } : null}
