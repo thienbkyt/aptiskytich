@@ -32,6 +32,17 @@ const playCountStore = new Map<string, number>();
 // Every future play for these files streams the signed URL directly — never blob again.
 const decodeFailedPaths = new Set<string>();
 
+// Safari (macOS + mọi trình duyệt trên iPhone/iPad đều là WebKit) hay báo
+// MEDIA_ERR_DECODE khi phát file mp3 dạng blob → rơi vào nhánh fallback, có máy
+// kẹt ở 0:00 hoặc báo lỗi. Với WebKit: phát thẳng URL ký sẵn, không tải blob.
+const PREFER_STREAM = (() => {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const iOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && (navigator as any).maxTouchPoints > 1);
+  const desktopSafari = /Safari/i.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/i.test(ua);
+  return iOS || desktopSafari;
+})();
+
 // Module-level registry: only ONE audio element may play per page.
 // Must be module-level (not state) so we can pause a player whose component
 // never re-renders (e.g. all 13 Listening Part 1 players mounted at once).
@@ -259,7 +270,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const loadAudioSrc = useCallback(async (path: string): Promise<string | null> => {
     if (!path) return null;
     // A file that previously failed to decode as a blob always streams directly.
-    if (decodeFailedPaths.has(path)) return resolveAudioUrl(path);
+    if (PREFER_STREAM || decodeFailedPaths.has(path)) return resolveAudioUrl(path);
     if (hasAudioBlob(path)) return resolveAudioBlobUrl(path);
     blobPathsRef.current.add(path);
     setLoadingAudio(true);
