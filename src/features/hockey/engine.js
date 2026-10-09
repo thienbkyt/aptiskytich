@@ -108,6 +108,7 @@ const PARTS = [
  {id:"r2", grp:"Reading", name:"Part 2–3", sub:"Text cohesion", tabs:["Thứ tự đúng","Luyện xếp","Câu tiếp theo?","🎮 Game ná"], items:()=>R2.map(s=>({id:s.id,prio:s.prio}))},
  {id:"r5", grp:"Reading", name:"Part 5", sub:"Long reading", tabs:["Bảng tra","Flashcard","Kiểm tra","🎮 Game"], items:()=>R5.map(s=>({id:s.id,prio:s.prio}))},
 ];
+let HIDE_SUG=(()=>{ try{ return localStorage.getItem("hk_hide_sug")==="1"; }catch{ return false; } })();
 let cur=(OPTS.initial&&OPTS.initial.cur)||"l3", tab=(OPTS.initial&&+OPTS.initial.tab)||0, locked=!!OPTS.locked, prioF="all";
 const passP = p => prioF==="all" || p===prioF;
 
@@ -126,7 +127,7 @@ function renderShell(){
   const grpHtml = g => `<div class="sg"><div class="sgl">${g.toUpperCase()}</div><div class="sgr">${PARTS.filter(x=>x.grp===g).map(x=>`<button class="pt ${x.id===cur?"on":""}" data-part="${x.id}"><b>${x.name}</b><span>${x.sub}</span></button>`).join("")}</div></div>`;
   const sugN = [...new Set([...SESSION_WRONG, ...PRACTICE_WRONG])].filter(id=>PARTOF.has(id) && !NB.has(id)).length;
   $("#parts").innerHTML = `<div class="seg">${grpHtml("Listening")}<div class="sep"></div>${grpHtml("Reading")}</div>
-    <button class="nbcard ${cur==="nb"?"on":""}" data-part="nb">${sugN?`<span class="dot">${sugN} gợi ý</span>`:""}<span class="ic">📒</span><span class="nbtx"><b>Sổ key của tôi</b><span class="csub">${NB.size} đề đã lưu · ôn Flashcard / Game</span></span><span class="go">›</span></button>`;
+    <button class="nbcard ${cur==="nb"?"on":""}" data-part="nb">${sugN&&!HIDE_SUG?`<span class="dot">${sugN} gợi ý</span>`:""}<span class="ic">📒</span><span class="nbtx"><b>Sổ key của tôi</b><span class="csub">${NB.size} đề đã lưu · ôn Flashcard / Game</span></span><span class="go">›</span></button>`;
   ROOT.classList.toggle("locked", locked);
   stopGames();
   if(cur==="nb"){ renderNotebook(); return; }
@@ -155,7 +156,7 @@ function renderNotebook(){
   const b=$("#body");
   if(tab===0){
     const pname = pt => { const x=PARTS.find(p=>p.id===pt); return `${x.grp} ${x.name}`; };
-    b.innerHTML = `${sugg.length?`<div class="card nbsug"><div class="l4h"><div><b>Gợi ý thêm vào sổ</b> <span class="muted">· ${sugg.length} đề bạn làm sai (bài luyện đề + kiểm tra/game ở đây)</span></div><button class="btn b-main sm" data-nball="1">＋ Thêm tất cả</button></div>
+    b.innerHTML = `${sugg.length&&HIDE_SUG?`<div class="sugoff"><button class="sugtg" data-sugtg="0">💡 Hiện gợi ý (${sugg.length} đề làm sai)</button></div>`:""}${sugg.length&&!HIDE_SUG?`<div class="card nbsug"><div class="l4h"><div><b>Gợi ý thêm vào sổ</b> <span class="muted">· ${sugg.length} đề bạn làm sai (bài luyện đề + kiểm tra/game ở đây)</span></div><div class="sugacts"><button class="sugtg" data-sugtg="1">Ẩn gợi ý</button><button class="btn b-main sm" data-nball="1">＋ Thêm tất cả</button></div></div>
       <div class="nblist">${sugg.map(id=>`<div class="nbrow"><span class="nbpart">${pname(PARTOF.get(id))}</span><span class="nbt">${esc(TITLE.get(id))}</span>${nbBtn(PARTOF.get(id),id)}</div>`).join("")}</div></div>`:""}
       <div class="card nbmain"><div class="l4h"><div><b>📒 Sổ key của tôi</b> <span class="muted">· ${items.length} đề</span></div>${items.length?`<span class="muted">Chọn tab Flashcard / Kiểm tra / Game để ôn riêng các đề này</span>`:""}</div>
       ${items.length?PARTS.map(x=>byPart(x.id).length?`<div class="nbgrp"><div class="lbl">${x.grp} · ${x.name}</div>${byPart(x.id).map(i=>`<div class="nbrow"><span class="nbt">${esc(i.title)}</span><button class="lbtn" data-goto="${i.part}|${esc(i.id)}">Mở</button><button class="nbb on" data-nb="${i.part}|${esc(i.id)}">Bỏ khỏi sổ</button></div>`).join("")}</div>`:"").join("")
@@ -172,6 +173,7 @@ ROOT.addEventListener("click", e=>{
   const up=e.target.closest("[data-upgrade]"); if(up){ OPTS.onUpgrade&&OPTS.onUpgrade(); return; }
   const ed=e.target.closest("[data-edit]"); if(ed){ e.stopPropagation(); editNote(ed.dataset.edit); return; }
   const nb=e.target.closest("[data-nb]"); if(nb){ e.stopPropagation(); const [p,id]=nb.dataset.nb.split("|"); toggleNB(p,id,null,"manual"); const on=NB.has(id); $$(`[data-nb="${p}|${id}"]`).forEach(x=>{ x.classList.toggle("on",on); if(!x.closest(".nbmain")) x.textContent=on?"✓ Trong sổ key":"＋ Sổ key"; }); const nc=$(".nbcard .csub"); if(nc) nc.textContent=`${NB.size} đề đã lưu · ôn Flashcard / Game`; if(cur==="nb"&&tab===0) renderShell(); return; }
+  const sg=e.target.closest("[data-sugtg]"); if(sg){ HIDE_SUG = sg.dataset.sugtg==="1"; try{ localStorage.setItem("hk_hide_sug", HIDE_SUG?"1":"0"); }catch{} renderShell(); return; }
   const na=e.target.closest("[data-nball]"); if(na){ [...new Set([...SESSION_WRONG, ...PRACTICE_WRONG])].filter(id=>PARTOF.has(id)&&!NB.has(id)).forEach(id=>toggleNB(PARTOF.get(id),id,true,"suggest")); renderShell(); return; }
   const np=e.target.closest("[data-nbp]"); if(np){ nbPart=np.dataset.nbp; resetState(); renderShell(); return; }
   const gt=e.target.closest("[data-goto]"); if(gt){ const [p,id]=gt.dataset.goto.split("|"); cur=p; tab=0; prioF="all"; lf="all"; resetState(); renderShell(); const t=TITLE.get(id); const q=$("#q"); if(q&&t){ q.value=(p==="l3"?(t.replace(/^Đề\s*\d+\s*[-–:]\s*/,"")):t); q.dispatchEvent(new Event("input")); } return; }
