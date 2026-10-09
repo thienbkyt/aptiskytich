@@ -828,7 +828,12 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     else if (partType === "part4") initialAnswers.p4 = rawInit;
   }
 
-  const midReviewEntry = midReview ? results[midReview.setIndex] : null;
+  // Đề đã nộp LUÔN mở ở chế độ xem lại (kể cả khi tới bằng Trước/Sau hay khôi phục
+  // tiến độ) — không cho sửa rồi nộp lại (trước đây tạo thêm 1 dòng kết quả mỗi lần).
+  const reviewSi: number | null = midReview
+    ? midReview.setIndex
+    : (results[currentIndex] ? currentIndex : null);
+  const midReviewEntry = reviewSi != null ? results[reviewSi] : null;
 
   // One chip per "màn hình câu hỏi" of a set (pagesPerSet).
   const qCounts = sets.map(() => pagesPerSet);
@@ -858,6 +863,34 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     });
   };
 
+  const isCurrentSetComplete = (): boolean => {
+    try {
+      const filled = (v: any) => v !== null && v !== undefined && v !== "";
+      if (partType === "part1") {
+        // Giống ReadingExamEngine.p1ScoredIdx: các ô {n} theo đoạn văn, bỏ ô đầu (ví dụ cho sẵn).
+        const q = engineData?.part1Question;
+        const gaps: any[] = q?.gaps ?? [];
+        const bag: any[] = currentAnswers?.p1 ?? [];
+        const need = [...String(q?.passage ?? "").matchAll(/\{(\d+)\}/g)]
+          .map((m) => Number(m[1])).filter((i) => gaps[i]).slice(1);
+        return need.length > 0 && need.every((i) => filled(bag[i]));
+      }
+      if (partType === "part2") {
+        const secs: any[] = engineData?.part2Question?.sections ?? [];
+        const bag: any[] = currentAnswers?.p2 ?? [];
+        return secs.length > 0 && secs.every((sec, si) => {
+          const placed = Object.values(bag[si] || {}).filter(filled).length;
+          const need = (sec?.sentences?.length ?? 0) - (si === 0 ? 1 : 0);
+          return placed >= need;
+        });
+      }
+      const bag: any[] = (partType === "part3" ? currentAnswers?.p3 : currentAnswers?.p4) ?? [];
+      return bag.length > 0 && bag.every(filled);
+    } catch {
+      return currentAnswered.some(Boolean);
+    }
+  };
+
   // Shared "đi tới đề khác" logic, used by the navigator chips and the inline "Sau →" button.
   const goToSet = (si: number, qi: number) => {
     try {
@@ -871,9 +904,9 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
         setTimeout(() => setJumpQ(null), 0);
         return;
       }
-      const hasAnyAnswer = currentAnswered.some(Boolean);
-      if (hasAnyAnswer) {
-        // Auto-submit the current in-progress set, then jump.
+      // Chỉ tự nộp khi đã làm ĐỦ mọi câu của đề (giống Listening) — làm dở thì giữ
+      // nháp, đánh dấu "đang làm dở", không chấm các ô bỏ trống thành sai.
+      if (isCurrentSetComplete()) {
         pendingJumpRef.current = { si, qi: clamped };
         setSubmitSignal((s) => s + 1);
         return;
@@ -886,26 +919,65 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   };
 
 
+  // Trước/Sau giữa các ĐỀ (dùng ở màn xem lại đề đã nộp).
+  const navSet = (si: number) => {
+    if (si < 0 || si >= sets.length) return;
+    setMidReview(null);
+    setEnterAtLast(false);
+    setCurrentIndex(si);
+  };
+
+  // Đề cuối: "Nộp & xem kết quả" (trước đây nút Sau bị khoá, không có cách kết thúc marathon).
+  const finishMarathon = () => {
+    const undone = sets.length - results.filter(Boolean).length - (results[currentIndex] ? 0 : (currentAnswered.some(Boolean) ? 1 : 0));
+    if (undone > 0 && !window.confirm(`Còn ${undone} đề chưa làm. Kết thúc marathon và xem kết quả?`)) return;
+    if (!results[currentIndex] && !midReview && currentAnswered.some(Boolean)) {
+      pendingJumpRef.current = null;
+      setSubmitSignal((x) => x + 1);
+      return;
+    }
+    if (results.some(Boolean)) setPhase("completed");
+  };
+
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
-        {midReviewEntry ? (
+        {midReviewEntry && reviewSi != null ? (
+          <>
           <HistoryReviewRenderer
-            key={`mid-${midReview!.setIndex}`}
+            key={`mid-${reviewSi}`}
             examSetId={midReviewEntry.examSetId}
             skill="reading"
             part={midReviewEntry.part}
-            testTitle={`Đề ${midReview!.setIndex + 1}${sets[midReview!.setIndex]?.title ? ` — ${sets[midReview!.setIndex]!.title}` : ""}`}
+            testTitle={`Đề ${reviewSi + 1}${sets[reviewSi]?.title ? ` — ${sets[reviewSi]!.title}` : ""}`}
             qResults={midReviewEntry.qResults}
-            onExit={() => setMidReview(null)}
-            pageBase={partType === "part2" ? undefined : midReview!.setIndex}
+            onExit={() => navSet(Math.min(reviewSi + 1, sets.length - 1))}
+            pageBase={partType === "part2" ? undefined : reviewSi}
             pageTotal={partType === "part2" ? undefined : sets.length}
-            pageLabelPrefix={partType === "part2" ? `Đề ${midReview!.setIndex + 1}/${sets.length}` : undefined}
+            pageLabelPrefix={partType === "part2" ? `Đề ${reviewSi + 1}/${sets.length}` : undefined}
             initialSection={0}
             hideTimer
             hideBottomNav
             hideBackToResults
           />
+          <div className="sticky bottom-0 z-30 bg-background/95 backdrop-blur border-t border-border">
+            <div className="flex items-center justify-between max-w-3xl mx-auto w-full px-4 py-3">
+              <Button type="button" variant="outline" className="rounded-full border-primary text-primary" onClick={() => navSet(reviewSi - 1)} disabled={reviewSi === 0}>
+                ← Đề trước
+              </Button>
+              <span className="text-sm text-muted-foreground">Đề {reviewSi + 1}/{sets.length} · đã nộp</span>
+              {reviewSi < sets.length - 1 ? (
+                <Button type="button" className="rounded-full bg-primary text-primary-foreground" onClick={() => navSet(reviewSi + 1)}>
+                  Đề sau →
+                </Button>
+              ) : (
+                <Button type="button" className="rounded-full bg-primary text-primary-foreground" onClick={finishMarathon}>
+                  Xem kết quả ✓
+                </Button>
+              )}
+            </div>
+          </div>
+          </>
         ) : (
           <ReadingExamEngine
             key={`${attempt}-${currentIndex}`}
@@ -932,6 +1004,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
               setCurrentIndex((i) => i - 1);
             } : undefined}
             onNavNextSet={currentIndex < sets.length - 1 ? () => goToSet(currentIndex + 1, 0) : undefined}
+            onNavFinish={currentIndex >= sets.length - 1 ? finishMarathon : undefined}
             enterAtLastQuestion={enterAtLast}
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
@@ -952,8 +1025,8 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
         sets={sets}
         results={results as any}
         currentIndex={currentIndex}
-        reviewingIndex={midReview ? midReview.setIndex : null}
-        reviewingQ={midReview ? 0 : undefined}
+        reviewingIndex={reviewSi}
+        reviewingQ={reviewSi != null ? 0 : undefined}
         currentQ={0}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
