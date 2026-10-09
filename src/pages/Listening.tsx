@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
+import MarathonSetPicker from "@/components/practice/MarathonSetPicker";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useUserMarathonProgress } from "@/hooks/useUserMarathonProgress";
 import { useWrongQuestions } from "@/hooks/useWrongQuestions";
@@ -107,6 +108,7 @@ const Listening = () => {
   });
   const [progressTick, setProgressTick] = useState(0);
   useMarathonServerSync(() => setProgressTick((t) => t + 1));
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [doneFilter, setDoneFilter] = useState<DoneFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
@@ -262,6 +264,24 @@ const Listening = () => {
       return (a.title || "").localeCompare(b.title || "");
     });
   }, [partSets, priorityFilter, priorityLabels, doneFilter, progress]);
+  // Danh sách đề cho popup "Chọn đề Marathon" (cả Part theo nhãn ưu tiên, không theo ô tìm kiếm / lọc Đã làm).
+  const pickerSets = useMemo(() => {
+    if (activeTab === "full") return [] as ExamSetRow[];
+    let list = examSets.filter((s) => normalizePart(s.part) === activeTab);
+    if (priorityFilter !== "all") list = list.filter((s) => priorityLabels.get(s.id)?.label === priorityFilter);
+    const rank = (id: string) => { const l = priorityLabels.get(id)?.label; return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
+    const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
+    return [...list].sort((a, b) => {
+      const ga = a.access_tier === "free" ? 0 : 1;
+      const gb = b.access_tier === "free" ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      const ra = rank(a.id), rb = rank(b.id);
+      if (ra !== rb) return ra - rb;
+      const na = num(a.title), nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [activeTab, examSets, priorityFilter, priorityLabels]);
 
   const marathonSets = useMemo(() => {
     if (marathon.retryWrongSetIds?.length) {
@@ -273,6 +293,11 @@ const Listening = () => {
       return marathon.retryWrongSetIds
         .map((id) => byId.get(id))
         .filter((s): s is ExamSetRow => !!s && !seen.has(s.id) && (seen.add(s.id), true));
+    }
+    // Bộ đề học viên tự chọn (popup "Chọn đề Marathon") — giữ đúng thứ tự đã chọn.
+    if (marathon.setIds && marathon.setIds.length) {
+      const byId = new Map(examSets.map((s) => [s.id, s] as const));
+      return marathon.setIds.map((id) => byId.get(id)).filter((s): s is ExamSetRow => !!s);
     }
     let base = examSets.filter((s) =>
       normalizePart(s.part) === marathon.partType
@@ -289,7 +314,7 @@ const Listening = () => {
     }
     const seen = new Set<string>();
     return base.filter((s) => (s.id && !seen.has(s.id) ? (seen.add(s.id), true) : false));
-  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels, retryFetchedSets]);
+  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, marathon.setIds, keySetIds, keyPrio, priorityLabels, retryFetchedSets]);
 
   useEffect(() => {
     const retryIds = marathon.retryWrongSetIds ?? [];
@@ -337,6 +362,7 @@ const Listening = () => {
     marathon.prio ?? "",
     marathon.priorityLabel ?? "",
     (marathon.retryWrongSetIds ?? []).join("|"),
+    (marathon.setIds ?? []).join("|"),
   ].join("#");
   const runSets = useMemo(() => {
     if (!marathon.active) { frozenMarathonRef.current = null; return marathonSets; }
@@ -704,9 +730,14 @@ const Listening = () => {
                     const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
                     const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
                     const savedProg = !activePrio ? loadMarathonProgress("listening", activeTab) : null;
+                    const pickerIdSet = new Set(pickerSets.map((s) => s.id));
+                    const picked = (savedProg?.pickedSetIds ?? []).filter((id) => pickerIdSet.has(id));
+                    const hasPicked = picked.length > 0;
+                    const runIds = hasPicked ? picked : null;
+                    const totalSets = hasPicked ? picked.length : filteredSets.length;
                     const lastRun = !activePrio ? loadMarathonLast("listening", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
-                    const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
+                    const hasResume = !!savedProg && doneCount > 0 && doneCount < totalSets;
                     const wrongQMap: Record<string, string[]> = {};
                     (savedProg?.results ?? []).forEach((r: any) => {
                       if (!r?.qResults) return;
@@ -729,7 +760,7 @@ const Listening = () => {
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
-                        <div className="absolute top-3 right-3">{!activePrio && <CornerResultBadge item={marathonProgress.get(activeTab)} />}</div>
+                        <div className="absolute top-3 right-3">{!activePrio && <CornerResultBadge item={marathonProgress.get(activeTab)} verbose="correct" />}</div>
                         <div className="flex items-center gap-2 mb-3">
                           <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
                             <InfinityIcon className="w-3 h-3" /> Marathon
@@ -737,14 +768,14 @@ const Listening = () => {
                           <ExamTierBadge tier="pro" locked={marathonLocked} />
                         </div>
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
-                          {prioName ? `Luyện đề ${prioName} ${activePartInfo?.label}` : `Luyện tất cả đề ${activePartInfo?.label}`}
+                          {hasPicked ? `Luyện ${totalSets} đề đã chọn ${activePartInfo?.label}` : prioName ? `Luyện đề ${prioName} ${activePartInfo?.label}` : `Luyện tất cả đề ${activePartInfo?.label}`}
                         </h3>
                         <p className="text-sm text-muted-foreground mb-1">
-                          Làm liên tục {filteredSets.length} đề{prioName ? ` (${prioName})` : ""} — không giới hạn giờ
+                          Làm liên tục {totalSets} đề{hasPicked ? " đã chọn" : prioName ? ` (${prioName})` : ""} — không giới hạn giờ
                         </p>
                         {hasResume && (
                           <p className="text-xs text-primary font-semibold mb-3">
-                            Đang làm dở: đã xong {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
+                            Đang làm dở: đã xong {doneCount}/{totalSets} đề ({Math.round((doneCount / totalSets) * 100)}%)
                           </p>
                         )}
                         {!hasResume && lastRun && (
@@ -759,23 +790,30 @@ const Listening = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }); }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab, hasPicked ? picked : null); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio, setIds: runIds }); }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                 className="gap-1.5 font-semibold"
                               >
                                 Làm lại từ đầu
                               </Button>
+                              {!marathonLocked && (
+                                <Button size="sm" variant="ghost" onClick={() => setPickerOpen(true)} className="font-semibold text-muted-foreground">
+                                  Chọn đề khác
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true, priorityLabel: activePrio }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true, priorityLabel: activePrio, setIds: runIds }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
                                 className="gap-1.5 font-semibold"
                               >
-                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
+                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{totalSets}) <ArrowRight className="w-4 h-4" /></>}
                               </Button>
                             </>
                           ) : (
                             <Button
                               size="sm"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
+                              onClick={() => (marathonLocked
+                                ? guard({ access_tier: maxTier } as any, () => setPickerOpen(true), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id), noCharge: true })
+                                : setPickerOpen(true))}
                               className="gap-1.5 font-semibold"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -798,6 +836,22 @@ const Listening = () => {
                           )}
                         </div>
                       </div>
+                      <MarathonSetPicker
+                        open={pickerOpen}
+                        onOpenChange={setPickerOpen}
+                        partLabel={activePartInfo?.label ?? "Part"}
+                        sets={pickerSets.map((s) => {
+                          const it = progress.get(s.id);
+                          return { id: s.id, title: s.title, done: progress.has(s.id), status: it && it.total > 0 ? `Đã làm · đúng ${it.bestScore}/${it.total}` : null };
+                        })}
+                        initialSelected={hasPicked ? picked : null}
+                        inProgress={hasResume ? { done: doneCount, total: totalSets } : null}
+                        onStart={(ids, isAll) => guard({ access_tier: maxTier } as any, () => {
+                          clearMarathonProgress("listening", activeTab, isAll && !activePrio ? null : ids);
+                          setProgressTick((t) => t + 1);
+                          setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio, setIds: ids });
+                        }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: ids })}
+                      />
                     </motion.div>
 
                     );
@@ -866,8 +920,8 @@ const Listening = () => {
                     return (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
-                        <div className="absolute top-3 right-3"><CornerResultBadge item={progress.get(set.id)} /></div>
-                        <div className="flex items-center gap-2 mb-3">
+                        <div className="absolute top-3 right-3"><CornerResultBadge item={progress.get(set.id)} verbose="correct" /></div>
+                        <div className={`flex flex-wrap items-center gap-2 mb-3 ${progress.has(set.id) ? "pr-32" : "pr-16"}`}>
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activePartInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />
                           <PriorityBadge label={priorityLabels.get(set.id)?.label} />
