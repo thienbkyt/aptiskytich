@@ -321,3 +321,38 @@
 .hk.locked .lockbar{display:flex}.hk .hk-loading{padding:60px;text-align:center;color:#9a7b6b}
 .hk.dopen #drawer{box-shadow:-20px 0 60px -20px #0004}
 @media(max-width:760px){.hk .prog>.muted{display:none}.hk .hk-head h1{font-size:24px}}
+/* ---- clean look (v2) ---- */
+.hk .s,.hk .sM,.hk .sW,.hk .sB{background:#fff;color:#3b1a14;border:1.5px solid #e2d4c8;font-weight:800}
+.hk .sMt,.hk .sWt,.hk .sBt{color:#3b1a14}
+.hk .l3t th.cnam,.hk .l3t td.cnam,.hk .l3t th.cnu,.hk .l3t td.cnu{background:transparent}
+.hk .l3t td{padding:12px 14px}.hk .l3t tr.row:hover td{background:#fffaf6}
+.hk .mn{color:#7a5a4b}.hk .mn b{color:#3b1a14;font-weight:700}.hk .mnv{color:#a8917f}
+.hk .edb{background:transparent;color:#c4ad9c;padding:0 4px}.hk .edb:hover{color:#7a5a4b}
+.hk .dash{color:#e2d4c8}
+.hk .showd{background:#fff;color:#3b1a14;border:1px solid #e2d4c8;font-weight:700}.hk .showd:hover{border-color:#3b1a14}
+.hk .who,.hk .who.M,.hk .who.W{background:#f6f1ec;color:#5a3a20}
+.hk .mnx{color:#3b1a14}
+.hk .pb{font-size:10px;padding:1px 7px}.hk .p-low{background:#f3eee9;color:#8a7466}
+.hk .player{background:#fff;color:#3b1a14;border:1px solid #eadfd5}.hk .spd button{border-color:#e2d4c8;color:#5a3a20}.hk .spd button.on{background:#3b1a14;color:#fff;border-color:#3b1a14}.hk .ptxt{color:#a8917f!important}
+.hk .sl,.hk .sl-M,.hk .sl-W{background:transparent;border-bottom:1px solid #f3ebe4;border-radius:0;padding:8px 2px;margin:0}
+.hk .spk,.hk .sl-M .spk,.hk .sl-W .spk{color:#a8917f;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+.hk mark.ev-q0,.hk mark.ev-q1,.hk mark.ev-q2,.hk mark.ev-q3{background:#FFF4C7}
+.hk mark.ev sup{color:#9a7b6b;font-weight:800}
+.hk .cn,.hk .cn.c0,.hk .cn.c1,.hk .cn.c2,.hk .cn.c3{color:#a8917f}
+.hk .legend2{color:#a8917f}
+/* R2 kéo-thả */
+.hk .r2given{display:flex;gap:10px;align-items:center;background:#faf6f2;border:1px solid #f0e6dd;border-radius:10px;padding:9px 12px;font-size:14px;color:#7a5a4b;margin-bottom:8px}
+.hk .r2slots{display:flex;flex-direction:column;gap:8px}
+.hk .r2slot{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;min-height:44px;border:1.5px dashed #e2d4c8;border-radius:10px;padding:8px 10px;background:#fff;transition:border-color .15s,background .15s}
+.hk .r2slot.has{border-style:solid}.hk .r2slot.over{border-color:#CC1C01;background:#fff6f1}
+.hk .r2slot.right{border-color:#2BC48A;background:#F2FCF7}.hk .r2slot.wrong{border-color:#E57373;background:#FFF5F4}
+.hk .r2n{flex:none;width:24px;height:24px;border-radius:7px;background:#3b1a14;color:#fff;font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-top:1px}
+.hk .r2given .r2n{background:#cbb8a9}
+.hk .r2ph{color:#c9b6a7;font-size:13px;align-self:center}
+.hk .r2item{flex:1;min-width:200px;font-size:14px;line-height:1.45;cursor:grab;user-select:none;touch-action:none}
+.hk .r2slot .r2item{padding:1px 0}
+.hk .pool .r2item{border:1px solid #e2d4c8;background:#fff;border-radius:10px;padding:10px 12px}
+.hk .pool .r2item:hover{border-color:#3b1a14}
+.hk .r2item.dragging{opacity:.35}
+.hk .r2fix{flex-basis:100%;margin-left:34px;font-size:12.5px;color:#14865A;font-weight:700}
+.r2ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;background:#fff;border:1px solid #3b1a14;border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 14px 30px -10px #0005;opacity:.95}
