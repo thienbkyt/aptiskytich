@@ -2,6 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+// remark-gfm dùng regex lookbehind (?<=…) — Safari cũ (< 16.4) không hỗ trợ và
+// làm sập cả trang bài viết ("invalid group specifier name"). Máy không hỗ trợ
+// thì render markdown thường (vẫn đọc được, chỉ thiếu bảng/autolink GFM).
+const SUPPORTS_LOOKBEHIND = (() => {
+  try { new RegExp("(?<=a)b"); return true; } catch { return false; }
+})();
+const REMARK_PLUGINS = SUPPORTS_LOOKBEHIND ? [remarkGfm] : [];
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
@@ -702,7 +710,7 @@ const BlogPostPage = () => {
             )}
 
             <div className="mx-auto max-w-[720px]">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={markdownComponents}>
                 {contentBody}
               </ReactMarkdown>
 
