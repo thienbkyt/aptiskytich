@@ -117,6 +117,8 @@ interface ReadingExamEngineProps {
   onNavPrevSet?: () => void;
   /** Marathon: go to the next exam set (used at the last question). */
   onNavNextSet?: () => void;
+  /** Marathon: last set → "Nộp & xem kết quả" thay cho nút Sau bị khoá. */
+  onNavFinish?: () => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -139,6 +141,7 @@ const ReadingExamEngine = ({
   onSectionChange,
   onNavPrevSet,
   onNavNextSet,
+  onNavFinish,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -522,15 +525,21 @@ const ReadingExamEngine = ({
 
   // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections,
   // and cross over to the previous/next exam set at the edges.
+  // Part 1 / 4 / 5 hiện cả đề trên 1 màn → Trước/Sau chuyển THẲNG sang đề khác
+  // (trước đây phải bấm 4–7 lần "câu ẩn" mới qua đề, trông như nút không chạy).
+  const marathonSinglePage = partType !== "part2";
   const arrowPrev = useCallback(() => {
-    if (currentIndex > 0) navProps.onPrevious?.();
+    if (!marathonSinglePage && currentIndex > 0) navProps.onPrevious?.();
     else onNavPrevSet?.();
-  }, [currentIndex, navProps, onNavPrevSet]);
+  }, [marathonSinglePage, currentIndex, navProps, onNavPrevSet]);
 
   const arrowNext = useCallback(() => {
-    if (currentIndex < totalQuestions - 1) goNextQuestion();
-    else onNavNextSet?.();
-  }, [currentIndex, totalQuestions, goNextQuestion, onNavNextSet]);
+    if (!marathonSinglePage && currentIndex < totalQuestions - 1) goNextQuestion();
+    else if (onNavNextSet) onNavNextSet();
+    else onNavFinish?.();
+  }, [marathonSinglePage, currentIndex, totalQuestions, goNextQuestion, onNavNextSet, onNavFinish]);
+  const atFirstPage = marathonSinglePage || currentIndex === 0;
+  const atLastPage = marathonSinglePage || currentIndex >= totalQuestions - 1;
   useMarathonArrowKeys({
     enabled: hideBottomNav && phase === "practice",
     onPrev: arrowPrev,
@@ -808,27 +817,29 @@ const ReadingExamEngine = ({
           />
         )}
 
-        {hideBottomNav && phase === "practice" && (
+        {hideBottomNav && phase === "practice" && !(reviewMode && marathonSinglePage) && (
           <div className="flex items-center justify-between max-w-3xl mx-auto w-full mt-6">
             <Button
               type="button"
               variant="outline"
               className="rounded-full border-primary text-primary"
               onClick={arrowPrev}
-              disabled={currentIndex === 0 && !onNavPrevSet}
+              disabled={atFirstPage && !onNavPrevSet}
             >
               ← Trước
             </Button>
             <span className="text-sm text-muted-foreground">
-              {currentIndex + 1}/{totalQuestions || 1}
+              {marathonSinglePage
+                ? (pageTotal ? `Đề ${(pageBase ?? 0) + 1}/${pageTotal}` : "")
+                : `${pageLabelPrefix ? `${pageLabelPrefix} · ` : ""}Đoạn ${currentIndex + 1}/${totalQuestions || 1}`}
             </span>
             <Button
               type="button"
               className="rounded-full bg-primary text-primary-foreground"
               onClick={arrowNext}
-              disabled={currentIndex === totalQuestions - 1 && !onNavNextSet}
+              disabled={atLastPage && !onNavNextSet && !onNavFinish}
             >
-              Sau →
+              {atLastPage && !onNavNextSet && onNavFinish ? "Nộp & xem kết quả ✓" : "Sau →"}
             </Button>
           </div>
         )}
