@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BandCelebration from "@/components/mascot/BandCelebration";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { getLevelColor } from "@/data/questions";
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,8 @@ const WritingFullResults = ({
           <span className="text-3xl">✍️</span>
         </div>
         <h2 className="text-2xl font-heading font-bold text-foreground">Kết quả Writing</h2>
+
+        {!stillGrading && <BandCelebration cefr={effCefr} skillLabel="Writing" />}
 
         <WritingGradingStatusBanner
           pendingParts={status.pendingParts}
