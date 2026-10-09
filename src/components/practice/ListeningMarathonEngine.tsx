@@ -773,7 +773,13 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
 
 
 
-  const midReviewEntry = midReview ? results[midReview.setIndex] : null;
+  // Đề đã nộp LUÔN mở ở chế độ xem lại (tới bằng Trước/Sau, chip hay khôi phục tiến độ)
+  // — không cho sửa rồi nộp lại (trước đây mỗi lần như vậy lưu thêm 1 dòng kết quả).
+  const reviewSi: number | null = midReview
+    ? midReview.setIndex
+    : (results[currentIndex] ? currentIndex : null);
+  const reviewQ = midReview ? midReview.qIndex : 0;
+  const midReviewEntry = reviewSi != null ? results[reviewSi] : null;
   const midPageCount = midReviewEntry?.qResults.length ?? 0;
 
   // Shared "đi tới đề khác" logic, used by the navigator chips and the inline "Sau →" button.
@@ -807,25 +813,77 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     } catch { /* noop */ }
   };
 
+  // Trước/Sau ở màn xem lại: đi từng câu, hết câu thì sang đề kế (đã nộp → xem lại, chưa → làm).
+  const navSetL = (si: number, atEnd = false) => {
+    if (si < 0 || si >= sets.length) return;
+    if (results[si]) {
+      const n = Math.max(1, results[si]!.qResults.length);
+      setMidReview({ setIndex: si, qIndex: atEnd ? n - 1 : 0 });
+      return;
+    }
+    setMidReview(null);
+    setEnterAtLast(atEnd);
+    setCurrentIndex(si);
+  };
+
+  // Đề cuối: "Nộp & xem kết quả" (trước đây nút Sau bị khoá, không có cách kết thúc).
+  const finishMarathon = () => {
+    const curInProgress = !results[currentIndex] && !midReview;
+    const undone = sets.length - results.filter(Boolean).length - (curInProgress && currentAnswered.some(Boolean) ? 1 : 0);
+    if (undone > 0 && !window.confirm(`Còn ${undone} đề chưa làm. Kết thúc marathon và xem kết quả?`)) return;
+    if (curInProgress && currentAnswered.some(Boolean)) {
+      pendingJumpRef.current = null;
+      setSubmitSignal((x) => x + 1);
+      return;
+    }
+    if (results.some(Boolean)) setPhase("completed");
+  };
+
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
-        {midReviewEntry ? (
+        {midReviewEntry && reviewSi != null ? (
+          <>
           <HistoryReviewRenderer
-            key={`mid-${midReview!.setIndex}-${midReview!.qIndex}`}
+            key={`mid-${reviewSi}-${reviewQ}`}
             examSetId={midReviewEntry.examSetId}
             skill="listening"
             part={midReviewEntry.part}
-            testTitle={`Đề ${midReview!.setIndex + 1}${sets[midReview!.setIndex]?.title ? ` — ${sets[midReview!.setIndex]!.title}` : ""}`}
+            testTitle={`Đề ${reviewSi + 1}${sets[reviewSi]?.title ? ` — ${sets[reviewSi]!.title}` : ""}`}
             qResults={midReviewEntry.qResults}
-            onExit={() => setMidReview(null)}
-            pageBase={0}
-            pageTotal={midPageCount}
-            initialSection={Math.min(midReview!.qIndex, Math.max(0, midPageCount - 1))}
+            onExit={() => navSetL(Math.min(reviewSi + 1, sets.length - 1))}
+            pageBase={reviewSi}
+            pageTotal={sets.length}
+            initialSection={Math.min(reviewQ, Math.max(0, midPageCount - 1))}
             hideTimer
             hideBottomNav
             hideBackToResults
           />
+          <div className="sticky bottom-0 z-30 bg-background/95 backdrop-blur border-t border-border">
+            <div className="flex items-center justify-between max-w-3xl mx-auto w-full px-4 py-3">
+              <Button
+                type="button" variant="outline" className="rounded-full border-primary text-primary"
+                disabled={reviewSi === 0 && reviewQ === 0}
+                onClick={() => (reviewQ > 0 ? setMidReview({ setIndex: reviewSi, qIndex: reviewQ - 1 }) : navSetL(reviewSi - 1, true))}
+              >
+                ← Trước
+              </Button>
+              <span className="text-sm text-muted-foreground">Đề {reviewSi + 1}/{sets.length} · Câu {Math.min(reviewQ, Math.max(0, midPageCount - 1)) + 1}/{Math.max(1, midPageCount)} · đã nộp</span>
+              {reviewQ < midPageCount - 1 || reviewSi < sets.length - 1 ? (
+                <Button
+                  type="button" className="rounded-full bg-primary text-primary-foreground"
+                  onClick={() => (reviewQ < midPageCount - 1 ? setMidReview({ setIndex: reviewSi, qIndex: reviewQ + 1 }) : navSetL(reviewSi + 1))}
+                >
+                  Sau →
+                </Button>
+              ) : (
+                <Button type="button" className="rounded-full bg-primary text-primary-foreground" onClick={finishMarathon}>
+                  Xem kết quả ✓
+                </Button>
+              )}
+            </div>
+          </div>
+          </>
         ) : (
           <ListeningExamEngine
             key={`${attempt}-${currentIndex}`}
@@ -848,11 +906,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
                 setCurrentIndex((i) => i - 1);
               }
             }}
-            onNavPrevSet={currentIndex > 0 ? () => {
-              setEnterAtLast(true);
-              setCurrentIndex((i) => i - 1);
-            } : undefined}
+            onNavPrevSet={currentIndex > 0 ? () => navSetL(currentIndex - 1, true) : undefined}
             onNavNextSet={currentIndex < sets.length - 1 ? () => goToSet(currentIndex + 1, 0) : undefined}
+            onNavFinish={currentIndex >= sets.length - 1 ? finishMarathon : undefined}
             initialQuestion={
               jumpQ != null
                 ? jumpQ
@@ -879,8 +935,8 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
         sets={sets}
         results={results as any}
         currentIndex={currentIndex}
-        reviewingIndex={midReview ? midReview.setIndex : null}
-        reviewingQ={midReview ? midReview.qIndex : undefined}
+        reviewingIndex={reviewSi}
+        reviewingQ={reviewSi != null ? reviewQ : undefined}
         currentQ={currentQ}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
