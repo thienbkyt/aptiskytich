@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import PriorityBadge from "@/components/practice/PriorityBadge";
 
 export interface PickerSet {
   id: string;
@@ -28,7 +29,12 @@ export interface PickerSet {
   done?: boolean;
   /** Nhãn trạng thái, vd "Đã làm · đúng 3/4". */
   status?: string | null;
+  /** Nhãn ưu tiên của đề (cao / vừa / thấp). */
+  priority?: "high" | "medium" | "low" | null;
 }
+
+type Prio = "high" | "medium" | "low";
+const PRIO_LABEL: Record<Prio, string> = { high: "Ưu tiên cao", medium: "Ưu tiên vừa", low: "Ưu tiên thấp" };
 
 interface Props {
   open: boolean;
@@ -49,6 +55,7 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [quickN, setQuickN] = useState("10");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [prioOn, setPrioOn] = useState<Set<Prio>>(new Set());
 
   useEffect(() => {
     if (!open) return;
@@ -56,10 +63,25 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
     const init = initialSelected?.filter((id) => valid.has(id)) ?? [];
     setSelected(new Set(init.length ? init : sets.map((s) => s.id)));
     setConfirmOpen(false);
+    setPrioOn(new Set());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const undoneCount = useMemo(() => sets.filter((s) => !s.done).length, [sets]);
+  const prioCounts = useMemo(() => {
+    const c: Record<Prio, number> = { high: 0, medium: 0, low: 0 };
+    sets.forEach((s) => { if (s.priority) c[s.priority]++; });
+    return c;
+  }, [sets]);
+  const hasPrio = prioCounts.high + prioCounts.medium + prioCounts.low > 0;
+  // Bấm nhãn ưu tiên: bật/tắt nhóm đó, danh sách chọn = gộp các nhóm đang bật.
+  const togglePrio = (p: Prio) => {
+    const next = new Set(prioOn);
+    if (next.has(p)) next.delete(p); else next.add(p);
+    setPrioOn(next);
+    setSelected(new Set(sets.filter((s) => s.priority && next.has(s.priority)).map((s) => s.id)));
+  };
+  const selectOnly = (ids: string[]) => { setPrioOn(new Set()); setSelected(new Set(ids)); };
   const orderedSel = useMemo(() => sets.filter((s) => selected.has(s.id)), [sets, selected]);
   const doneSel = useMemo(() => orderedSel.filter((s) => s.done), [orderedSel]);
   const newSel = useMemo(() => orderedSel.filter((s) => !s.done), [orderedSel]);
@@ -76,6 +98,7 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
     const n = Math.max(1, Math.min(sets.length, parseInt(quickN, 10) || 0));
     // Ưu tiên đề chưa làm, thiếu mới lấy thêm đề đã làm — giữ thứ tự danh sách.
     const chosen = new Set([...sets.filter((s) => !s.done), ...sets.filter((s) => s.done)].slice(0, n).map((s) => s.id));
+    setPrioOn(new Set());
     setSelected(chosen);
   };
 
@@ -106,20 +129,45 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
           </DialogHeader>
 
           <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
-            <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setSelected(new Set(sets.map((s) => s.id)))}>
+            <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => selectOnly(sets.map((s) => s.id))}>
               Chọn tất cả ({sets.length})
             </Button>
             <Button
               type="button" size="sm" variant="outline" className="h-8"
               disabled={undoneCount === 0}
-              onClick={() => setSelected(new Set(sets.filter((s) => !s.done).map((s) => s.id)))}
+              onClick={() => selectOnly(sets.filter((s) => !s.done).map((s) => s.id))}
             >
               Chỉ đề chưa làm ({undoneCount})
             </Button>
-            <Button type="button" size="sm" variant="ghost" className="h-8 text-muted-foreground" onClick={() => setSelected(new Set())}>
+            <Button type="button" size="sm" variant="ghost" className="h-8 text-muted-foreground" onClick={() => selectOnly([])}>
               Bỏ chọn
             </Button>
           </div>
+          {hasPrio && (
+            <div className="px-5 pb-3 flex flex-wrap items-center gap-2">
+              {(["high", "medium", "low"] as Prio[]).filter((p) => prioCounts[p] > 0).map((p) => {
+                const on = prioOn.has(p);
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => togglePrio(p)}
+                    aria-pressed={on}
+                    className={cn(
+                      "h-8 px-3 rounded-full text-sm font-medium border transition-colors",
+                      on
+                        ? p === "high" ? "bg-[#CC1C01] border-[#CC1C01] text-white"
+                          : p === "medium" ? "bg-[#FEAD5F] border-[#FEAD5F] text-[#4D0D0D]"
+                          : "bg-foreground/80 border-foreground/80 text-background"
+                        : "bg-background border-border text-foreground hover:bg-muted",
+                    )}
+                  >
+                    {p === "high" && <Flame className="inline w-3.5 h-3.5 -mt-0.5 mr-1" />}{PRIO_LABEL[p]} ({prioCounts[p]})
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div className="px-5 pb-3 flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Chọn nhanh</span>
             <Input
@@ -146,7 +194,10 @@ const MarathonSetPicker = ({ open, onOpenChange, partLabel, sets, initialSelecte
                   )}
                 >
                   <Checkbox checked={on} onCheckedChange={() => toggle(s.id)} />
-                  <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">{s.title}</span>
+                  <span className="flex-1 min-w-0 flex items-center gap-1.5">
+                    <span className="min-w-0 truncate text-sm font-medium text-foreground">{s.title}</span>
+                    <PriorityBadge label={s.priority} className="shrink-0" />
+                  </span>
                   {s.done ? (
                     <span className="inline-flex items-center gap-1 shrink-0 whitespace-nowrap text-[11px] font-bold px-2 py-[2px] rounded-full bg-success/15 text-success border border-success/30">
                       <CheckCircle2 style={{ width: 11, height: 11 }} strokeWidth={2.25} />
