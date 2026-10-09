@@ -10,7 +10,7 @@ import { mountHocKey } from "@/features/hockey/engine";
 import MASCOTS from "@/features/hockey/mascots";
 import "@/features/hockey/engine.css";
 
-// Học Key Siêu Tốc: Listening câu 15 (Part 3), 16–17 (Part 4) · Reading Part 2–3 (Text cohesion), Part 5 (Long text — DB "Part 4").
+// Học Key Thần Tốc: Listening câu 15 (Part 3), 16–17 (Part 4) · Reading Part 2–3 (Text cohesion), Part 5 (Long text — DB "Part 4").
 const PARTS: Record<string, [string, string]> = {
   l3: ["listening", "Part 3%"],
   l4: ["listening", "Part 4%"],
@@ -38,8 +38,8 @@ async function loadPart(skill: string, like: string) {
 
 const HocKey = () => {
   usePageMeta({
-    title: "Học Key Siêu Tốc — Aptis Kỳ Tích",
-    description: "Học thuộc key Aptis siêu tốc: Listening câu 15, 16–17 và Reading Part 2–3, Part 5 — bảng mã, flashcard, kiểm tra và game.",
+    title: "Học Key Thần Tốc — Aptis Kỳ Tích",
+    description: "Học thuộc key Aptis thần tốc: Listening câu 15, 16–17 và Reading Part 2–3, Part 5 — bảng mã, flashcard, kiểm tra và game.",
     path: "/hoc-key",
   });
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -113,7 +113,7 @@ const HocKey = () => {
         {!authLoading && !user ? (
           <div className="max-w-lg mx-auto text-center py-24 px-4">
             <div className="text-4xl mb-3">🚀</div>
-            <h1 className="text-2xl font-extrabold mb-2">Học Key Siêu Tốc</h1>
+            <h1 className="text-2xl font-extrabold mb-2">Học Key Thần Tốc</h1>
             <p className="text-muted-foreground mb-6">Đăng nhập để học thuộc key Listening câu 15–17 và Reading Part 2–3, Part 5.</p>
             <Link to="/auth" className="inline-flex px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold">Đăng nhập</Link>
           </div>
