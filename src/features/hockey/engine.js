@@ -98,16 +98,17 @@ const passL = (part,id) => lf==="all" || (lf==="yes") === learned[part].has(id);
 const okSet = (part,s) => passP(s.prio) && (!NBMODE || NB.has(s.id)) && passL(part,s.id);
 const okRow = r => passP(r.b.prio) && r.b.sets.some(s=>(!NBMODE||NB.has(s.id)) && passL("l3",s.id));
 const noteWrong = (part,id) => { if(id) SESSION_WRONG.add(id); };
+const doBtn = (part,id) => OPTS.onDoSet ? `<button class="dob" data-do="${part}|${esc(id)}" title="Vào làm đề này theo đúng Part">▶ Làm đề</button>` : "";
 const nbBtn = (part,id,big) => `<button class="nbb ${NB.has(id)?"on":""} ${big?"big":""}" data-nb="${part}|${esc(id)}">${NB.has(id)?"✓ Trong sổ key":"＋ Sổ key"}</button>`;
 function toggleNB(part,id,force,source){ const on = force==null ? !NB.has(id) : force; if(on===NB.has(id)) return; on?NB.add(id):NB.delete(id); OPTS.onToggleNotebook&&OPTS.onToggleNotebook(part,id,on,source||"manual"); }
 
 const PARTS = [
- {id:"l3", grp:"Listening", name:"Câu 15", sub:"Man / Woman / Both", tabs:["Bảng mã","Flashcard","Kiểm tra","🎮 Game"], items:()=>L3SETS.map(x=>({id:x.id,prio:x.s.prio}))},
- {id:"l4", grp:"Listening", name:"Câu 16–17", sub:"Độc thoại · 3 lựa chọn", tabs:["Bảng đáp án","Flashcard","Kiểm tra","🎮 Game"], items:()=>L4.map(s=>({id:s.id,prio:s.prio}))},
- {id:"r2", grp:"Reading", name:"Part 2–3", sub:"Sắp xếp câu", tabs:["Thứ tự đúng","Luyện xếp","Câu tiếp theo?","🎮 Game ná"], items:()=>R2.map(s=>({id:s.id,prio:s.prio}))},
- {id:"r5", grp:"Reading", name:"Part 5", sub:"Ghép tiêu đề đoạn", tabs:["Bảng tra","Flashcard","Kiểm tra","🎮 Game"], items:()=>R5.map(s=>({id:s.id,prio:s.prio}))},
+ {id:"l3", grp:"Listening", name:"Câu 15", sub:"Short conversations", tabs:["Bảng mã","Flashcard","Kiểm tra","🎮 Game"], items:()=>L3SETS.map(x=>({id:x.id,prio:x.s.prio}))},
+ {id:"l4", grp:"Listening", name:"Câu 16–17", sub:"Monologues", tabs:["Bảng đáp án","Flashcard","Kiểm tra","🎮 Game"], items:()=>L4.map(s=>({id:s.id,prio:s.prio}))},
+ {id:"r2", grp:"Reading", name:"Part 2–3", sub:"Text cohesion", tabs:["Thứ tự đúng","Luyện xếp","Câu tiếp theo?","🎮 Game ná"], items:()=>R2.map(s=>({id:s.id,prio:s.prio}))},
+ {id:"r5", grp:"Reading", name:"Part 5", sub:"Long reading", tabs:["Bảng tra","Flashcard","Kiểm tra","🎮 Game"], items:()=>R5.map(s=>({id:s.id,prio:s.prio}))},
 ];
-let cur="l3", tab=0, locked=!!OPTS.locked, prioF="all";
+let cur=(OPTS.initial&&OPTS.initial.cur)||"l3", tab=(OPTS.initial&&+OPTS.initial.tab)||0, locked=!!OPTS.locked, prioF="all";
 const passP = p => prioF==="all" || p===prioF;
 
 const HOW = {
@@ -121,11 +122,11 @@ const NBTABS=["Danh sách","Flashcard","Kiểm tra","🎮 Game"];
 const PART_FN={l3:[L3Table,L3Flash,L3Quiz,L3Game], l4:[L4Table,L4Flash,L4Quiz,L4Game], r2:[R2Table,R2Order,R2Next,R2Game], r5:[R5Table,R5Flash,R5Quiz,R5Game]};
 const PART_PLAY={l3:[1,2,3], l4:[1,2,3], r2:[1,2,3], r5:[1,2,3]};
 function renderShell(){
-  let chips="", lastG="";
-  PARTS.forEach(x=>{ if(x.grp!==lastG){ chips+=`<span class="grp">${x.grp}</span>`; lastG=x.grp; }
-    chips+=`<button class="chip ${x.id===cur?"on":""}" data-part="${x.id}">${x.name}<span class="csub">${x.sub}</span></button>`; });
-  chips+=`<span class="grp">Của tôi</span><button class="chip nbchip ${cur==="nb"?"on":""}" data-part="nb">📒 Sổ key<span class="csub">${NB.size} đề đã lưu</span></button>`;
-  $("#parts").innerHTML = chips;
+  OPTS.onState&&OPTS.onState({cur,tab});
+  const grpHtml = g => `<div class="sg"><div class="sgl">${g.toUpperCase()}</div><div class="sgr">${PARTS.filter(x=>x.grp===g).map(x=>`<button class="pt ${x.id===cur?"on":""}" data-part="${x.id}"><b>${x.name}</b><span>${x.sub}</span></button>`).join("")}</div></div>`;
+  const sugN = [...new Set([...SESSION_WRONG, ...PRACTICE_WRONG])].filter(id=>PARTOF.has(id) && !NB.has(id)).length;
+  $("#parts").innerHTML = `<div class="seg">${grpHtml("Listening")}<div class="sep"></div>${grpHtml("Reading")}</div>
+    <button class="nbcard ${cur==="nb"?"on":""}" data-part="nb">${sugN?`<span class="dot">${sugN} gợi ý</span>`:""}<span class="ic">📒</span><span class="nbtx"><b>Sổ key của tôi</b><span class="csub">${NB.size} đề đã lưu · ôn Flashcard / Game</span></span><span class="go">›</span></button>`;
   ROOT.classList.toggle("locked", locked);
   stopGames();
   if(cur==="nb"){ renderNotebook(); return; }
@@ -133,12 +134,12 @@ function renderShell(){
   const p = PARTS.find(x=>x.id===cur);
   const items = p.items(), cnt = k => items.filter(i=>i.prio===k).length;
   const ly = items.filter(i=>learned[cur].has(i.id)).length;
-  $("#pf").innerHTML = `<span class="muted">Lọc:</span>` + [["all",`Tất cả (${items.length})`],["high",`🔥 Ưu tiên cao (${cnt("high")})`],["medium",`Ưu tiên vừa (${cnt("medium")})`],["low",`Ưu tiên thấp (${cnt("low")})`]]
-    .filter(([k])=>k==="all"||cnt(k)>0).map(([k,l])=>`<button class="pfc ${prioF===k?"on":""} pf-${k}" data-pf="${k}">${l}</button>`).join("")
-    + `<span class="pfsep"></span>` + [["all","Tất cả"],["no",`Chưa thuộc (${items.length-ly})`],["yes",`Đã thuộc (${ly})`]].map(([k,l])=>`<button class="pfc ${lf===k?"on":""}" data-lf="${k}">${l}</button>`).join("");
   const vis = items.filter(i=>passP(i.prio)), done = vis.filter(i=>learned[cur].has(i.id)).length, pct = vis.length?Math.round(done/vis.length*100):0;
-  $("#prog").innerHTML = `<b>${p.grp} ${p.name}</b><span class="muted">· ${p.sub}</span><div class="bar"><i style="width:${pct}%"></i></div><b>${done}/${vis.length}</b><span class="muted">đã thuộc</span>`;
-  $("#prog").style.display=""; 
+  $("#pf").innerHTML = `<div class="hfg"><span class="hfl">Ưu tiên</span><div class="hseg">` + [["all","Tất cả",items.length],["high","🔥 Cao",cnt("high")],["medium","Vừa",cnt("medium")],["low","Thấp",cnt("low")]]
+    .filter(([k,,n])=>k==="all"||n>0).map(([k,l,n])=>`<button class="${prioF===k?"on":""}" data-pf="${k}">${l}<i>${n}</i></button>`).join("") + `</div></div>`
+    + `<div class="hfg"><span class="hfl">Trạng thái</span><div class="hseg">` + [["all","Tất cả",null],["no","Chưa thuộc",items.length-ly],["yes","Đã thuộc",ly]].map(([k,l,n])=>`<button class="${lf===k?"on":""}" data-lf="${k}">${l}${n==null?"":`<i>${n}</i>`}</button>`).join("") + `</div></div>`
+    + `<div class="pprog"><b>${p.name}</b><div class="bar"><i style="width:${pct}%"></i></div><b>${done}/${vis.length}</b><span class="muted">đã thuộc</span></div>`;
+  $("#pf").style.display=""; $("#prog").style.display="none"; 
   $("#tabs").innerHTML = p.tabs.map((t,i)=>`<button class="tab ${i===tab?"on":""} ${i===3?"tgame":""}" data-tab="${i}">${t}</button>`).join("");
   PART_FN[cur][tab]($("#body"));
 }
@@ -147,7 +148,8 @@ function renderNotebook(){
   const items = nbItems(); const byPart = pt => items.filter(i=>i.part===pt);
   if(!nbPart || !byPart(nbPart).length) nbPart = (PARTS.find(x=>byPart(x.id).length)||PARTS[0]).id;
   const sugg = [...new Set([...SESSION_WRONG, ...PRACTICE_WRONG])].filter(id=>PARTOF.has(id) && !NB.has(id));
-  $("#pf").innerHTML = tab===0 ? "" : `<span class="muted">Ôn phần:</span>` + PARTS.map(x=>`<button class="pfc ${nbPart===x.id?"on":""}" data-nbp="${x.id}" ${byPart(x.id).length?"":"disabled"}>${x.grp==="Listening"?"L":"R"} · ${x.name} (${byPart(x.id).length})</button>`).join("");
+  $("#pf").innerHTML = tab===0 ? "" : `<div class="hfg"><span class="hfl">Ôn phần</span><div class="hseg">` + PARTS.map(x=>`<button class="${nbPart===x.id?"on":""}" data-nbp="${x.id}" ${byPart(x.id).length?"":"disabled"}>${x.grp==="Listening"?"L":"R"} · ${x.name}<i>${byPart(x.id).length}</i></button>`).join("") + `</div></div>`;
+  $("#pf").style.display = tab===0 ? "none" : "";
   $("#prog").style.display="none";
   $("#tabs").innerHTML = NBTABS.map((t,i)=>`<button class="tab ${i===tab?"on":""} ${i===3?"tgame":""}" data-tab="${i}">${t}</button>`).join("");
   const b=$("#body");
@@ -166,9 +168,10 @@ function renderNotebook(){
 }
 ROOT.addEventListener("click", e=>{
   const cl=e.target.closest("[data-close]"); if(cl){ closeDrawer(); return; }
+  const dz=e.target.closest("[data-do]"); if(dz){ e.stopPropagation(); if(locked){ OPTS.onUpgrade&&OPTS.onUpgrade(); return; } const [p,id]=dz.dataset.do.split("|"); OPTS.onDoSet&&OPTS.onDoSet(p,id); return; }
   const up=e.target.closest("[data-upgrade]"); if(up){ OPTS.onUpgrade&&OPTS.onUpgrade(); return; }
   const ed=e.target.closest("[data-edit]"); if(ed){ e.stopPropagation(); editNote(ed.dataset.edit); return; }
-  const nb=e.target.closest("[data-nb]"); if(nb){ e.stopPropagation(); const [p,id]=nb.dataset.nb.split("|"); toggleNB(p,id,null,"manual"); const on=NB.has(id); $$(`[data-nb="${p}|${id}"]`).forEach(x=>{ x.classList.toggle("on",on); if(!x.closest(".nbmain")) x.textContent=on?"✓ Trong sổ key":"＋ Sổ key"; }); const nc=$(".nbchip .csub"); if(nc) nc.textContent=`${NB.size} đề đã lưu`; if(cur==="nb"&&tab===0) renderShell(); return; }
+  const nb=e.target.closest("[data-nb]"); if(nb){ e.stopPropagation(); const [p,id]=nb.dataset.nb.split("|"); toggleNB(p,id,null,"manual"); const on=NB.has(id); $$(`[data-nb="${p}|${id}"]`).forEach(x=>{ x.classList.toggle("on",on); if(!x.closest(".nbmain")) x.textContent=on?"✓ Trong sổ key":"＋ Sổ key"; }); const nc=$(".nbcard .csub"); if(nc) nc.textContent=`${NB.size} đề đã lưu · ôn Flashcard / Game`; if(cur==="nb"&&tab===0) renderShell(); return; }
   const na=e.target.closest("[data-nball]"); if(na){ [...new Set([...SESSION_WRONG, ...PRACTICE_WRONG])].filter(id=>PARTOF.has(id)&&!NB.has(id)).forEach(id=>toggleNB(PARTOF.get(id),id,true,"suggest")); renderShell(); return; }
   const np=e.target.closest("[data-nbp]"); if(np){ nbPart=np.dataset.nbp; resetState(); renderShell(); return; }
   const gt=e.target.closest("[data-goto]"); if(gt){ const [p,id]=gt.dataset.goto.split("|"); cur=p; tab=0; prioF="all"; lf="all"; resetState(); renderShell(); const t=TITLE.get(id); const q=$("#q"); if(q&&t){ q.value=(p==="l3"?(t.replace(/^Đề\s*\d+\s*[-–:]\s*/,"")):t); q.dispatchEvent(new Event("input")); } return; }
@@ -266,7 +269,7 @@ function L3Table(b){
        <td class="cnam ${M?"":"empty"}" data-l="👨 Nam nói trước">${M?cell:`<span class="dash">—</span>`}</td>
        <td class="cnu ${M?"empty":""}" data-l="👩 Nữ nói trước">${M?`<span class="dash">—</span>`:cell}</td>
        <td class="tdshow"><button class="showd" data-sc="${i}">Hiện đề</button></td>
-       <td class="tdacts"><div class="acts">${learnBtn("l3",s.id)}${nbBtn("l3",s.id)}</div></td></tr>
+       <td class="tdacts"><div class="acts">${doBtn("l3",s.id)}${learnBtn("l3",s.id)}${nbBtn("l3",s.id)}</div></td></tr>
        <tr class="detail" id="d${i}" hidden><td></td><td colspan="5">${r.b.st.map((t,k)=>`<div class="stmt"><span class="s s${code[k]}">${code[k]}</span>${esc(t)}</div>`).join("")}</td></tr>`; }).join("");
   };
   draw(); $("#q").oninput=draw;
@@ -315,7 +318,7 @@ function L4Table(b){
   b.innerHTML = `<div class="tools"><input class="search" id="q" placeholder="Tìm theo đề / câu hỏi / đáp án…"></div><div id="list"></div>`;
   const draw=()=>{ const q=($("#q").value||"").toLowerCase();
     $("#list").innerHTML = list.filter(s=>JSON.stringify(s.qs).toLowerCase().includes(q)||s.title.toLowerCase().includes(q)).map(s=>{ const si=L4.indexOf(s); return `
-     <div class="card l4c"><div class="l4h"><div><b>${esc(s.title)}</b> ${prioBadge(s.prio)}</div><div class="acts">${learnBtn("l4",s.id)}${nbBtn("l4",s.id)}</div></div>
+     <div class="card l4c"><div class="l4h"><div><b>${esc(s.title)}</b> ${prioBadge(s.prio)}</div><div class="acts">${doBtn("l4",s.id)}${learnBtn("l4",s.id)}${nbBtn("l4",s.id)}</div></div>
      <div class="l4g">${[0,1].map(m=>`<div class="mono"><div class="monoh"><span class="lbl">Câu ${16+m} · bài nói ${m+1}</span><button class="abtn" data-l4="${si}|${m}">🎧 Audio & script</button></div>${s.qs.slice(m*2,m*2+2).map(qq=>`
        <div class="qa"><div class="qq">${esc(qq.t)}</div>${qq.o.map((o,i)=>`<div class="op ${i===qq.a?"good":"bad"}">${i===qq.a?"✓ ":""}${esc(o)}</div>`).join("")}</div>`).join("")}</div>`).join("")}</div></div>`; }).join("");
   };
@@ -354,7 +357,7 @@ const hl = t => esc(t).replace(CLUE, m=>`<mark class="cl">${m}</mark>`);
 const fw = t => t.replace(/^[^A-Za-z]+/,"").split(/\s+/).slice(0,3).join(" ");
 function R2Table(b){
   const list=R2.filter(s=>okSet("r2",s)); if(!list.length){ b.innerHTML=empty; return; }
-  b.innerHTML = list.map(s=>`<div class="card r2c"><div class="l4h"><div><b>${esc(s.title)}</b> ${prioBadge(s.prio)}</div><div class="acts">${learnBtn("r2",s.id)}${nbBtn("r2",s.id)}</div></div>
+  b.innerHTML = list.map(s=>`<div class="card r2c"><div class="l4h"><div><b>${esc(s.title)}</b> ${prioBadge(s.prio)}</div><div class="acts">${doBtn("r2",s.id)}${learnBtn("r2",s.id)}${nbBtn("r2",s.id)}</div></div>
    <div class="l4g">${s.sec.map((sec,k)=>`<div class="mono"><div class="lbl">Đoạn ${k+1}: ${esc(sec.t)}</div>
     <div class="chain">${sec.order.map(t=>`<span>${esc(fw(t))}…</span>`).join("<i>→</i>")}</div>
     <ol class="ord" start="${sec.given?0:1}">${sec.given?`<li class="given">${esc(sec.given)} <span class="tag0">câu cho sẵn</span></li>`:""}${sec.order.map(t=>`<li>${hl(t)}</li>`).join("")}</ol></div>`).join("")}</div></div>`).join("")
@@ -414,7 +417,7 @@ const markKey=(s,p,txt)=>{ const k=(s.key||[])[p-1]; if(!k) return esc(txt); con
 const sigS=(s,p)=>{ const k=(s.key||[])[p-1]; const ss=s.p[p-1].match(/[^.!?]+[.!?]+/g)||[s.p[p-1]]; return ((k&&ss.find(x=>x.includes(k)))||ss[0]).trim(); };
 function R5Table(b){
   const list=R5.filter(s=>okSet("r5",s)); if(!list.length){ b.innerHTML=empty; return; }
-  b.innerHTML=list.map(s=>{ const extra=s.h.filter(h=>h[1]==null); return `<div class="card r2c"><div class="l4h"><div><b>${esc(s.title)}</b> ${prioBadge(s.prio)}</div><div class="acts">${learnBtn("r5",s.id)}${nbBtn("r5",s.id)}</div></div>
+  b.innerHTML=list.map(s=>{ const extra=s.h.filter(h=>h[1]==null); return `<div class="card r2c"><div class="l4h"><div><b>${esc(s.title)}</b> ${prioBadge(s.prio)}</div><div class="acts">${doBtn("r5",s.id)}${learnBtn("r5",s.id)}${nbBtn("r5",s.id)}</div></div>
    <table><thead><tr><th style="width:70px">Đoạn</th><th style="width:34%">Tiêu đề đúng</th><th>Câu tín hiệu trong đoạn</th></tr></thead><tbody>
    ${s.p.map((_,i)=>`<tr class="row r5r"><td><span class="pn">${i+1}</span></td><td><b>${esc(headOf(s,i+1))}</b></td><td class="sig">${markKey(s,i+1,sigS(s,i+1))} ${editBtn(`r5§${s.id}§${i+1}`)} <span class="more">xem cả đoạn ▾</span><div class="full" hidden>${markKey(s,i+1,s.p[i])}</div></td></tr>`).join("")}
    ${extra.map(h=>`<tr><td><span class="pn x">✕</span></td><td><s>${esc(h[0])}</s></td><td class="muted">Tiêu đề thừa — không thuộc đoạn nào (bẫy)</td></tr>`).join("")}
