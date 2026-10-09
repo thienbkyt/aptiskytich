@@ -542,6 +542,7 @@ const Reading = () => {
     draftRec.finish();
     setRestoreDraft(null);
     if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
+    if (searchParams.get("from") === "hockey") { navigate("/hoc-key"); return; }
     setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
   };
 
