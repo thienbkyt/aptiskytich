@@ -512,3 +512,7 @@
 .hk .hkm-s:disabled{opacity:.6;cursor:wait}
 .hk .hktoast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:#3b1a14;color:#fff;font-size:13.5px;font-weight:700;border-radius:999px;padding:10px 18px;opacity:0;transition:.25s;z-index:90;pointer-events:none}
 .hk .hktoast.on{opacity:1;transform:translate(-50%,0)}
+.hk .l3t td.empty{text-align:center;vertical-align:middle}
+.hk .acts .lbtn{min-width:142px;text-align:center}
+.hk .acts .nbb{min-width:80px;text-align:center}
+@media(max-width:760px){.hk .acts .lbtn{min-width:0}.hk .acts .nbb{min-width:0}}
