@@ -432,3 +432,57 @@
  .hk .l3t tr.row td.tdshow{margin-right:6px}
  .hk .nbrow{flex-wrap:wrap}.hk .nbt{flex-basis:100%}
 }
+/* ---- header v4 (phương án A) ---- */
+.hk .parts{display:flex;gap:14px;align-items:stretch;flex-wrap:nowrap;margin-bottom:12px}
+.hk .seg{flex:1;min-width:0;display:flex;background:#fff;border:1px solid #F0E0D3;border-radius:16px;padding:5px;gap:4px}
+.hk .sg{display:flex;flex-direction:column;flex:1;min-width:0}
+.hk .sgl{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#B79A88;padding:4px 10px 3px}
+.hk .sgr{display:flex;gap:4px}
+.hk .seg .sep{width:1px;background:#F2E4D9;margin:6px 4px;flex:none}
+.hk .pt{flex:1;min-width:0;border:0;background:transparent;border-radius:12px;padding:8px 12px;text-align:left;font:inherit;cursor:pointer;color:#5a3a20;transition:background .15s}
+.hk .pt b{display:block;font-size:14.5px;font-weight:800}
+.hk .pt span{display:block;font-size:11.5px;color:#a08575;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hk .pt:hover{background:#FBF3EC}
+.hk .pt.on{background:linear-gradient(135deg,#CC1C01,#E9561E);color:#fff;box-shadow:0 6px 16px -8px #CC1C01}
+.hk .pt.on span{color:#FFE1D2}
+.hk .nbcard{width:240px;flex:none;border-radius:16px;padding:12px 14px;background:linear-gradient(135deg,#FFF4D6,#FFE2A8);border:1px solid #F5CF7A;display:flex;gap:12px;align-items:center;cursor:pointer;position:relative;font:inherit;text-align:left;transition:transform .15s,box-shadow .15s}
+.hk .nbcard:hover{transform:translateY(-1px);box-shadow:0 10px 22px -14px #B7791F}
+.hk .nbcard.on{border:2px solid #E0A42E;padding:11px 13px;box-shadow:0 10px 22px -14px #B7791F}
+.hk .nbcard .ic{width:42px;height:42px;border-radius:12px;background:#fff;display:grid;place-items:center;font-size:22px;box-shadow:0 4px 10px -6px #B7791F;flex:none}
+.hk .nbcard .nbtx{min-width:0}
+.hk .nbcard b{display:block;font-size:15px;color:#5B3A00}
+.hk .nbcard .csub{display:block;font-size:12px;color:#8A6417;line-height:1.35}
+.hk .nbcard .go{margin-left:auto;font-weight:800;color:#B7791F;font-size:20px}
+.hk .nbcard .dot{position:absolute;top:-8px;right:-6px;background:#CC1C01;color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;border:2px solid #fff;white-space:nowrap}
+.hk .pfbar{display:flex;align-items:center;gap:18px;margin-bottom:14px;padding:9px 14px;background:#fff;border:1px solid #F0E0D3;border-radius:14px;flex-wrap:wrap}
+.hk .pfbar:empty{display:none}
+.hk .hfg{display:flex;align-items:center;gap:8px}
+.hk .hfl{font-size:12px;font-weight:700;color:#a08575;white-space:nowrap}
+.hk .hseg{display:flex;background:#F7EFE8;border-radius:10px;padding:3px}
+.hk .hseg button{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:700;color:#7a5a4b;padding:5px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.hk .hseg button.on{background:#fff;color:#3b1a14;box-shadow:0 1px 4px #0000001a}
+.hk .hseg button i{font-style:normal;color:#B79A88;font-weight:600;margin-left:4px}
+.hk .hseg button:disabled{opacity:.4;cursor:not-allowed}
+.hk .pprog{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;min-width:220px}
+.hk .pprog .bar{height:8px}
+.hk .dob{border:1px solid #3b1a14;background:#3b1a14;color:#fff;border-radius:10px;padding:6px 11px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s}
+.hk .dob:hover{background:#CC1C01;border-color:#CC1C01}
+@media(max-width:900px){
+ .hk .parts{flex-direction:column;gap:10px}
+ .hk .nbcard{width:auto}
+ .hk .pprog{margin-left:0;width:100%;min-width:0}
+}
+@media(max-width:760px){
+ .hk .parts{margin:0 0 10px;padding:0;overflow:visible}
+ .hk .seg{padding:4px}
+ .hk .seg{flex-direction:column}.hk .seg .sep{width:auto;height:1px;margin:4px 8px}.hk .pt{padding:7px 11px}.hk .pt b{font-size:13.5px}.hk .pt span{font-size:11px}
+ .hk .nbcard{padding:10px 12px}.hk .nbcard .ic{width:36px;height:36px;font-size:19px}
+ .hk .pfbar{gap:10px;padding:8px 10px;margin:0 0 12px;flex-wrap:wrap;overflow:visible}
+ .hk .hfg{width:100%;justify-content:space-between}
+ .hk .hseg{overflow-x:auto;scrollbar-width:none}.hk .hseg::-webkit-scrollbar{display:none}
+ .hk .hseg button{padding:5px 9px;font-size:12px}
+ .hk .l3t tr.row td.tdacts .acts .dob{order:-1}
+}
+.hk .hseg{width:auto;max-width:none;margin:0;touch-action:auto}
+.hk .l3t .acts{flex-wrap:nowrap;justify-content:flex-end}
+@media(max-width:760px){.hk .l3t .acts{flex-wrap:wrap;justify-content:flex-start}}
