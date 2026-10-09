@@ -356,3 +356,18 @@
 .hk .r2item.dragging{opacity:.35}
 .hk .r2fix{flex-basis:100%;margin-left:34px;font-size:12.5px;color:#14865A;font-weight:700}
 .r2ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;background:#fff;border:1px solid #3b1a14;border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 14px 30px -10px #0005;opacity:.95}
+/* ---- sổ key + lọc thuộc (v3) ---- */
+.hk .pfsep{width:1px;height:20px;background:#eadfd5;margin:0 4px}
+.hk .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hk .nbb{border:1px dashed #d9c4b4;background:#fff;border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;color:#7a5a4b;cursor:pointer;white-space:nowrap}
+.hk .nbb.on{border-style:solid;border-color:#3b1a14;background:#3b1a14;color:#fff}
+.hk .nbb.big{padding:6px 13px;font-size:12.5px}
+.hk .nbchip{border-style:dashed}.hk .nbchip.on{border-style:solid}
+.hk .nbsug,.hk .nbmain{padding:16px 18px;margin-bottom:14px}
+.hk .nbsug{border-color:#f1d9a8;background:#fffcf3}
+.hk .nbgrp{margin-top:10px}.hk .nbgrp .lbl{margin-bottom:4px}
+.hk .nbrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #f3ebe4}
+.hk .nbrow:last-child{border-bottom:0}
+.hk .nbt{flex:1;font-size:14px;font-weight:600}
+.hk .nbpart{font-size:11px;font-weight:800;color:#9a7b6b;background:#f6f1ec;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.hk .pfc:disabled{opacity:.4;cursor:not-allowed}
