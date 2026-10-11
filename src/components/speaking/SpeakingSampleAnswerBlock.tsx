@@ -6,6 +6,8 @@ interface Props {
   pair?: SampleAnswerPair | null;
   /** Optional heading suffix, e.g. "cho cả phần này". */
   note?: string;
+  /** Mở sẵn (dùng trong khung Bảng Kỳ Tích & bài mẫu). */
+  defaultOpen?: boolean;
 }
 
 /**
@@ -13,10 +15,10 @@ interface Props {
  * screens (never while the student is still speaking). Renders nothing when
  * the question has no sample answer in exam_questions.extra_data.
  */
-const SpeakingSampleAnswerBlock = ({ pair, note }: Props) => {
+const SpeakingSampleAnswerBlock = ({ pair, note, defaultOpen = false }: Props) => {
   const basic = (pair?.basic || "").trim();
   const advanced = (pair?.advanced || "").trim();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [level, setLevel] = useState<"basic" | "advanced">("basic");
 
   if (!basic && !advanced) return null;
