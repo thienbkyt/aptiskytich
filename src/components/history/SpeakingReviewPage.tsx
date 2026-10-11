@@ -23,6 +23,7 @@ import { toTimeSafe } from "@/lib/safeDate";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
 import GradingFailedRetryBox from "@/components/history/GradingFailedRetryBox";
+import ReviewKyTichPanel from "@/components/showcase/ReviewKyTichPanel";
 import SignedImage from "@/components/exam/SignedImage";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -429,6 +430,21 @@ const SpeakingReviewPage = ({
     : partType === "part3" ? part3Data?.sampleAnswers
     : part4Data?.sampleAnswers;
 
+  const kyTichQuestions: any[] = (partType === "part1" ? part1Data?.questions
+    : partType === "part2" ? (part2Data?.questions?.length ? part2Data.questions : [part2Data?.prompt])
+    : partType === "part3" ? (part3Data?.questions?.length ? part3Data.questions : [part3Data?.prompt])
+    : []) || [];
+  const kyTichPanel = (
+    <ReviewKyTichPanel
+      skill="speaking"
+      examSetId={examSetId}
+      partType={partType}
+      rawPart={null}
+      speakingSamples={partType === "part4" ? [] : kyTichQuestions.map((q, i) => ({ question: safeText(q), pair: samplesForPart?.[i] }))}
+      sharedSpeakingSample={partType === "part4" ? samplesForPart?.[0] : null}
+    />
+  );
+
   if (v2Part) {
     const partQuestions = partType === "part1" ? part1Data?.questions
       : partType === "part2" ? (part2Data?.questions?.length ? part2Data.questions : [part2Data?.prompt])
@@ -481,6 +497,7 @@ const SpeakingReviewPage = ({
             sampleAnswers={samplesForPart}
             sharedSample={partType === "part4"}
           />
+          {kyTichPanel}
         </div>
       </div>
     );
@@ -511,6 +528,7 @@ const SpeakingReviewPage = ({
           sampleAnswers={samplesForPart}
           onRegrade={handleRegrade}
         />
+        <div className="max-w-3xl mx-auto">{kyTichPanel}</div>
       </div>
     </div>
   );
