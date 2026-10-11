@@ -12,6 +12,7 @@ import WritingPart2Social from "@/components/writing/WritingPart2Social";
 import WritingPart3Questions from "@/components/writing/WritingPart3Questions";
 import WritingPart4TwoEmails from "@/components/writing/WritingPart4TwoEmails";
 import WritingResults from "@/components/writing/WritingResults";
+import ReviewKyTichPanel from "@/components/showcase/ReviewKyTichPanel";
 import WritingGradingReview from "@/components/writing/WritingGradingReview";
 import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -815,6 +816,25 @@ const WritingExamEngine = ({
           <div className="mt-4">
             <WritingGradingReview grading={effectiveGrading} answerText={getTextAndQuestions().text} />
           </div>
+        )}
+
+        {reviewMode && (
+          <ReviewKyTichPanel
+            skill="writing"
+            examSetId={examSetId}
+            partType={partType}
+            rawPart={(effectiveGrading as any)?.partScore ?? null}
+            writingSamples={
+              partType === "task1" && part1Data ? part1Data.questions.map((q) => ({ prompt: q.text, sample: q.sampleAnswer }))
+              : partType === "task2" && part2Data ? [{ prompt: `${part2Data.instruction}\n${part2Data.question || ""}`.trim(), sample: part2Data.sampleAnswer }]
+              : partType === "task3" && part3Data ? part3Data.questions.map((q) => ({ prompt: q.text, sample: q.sampleAnswer }))
+              : partType === "task4" && part4Data ? [
+                  { prompt: `Informal Email: ${part4Data.informalEmail.instruction}`, sample: part4Data.informalEmail.sampleAnswer },
+                  { prompt: `Formal Email: ${part4Data.formalEmail.instruction}`, sample: part4Data.formalEmail.sampleAnswer },
+                ]
+              : []
+            }
+          />
         )}
       </div>
     </div>
