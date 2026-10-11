@@ -391,7 +391,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       init.textAnswer = raw;
     }
     const props: any = {
-      partType: taskKey, testTitle, timeLimit: 3000,
+      partType: taskKey, testTitle, timeLimit: 3000, examSetId,
       onExit, reviewMode: true, initialAnswers: init,
       gradingResult: writingGrading ?? null,
     };
