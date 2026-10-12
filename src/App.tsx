@@ -1,4 +1,5 @@
 import { lazy, Suspense, ReactNode } from "react";
+import CreditsReturnWatcher from "@/components/pro/CreditsReturnWatcher";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useParams, useLocation } from "react-router-dom";
 import { FEATURES } from "@/config/features";
@@ -187,6 +188,7 @@ const App = () => (
               <MobileNoticeProvider>
               <LoginGateProvider>
                 <RouteProgressBar />
+                <CreditsReturnWatcher />
                 <MetaPixelRouteTracker />
                 <NoTranslateExamRoutes />
                 <Suspense fallback={<PageLoadingSkeleton />}>
