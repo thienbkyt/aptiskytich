@@ -1,4 +1,8 @@
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
+import FlashcardMode from "@/components/vocab/FlashcardMode";
+import QuizMode from "@/components/vocab/QuizMode";
+import MatchingMode from "@/components/vocab/MatchingMode";
+import { List as ListIcon, Layers as LayersIcon, Brain as BrainIcon, Shuffle as ShuffleIcon } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -81,6 +85,17 @@ interface VocabItem {
 const VocabListDetail = () => {
   const { listId } = useParams<{ listId: string }>();
   const navigate = useNavigate();
+  // Chế độ học cho danh sách tự tạo: giống bộ từ có sẵn (Flashcard / Quiz / Matching).
+  const [searchParams, setSearchParams] = useSearchParams();
+  type StudyMode = "list" | "flashcard" | "quiz" | "matching";
+  const rawMode = searchParams.get("mode");
+  const studyMode: StudyMode = rawMode === "flashcard" || rawMode === "quiz" || rawMode === "matching" ? rawMode : "list";
+  const setStudyMode = (m: StudyMode) => {
+    const next = new URLSearchParams(searchParams);
+    if (m === "list") next.delete("mode"); else next.set("mode", m);
+    setSearchParams(next, { replace: true });
+    window.scrollTo({ top: 0 });
+  };
   const { user } = useAuth();
   const [listName, setListName] = useState("");
   const [listDesc, setListDesc] = useState("");
@@ -836,7 +851,61 @@ const VocabListDetail = () => {
           </div>
         </div>
 
-        <div className="section-container py-8 max-w-3xl mx-auto">
+        {words.length > 0 && (
+          <div className="section-container pt-4 max-w-3xl mx-auto">
+            <div className="inline-flex flex-wrap items-center gap-1 p-1 rounded-lg bg-muted">
+              {([
+                ["list", "Danh sách", ListIcon],
+                ["flashcard", "Flashcard", LayersIcon],
+                ["quiz", "Quiz", BrainIcon],
+                ["matching", "Matching", ShuffleIcon],
+              ] as const).map(([m, label, Icon]) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setStudyMode(m)}
+                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    studyMode === m ? "bg-[hsl(0,98%,40%)] text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" /> {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {studyMode !== "list" && words.length > 0 && (
+          <div className="section-container py-8">
+            {studyMode === "flashcard" ? (
+              <FlashcardMode
+                key={`fc-${words.length}`}
+                words={words as any}
+                learnedWords={new Set(words.filter((w) => w.status === "learned").map((w) => w.word))}
+                onMarkLearned={async (word: string) => {
+                  const item = words.find((w) => w.word === word);
+                  if (!item || item.status === "learned") return;
+                  setWords((prev) => prev.map((w) => (w.id === item.id ? { ...w, status: "learned" } : w)));
+                  const { error } = await supabase.from("vocab_items").update({ status: "learned" }).eq("id", item.id);
+                  if (error) setWords((prev) => prev.map((w) => (w.id === item.id ? { ...w, status: item.status } : w)));
+                }}
+                onBackToList={() => setStudyMode("list")}
+              />
+            ) : studyMode === "quiz" ? (
+              words.length < 4 ? (
+                <p className="text-center text-muted-foreground py-12">Cần ít nhất 4 từ trong danh sách để làm Quiz. Thêm từ rồi quay lại nhé!</p>
+              ) : (
+                <QuizMode key={`qz-${words.length}`} words={words as any} onBackToList={() => setStudyMode("list")} />
+              )
+            ) : words.length < 2 ? (
+              <p className="text-center text-muted-foreground py-12">Cần ít nhất 2 từ trong danh sách để chơi Matching.</p>
+            ) : (
+              <MatchingMode key={`mt-${words.length}`} words={words as any} onBackToList={() => setStudyMode("list")} />
+            )}
+          </div>
+        )}
+
+        <div className={`section-container py-8 max-w-3xl mx-auto ${studyMode !== "list" && words.length > 0 ? "hidden" : ""}`}>
           {loading ? (
             <div className="grid grid-cols-1 gap-4">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -1003,7 +1072,7 @@ const VocabListDetail = () => {
       </main>
 
       {/* ═══ Sticky Audio Player ═══ */}
-      {words.length > 0 && (
+      {words.length > 0 && studyMode === "list" && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-popover/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_20px_-4px_hsl(0_0%_0%/0.15)]">
           <Progress value={progress} className="h-1 rounded-none" />
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
