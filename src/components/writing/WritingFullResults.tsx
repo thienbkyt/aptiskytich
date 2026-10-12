@@ -87,7 +87,11 @@ const WritingFullResults = ({
     // Parts graded live in this session already have a score in `results`.
     locallyGradedParts: results.filter((r) => typeof r.partScore === "number").map((r) => r.partType),
     enabled: Boolean(sessionId || (testResultIds || []).filter(Boolean).length > 0),
+    awaitAggregate: expected.length === 4 && !(score50 > 0),
   });
+  // Cả 4 part đã có điểm (chấm tại chỗ hoặc chấm lại ở hàng đợi nền).
+  const liveAllScored = expected.length === 4 && expected.every((pt) =>
+    typeof results.find((r) => r.partType === pt)?.partScore === "number" || typeof status.partScores[pt] === "number");
 
 
   const effScore50 = status.scale50 != null && status.scale50 > 0 ? status.scale50 : score50;
@@ -95,6 +99,8 @@ const WritingFullResults = ({
   const band = effCefr && effCefr.length > 0 ? effCefr : "—";
   const bandColor = getLevelColor(band);
   const stillGrading = status.isGrading;
+  // 4 part đã có điểm mà chưa có điểm tổng → không hiện "0/50".
+  const totalMissing = !stillGrading && liveAllScored && !(effScore50 > 0);
 
   useEffect(() => {
     if (view === "review") {
@@ -113,7 +119,7 @@ const WritingFullResults = ({
         </div>
         <h2 className="text-2xl font-heading font-bold text-foreground">Kết quả Writing</h2>
 
-        {!stillGrading && <BandCelebration cefr={effCefr} skillLabel="Writing" />}
+        {!stillGrading && !totalMissing && <BandCelebration cefr={effCefr} skillLabel="Writing" />}
 
         <WritingGradingStatusBanner
           pendingParts={status.pendingParts}
@@ -127,6 +133,17 @@ const WritingFullResults = ({
           {stillGrading ? (
             <div className="text-sm text-muted-foreground">
               Điểm tổng sẽ hiện ngay khi tất cả các phần được chấm xong.
+            </div>
+          ) : totalMissing ? (
+            <div className="text-sm text-muted-foreground space-y-2">
+              {status.awaitingTotal ? (
+                <p className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Đang tổng hợp điểm tổng…</p>
+              ) : (
+                <>
+                  <p>Điểm tổng đang được tổng hợp. Bạn xem lại trong <a href="/history" className="font-semibold text-primary underline">Lịch sử học tập</a> sau ít phút nhé.</p>
+                  <button type="button" onClick={status.refresh} className="text-xs font-semibold text-primary underline">Tải lại điểm</button>
+                </>
+              )}
             </div>
           ) : (
             <>
