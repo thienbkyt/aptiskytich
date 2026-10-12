@@ -23,6 +23,7 @@ const SpeakingResults = ({ isGrading, grading, onExit, quotaExceeded }: Speaking
       <div className="max-w-2xl mx-auto space-y-4">
         <UpgradeLock
           reason="quota"
+          aiCredits
           need={quotaExceeded.need ?? "pro"}
           featureLabel="Chấm AI Speaking"
           freeQuota={quotaExceeded.freeQuota}
