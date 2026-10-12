@@ -9,6 +9,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Bot } from "lucide-react";
+import { useIsPro } from "@/hooks/useIsPro";
+import { useAiWallet } from "@/hooks/useAiWallet";
+import BuyCreditsPanel from "./BuyCreditsPanel";
 
 export type UpgradeReason = "pro" | "premium" | "quota" | "quota_exceeded" | "disabled" | string;
 export type UpgradeRequiredTier = "pro" | "premium";
@@ -34,6 +38,8 @@ export interface UpgradeLockProps {
 
 
   asModal?: boolean;
+  /** Hết lượt chấm AI Writing/Speaking: tài khoản Pro được mời mua thêm lượt. */
+  aiCredits?: boolean;
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
   className?: string;
@@ -82,6 +88,33 @@ function getCopy(
 
 function LockBody(props: UpgradeLockProps) {
   const { reason, featureLabel, remaining, freeQuota, resetNote, used, title, description } = props;
+  const { isPro, isPremium } = useIsPro();
+  const isQuota = reason === "quota" || reason === "quota_exceeded";
+  const canBuyCredits = isQuota && (isPro || isPremium) && !!props.aiCredits;
+  const { wallet } = useAiWallet(canBuyCredits);
+
+  // Pro hết lượt chấm AI trong ngày → mời mua thêm lượt thay vì "Nâng cấp Pro".
+  if (canBuyCredits) {
+    const cap = typeof freeQuota === "number" ? freeQuota : null;
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-start gap-3 text-left">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700"><Bot className="h-6 w-6" /></span>
+          <div>
+            <h3 className="text-lg font-heading font-bold text-foreground">Bạn đã dùng hết lượt chấm AI hôm nay</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Bài làm của bạn đã được lưu. Mua thêm lượt để chấm ngay, hoặc quay lại sau 0h (lượt ngày tự làm mới).
+            </p>
+          </div>
+        </div>
+        <BuyCreditsPanel
+          usageText={typeof used === "number" ? `Hôm nay ${used}${cap !== null ? `/${cap}` : ""} lượt` : null}
+          walletBalance={wallet ? wallet.balance : null}
+          onCancel={props.onOpenChange ? () => props.onOpenChange!(false) : undefined}
+        />
+      </div>
+    );
+  }
 
   const base = getCopy(reason, "pro", featureLabel, remaining, freeQuota);
   const copy = { ...base, title: title ?? base.title, desc: description ?? base.desc };
