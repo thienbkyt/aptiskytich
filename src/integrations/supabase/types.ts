@@ -50,7 +50,10 @@ export type Database = {
           expires_at: string | null
           granted_at: string
           id: string
+          payment_id: string | null
+          source: string
           source_code_id: string | null
+          used: number
           user_id: string
         }
         Insert: {
@@ -58,7 +61,10 @@ export type Database = {
           expires_at?: string | null
           granted_at?: string
           id?: string
+          payment_id?: string | null
+          source?: string
           source_code_id?: string | null
+          used?: number
           user_id: string
         }
         Update: {
@@ -66,10 +72,20 @@ export type Database = {
           expires_at?: string | null
           granted_at?: string
           id?: string
+          payment_id?: string | null
+          source?: string
           source_code_id?: string | null
+          used?: number
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ai_credit_grants_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ai_credit_grants_source_code_id_fkey"
             columns: ["source_code_id"]
@@ -78,6 +94,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_credit_packs: {
+        Row: {
+          active: boolean
+          badge: string | null
+          credits: number
+          key: string
+          label: string
+          price_vnd: number
+          sort_order: number
+          updated_at: string
+          valid_days: number
+        }
+        Insert: {
+          active?: boolean
+          badge?: string | null
+          credits: number
+          key: string
+          label: string
+          price_vnd: number
+          sort_order?: number
+          updated_at?: string
+          valid_days?: number
+        }
+        Update: {
+          active?: boolean
+          badge?: string | null
+          credits?: number
+          key?: string
+          label?: string
+          price_vnd?: number
+          sort_order?: number
+          updated_at?: string
+          valid_days?: number
+        }
+        Relationships: []
       }
       ai_daily_quota: {
         Row: {
@@ -5508,6 +5560,63 @@ export type Database = {
         }
         Relationships: []
       }
+      bak_ai_credit_grants_20261012: {
+        Row: {
+          amount: number | null
+          expires_at: string | null
+          granted_at: string | null
+          id: string | null
+          source_code_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string | null
+          source_code_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string | null
+          source_code_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bak_feature_usage_credit_20261012: {
+        Row: {
+          feature_key: string | null
+          id: string | null
+          paid_by_credit: boolean | null
+          ref_id: string | null
+          scope: string | null
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          feature_key?: string | null
+          id?: string | null
+          paid_by_credit?: boolean | null
+          ref_id?: string | null
+          scope?: string | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          feature_key?: string | null
+          id?: string | null
+          paid_by_credit?: boolean | null
+          ref_id?: string | null
+          scope?: string | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -6388,6 +6497,7 @@ export type Database = {
       }
       feature_usage: {
         Row: {
+          credit_grant_id: string | null
           feature_key: string
           id: string
           paid_by_credit: boolean
@@ -6397,6 +6507,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          credit_grant_id?: string | null
           feature_key: string
           id?: string
           paid_by_credit?: boolean
@@ -6406,6 +6517,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          credit_grant_id?: string | null
           feature_key?: string
           id?: string
           paid_by_credit?: boolean
@@ -6414,13 +6526,52 @@ export type Database = {
           used_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "feature_usage_credit_grant_id_fkey"
+            columns: ["credit_grant_id"]
+            isOneToOne: false
+            referencedRelation: "ai_credit_grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_expense_log: {
+        Row: {
+          action: string
+          after: Json | null
+          at: string
+          before: Json | null
+          by_name: string | null
+          expense_id: string | null
+          id: number
+        }
+        Insert: {
+          action: string
+          after?: Json | null
+          at?: string
+          before?: Json | null
+          by_name?: string | null
+          expense_id?: string | null
+          id?: number
+        }
+        Update: {
+          action?: string
+          after?: Json | null
+          at?: string
+          before?: Json | null
+          by_name?: string | null
+          expense_id?: string | null
+          id?: number
+        }
         Relationships: []
       }
-      finance_expenses: {
+      finance_expenses_all: {
         Row: {
           amount_vnd: number
           category: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           expense_group: string
           id: string
@@ -6428,11 +6579,13 @@ export type Database = {
           note: string | null
           payer: string
           spent_on: string
+          updated_at: string | null
         }
         Insert: {
           amount_vnd: number
           category: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           expense_group: string
           id?: string
@@ -6440,11 +6593,13 @@ export type Database = {
           note?: string | null
           payer: string
           spent_on: string
+          updated_at?: string | null
         }
         Update: {
           amount_vnd?: number
           category?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           expense_group?: string
           id?: string
@@ -6452,6 +6607,7 @@ export type Database = {
           note?: string | null
           payer?: string
           spent_on?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -6475,6 +6631,7 @@ export type Database = {
       }
       finance_tokens: {
         Row: {
+          can_edit: boolean
           created_at: string
           expires_at: string | null
           is_active: boolean
@@ -6484,6 +6641,7 @@ export type Database = {
           viewer_name: string
         }
         Insert: {
+          can_edit?: boolean
           created_at?: string
           expires_at?: string | null
           is_active?: boolean
@@ -6493,6 +6651,7 @@ export type Database = {
           viewer_name: string
         }
         Update: {
+          can_edit?: boolean
           created_at?: string
           expires_at?: string | null
           is_active?: boolean
@@ -6795,6 +6954,78 @@ export type Database = {
         }
         Relationships: []
       }
+      key_learned: {
+        Row: {
+          exam_set_id: string
+          learned_at: string
+          part: string
+          user_id: string
+        }
+        Insert: {
+          exam_set_id: string
+          learned_at?: string
+          part: string
+          user_id: string
+        }
+        Update: {
+          exam_set_id?: string
+          learned_at?: string
+          part?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      key_notebook: {
+        Row: {
+          added_at: string
+          exam_set_id: string
+          part: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          exam_set_id: string
+          part: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          exam_set_id?: string
+          part?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      key_notes: {
+        Row: {
+          data: Json
+          id: string
+          kind: string
+          ref: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data?: Json
+          id?: string
+          kind: string
+          ref: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: string
+          kind?: string
+          ref?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       key_notify_log: {
         Row: {
           email_count: number
@@ -6810,6 +7041,30 @@ export type Database = {
           email_count?: number
           key_date?: string
           sent_at?: string
+        }
+        Relationships: []
+      }
+      key_user_notes: {
+        Row: {
+          data: Json
+          kind: string
+          ref: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          kind: string
+          ref: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          kind?: string
+          ref?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -8910,6 +9165,51 @@ export type Database = {
       }
     }
     Views: {
+      finance_expenses: {
+        Row: {
+          amount_vnd: number | null
+          category: string | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          expense_group: string | null
+          id: string | null
+          is_paid: boolean | null
+          note: string | null
+          payer: string | null
+          spent_on: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_vnd?: number | null
+          category?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          expense_group?: string | null
+          id?: string | null
+          is_paid?: boolean | null
+          note?: string | null
+          payer?: string | null
+          spent_on?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_vnd?: number | null
+          category?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          expense_group?: string | null
+          id?: string | null
+          is_paid?: boolean | null
+          note?: string | null
+          payer?: string | null
+          spent_on?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       site_stats_v: {
         Row: {
           attempt_count: number | null
@@ -9114,6 +9414,14 @@ export type Database = {
           window_size: number
         }[]
       }
+      fin_edit_check: { Args: { p_token: string }; Returns: string }
+      fin_exp_delete: { Args: { p_id: string; p_token: string }; Returns: Json }
+      fin_exp_list: { Args: { p_token: string }; Returns: Json }
+      fin_exp_restore: {
+        Args: { p_id: string; p_token: string }
+        Returns: Json
+      }
+      fin_exp_save: { Args: { p: Json; p_token: string }; Returns: Json }
       finalize_skill_test_result: {
         Args: {
           p_correct_answers?: number
@@ -9261,6 +9569,7 @@ export type Database = {
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_intro_video: { Args: never; Returns: Json }
+      get_my_ai_wallet: { Args: never; Returns: Json }
       get_my_error_trends: {
         Args: { p_n?: number; p_skill: string }
         Returns: Json
@@ -9357,6 +9666,10 @@ export type Database = {
       get_user_bootstrap: { Args: never; Returns: Json }
       get_wrong_questions: {
         Args: { p_part: string; p_skill: string }
+        Returns: Json
+      }
+      grant_credits_for_payment: {
+        Args: { p_payment_id: string }
         Returns: Json
       }
       has_review: {
