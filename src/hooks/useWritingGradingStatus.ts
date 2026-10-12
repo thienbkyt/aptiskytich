@@ -20,7 +20,8 @@ import { enqueueGradingFallback } from "@/lib/gradingQueue";
 export type WritingPartStatus = "graded" | "pending" | "failed" | "recoverable";
 
 const POLL_MS = 15_000;
-const MAX_POLLS = 20; // ~5 minutes
+const MAX_POLLS = 60; // ~15 minutes (hàng đợi chấm có lúc chậm 8–10 phút)
+const MAX_AGG_POLLS = 16; // ~2 phút chờ điểm tổng sau khi mọi part đã có điểm
 
 export interface WritingGradingStatusResult {
   loading: boolean;
@@ -37,6 +38,8 @@ export interface WritingGradingStatusResult {
   isPolling: boolean;
   /** True while at least one part is still being graded. */
   isGrading: boolean;
+  /** Mọi part đã có điểm nhưng điểm tổng (scale50) chưa được lưu — đang chờ tổng hợp. */
+  awaitingTotal: boolean;
   refresh: () => void;
   retryPart: (part: string) => Promise<boolean>;
   recoverPart: (part: string) => Promise<{ ok: boolean; upgrade?: boolean }>;
@@ -55,7 +58,8 @@ interface Options {
    */
   locallyGradedParts?: string[];
   enabled?: boolean;
-
+  /** Bài đủ 4 part nhưng chưa có điểm tổng → tiếp tục hỏi lại server. */
+  awaitAggregate?: boolean;
 }
 
 const normPart = (p: string | null | undefined): string => {
@@ -69,6 +73,7 @@ export function useWritingGradingStatus({
   expectedParts,
   locallyGradedParts,
   enabled = true,
+  awaitAggregate = false,
 }: Options): WritingGradingStatusResult {
 
   const [loading, setLoading] = useState(enabled);
@@ -82,6 +87,7 @@ export function useWritingGradingStatus({
   const failedJobsRef = useRef<Record<string, any>>({});
   const resultIdByPartRef = useRef<Record<string, string>>({});
   const pollCountRef = useRef(0);
+  const aggPollRef = useRef(0);
   const idsKey = (testResultIds || []).filter(Boolean).join(",");
   const partsKey = expectedParts.join(",");
   const localKey = (locallyGradedParts || []).join(",");
@@ -242,22 +248,30 @@ export function useWritingGradingStatus({
 
   // Poll only while something is genuinely still being graded, and never forever.
   const hasPending = pendingParts.length > 0;
+  // Điểm tổng do worker lưu ngay sau part cuối → có thể chậm vài giây so với điểm part.
+  const waitingAgg = awaitAggregate && !hasPending && !(typeof scale50 === "number" && scale50 > 0);
+  const aggPollsLeft = aggPollRef.current < MAX_AGG_POLLS;
   useEffect(() => {
-    if (!enabled || loading || !hasPending) {
+    if (!enabled || loading || (!hasPending && !waitingAgg)) {
       setIsPolling(false);
       return;
     }
-    if (pollCountRef.current >= MAX_POLLS) {
+    if (hasPending && pollCountRef.current >= MAX_POLLS) {
+      setIsPolling(false);
+      return;
+    }
+    if (!hasPending && !aggPollsLeft) {
       setIsPolling(false);
       return;
     }
     setIsPolling(true);
     const t = window.setTimeout(() => {
-      pollCountRef.current += 1;
+      if (hasPending) pollCountRef.current += 1;
+      else aggPollRef.current += 1;
       refresh();
-    }, POLL_MS);
+    }, hasPending ? POLL_MS : 8_000);
     return () => window.clearTimeout(t);
-  }, [enabled, loading, hasPending, tick, refresh]);
+  }, [enabled, loading, hasPending, waitingAgg, aggPollsLeft, tick, refresh]);
 
   const retryPart = useCallback(
     async (part: string): Promise<boolean> => {
@@ -308,6 +322,7 @@ export function useWritingGradingStatus({
     cefr,
     isPolling,
     isGrading: hasPending,
+    awaitingTotal: waitingAgg && aggPollsLeft,
     refresh,
     retryPart,
     recoverPart,
