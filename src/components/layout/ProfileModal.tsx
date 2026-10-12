@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AiWalletCard from "@/components/pro/AiWalletCard";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -325,6 +326,8 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
                   </Link>
                 </Button>
               </div>
+
+              {(isPro && !isPremium) && <AiWalletCard />}
 
               {aiQuota && (
                 aiQuota.remaining === null ? (
