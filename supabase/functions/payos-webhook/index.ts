@@ -24,6 +24,11 @@ function hmacHex(payload: string): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "GET") {
+    return new Response(JSON.stringify({ ok: true, v: "2026-10-12-credits" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const body = await req.json().catch(() => null);
@@ -113,6 +118,23 @@ Deno.serve(async (req) => {
       });
     }
 
+
+    // Gói lượt chấm AI: chỉ cộng lượt vào ví, KHÔNG đụng gói Pro.
+    if (String((payment as any).plan_key ?? "").startsWith("credits_")) {
+      const { data: g, error: gErr } = await admin.rpc("grant_credits_for_payment", {
+        p_payment_id: (payment as any).id,
+      });
+      if (gErr || !(g as any)?.ok) {
+        console.error("Credit grant failed", gErr, g);
+        await admin.from("payments").update({ status: "pending", paid_at: null }).eq("id", (payment as any).id);
+        return new Response(JSON.stringify({ error: "Internal error" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true, credits: (g as any)?.credits ?? null }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Load plan for duration
     const { data: plan } = await admin
