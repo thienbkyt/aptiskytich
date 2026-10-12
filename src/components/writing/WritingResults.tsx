@@ -40,6 +40,7 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
       <div className="max-w-2xl mx-auto space-y-4">
         <UpgradeLock
           reason="quota"
+          aiCredits
           need={quotaExceeded.need ?? "pro"}
           featureLabel="Chấm AI Writing"
           freeQuota={quotaExceeded.freeQuota}
