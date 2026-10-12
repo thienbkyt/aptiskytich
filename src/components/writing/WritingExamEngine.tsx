@@ -658,6 +658,7 @@ const WritingExamEngine = ({
           open
           onOpenChange={(v) => { if (!v) setQuotaModal(null); }}
           reason="quota_exceeded"
+                aiCredits
           need="pro"
           featureLabel="Chấm bài bằng AI"
           freeQuota={quotaModal.cap}
