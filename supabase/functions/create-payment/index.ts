@@ -15,6 +15,11 @@ function signPayload(obj: Record<string, string | number>): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "GET") {
+    return new Response(JSON.stringify({ ok: true, v: "2026-10-12-credits" }), {
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -52,13 +57,36 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Read plan server-side (don't trust client amount)
-    const { data: plan, error: planErr } = await admin
-      .from("pricing_plans")
-      .select("key,label,price_vnd,duration_days,tier,active")
-      .eq("key", planKey)
-      .eq("active", true)
-      .maybeSingle();
+    // Gói lượt chấm AI (credits_*): chỉ tài khoản Pro/Premium được mua, không áp mã giảm giá.
+    const isCreditPack = planKey.startsWith("credits_");
+    let plan: any = null;
+    let planErr: any = null;
+    if (isCreditPack) {
+      const { data: tierNow } = await admin.rpc("user_tier", { p_uid: userId });
+      if (tierNow !== "pro" && tierNow !== "premium") {
+        return new Response(JSON.stringify({ error: "pro_required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: pack, error: packErr } = await admin
+        .from("ai_credit_packs")
+        .select("key,label,credits,price_vnd,active")
+        .eq("key", planKey)
+        .eq("active", true)
+        .maybeSingle();
+      planErr = packErr;
+      plan = pack ? { key: pack.key, label: pack.label, price_vnd: pack.price_vnd, duration_days: 0, tier: "credits", credits: pack.credits } : null;
+    } else {
+      // Read plan server-side (don't trust client amount)
+      const res = await admin
+        .from("pricing_plans")
+        .select("key,label,price_vnd,duration_days,tier,active")
+        .eq("key", planKey)
+        .eq("active", true)
+        .maybeSingle();
+      plan = res.data;
+      planErr = res.error;
+    }
     if (planErr || !plan) {
       return new Response(JSON.stringify({ error: "Plan not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -77,15 +105,21 @@ Deno.serve(async (req) => {
     const orderCode = Number(`${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`);
 
     const appOrigin = Deno.env.get("APP_ORIGIN") || "https://aptiskytich.vn";
-    const returnUrl = `${appOrigin}/pricing?paid=1`;
-    const cancelUrl = `${appOrigin}/pricing?cancel=1`;
-    const description = `${tier === "premium" ? "Premium" : "Pro"} ${planKey}`.slice(0, 25);
+    // Gói lượt: quay về đúng trang đang làm bài (chỉ nhận đường dẫn nội bộ).
+    const rawReturn = String(body?.return_path ?? "");
+    const safeReturn = /^\/(?!\/)[^\s]*$/.test(rawReturn) ? rawReturn : "/pricing";
+    const sep = safeReturn.includes("?") ? "&" : "?";
+    const returnUrl = isCreditPack ? `${appOrigin}${safeReturn}${sep}credits_paid=1` : `${appOrigin}/pricing?paid=1`;
+    const cancelUrl = isCreditPack ? `${appOrigin}${safeReturn}${sep}credits_cancel=1` : `${appOrigin}/pricing?cancel=1`;
+    const description = isCreditPack
+      ? `AI ${(plan as any).credits} luot`.slice(0, 25)
+      : `${tier === "premium" ? "Premium" : "Pro"} ${planKey}`.slice(0, 25);
 
     // Validate promo code server-side (never trust client). Invalid code = order
     // still created, just without any gift/discount attached.
     let validVoucherCode: string | null = null;
     let finalAmount = amount;
-    if (promoCode) {
+    if (promoCode && !isCreditPack) {
       const { data: vc } = await admin
         .from("voucher_codes")
         .select("id,code_norm,kind,enabled,expires_at,applies_to_plans,discount_percent,discount_max_vnd,created_by")
