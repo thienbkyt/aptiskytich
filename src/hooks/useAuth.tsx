@@ -87,7 +87,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const k = safeSessionStorage.key(i) || "";
       if (k.startsWith("isAdmin:")) safeSessionStorage.removeItem(k);
     }
-    await supabase.auth.signOut();
+    // scope "local": chỉ đăng xuất trình duyệt này. Mặc định của Supabase là "global"
+    // (thu hồi phiên trên MỌI thiết bị) → thiết bị cũ bị đá ra lại kéo luôn thiết bị
+    // vừa đăng nhập ra theo, học viên đang làm bài bị bắt đăng nhập lại.
+    await supabase.auth.signOut({ scope: "local" });
   };
 
   return (
