@@ -35,6 +35,7 @@ import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
+import LoginToViewSets from "@/components/auth/LoginToViewSets";
 import { useMarathonServerSync } from "@/hooks/useMarathonServerSync";
 import { useExamDraftRecorder, loadExamDraft, clearExamDraft, type ExamDraft } from "@/lib/examDraft";
 import ExamDraftResumeDialog from "@/components/exam/ExamDraftResumeDialog";
@@ -953,10 +954,14 @@ const Listening = () => {
 
 
                   {filteredSets.length === 0 && (
+                    !authLoading && !authUser ? (
+                      <LoginToViewSets />
+                    ) : (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
                       <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
                       <p className="text-sm text-muted-foreground">Chưa có đề cho phần này</p>
                     </div>
+                    )
                   )}
                 </div>
               )}
