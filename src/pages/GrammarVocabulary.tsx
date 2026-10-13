@@ -18,6 +18,7 @@ import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
+import LoginToViewSets from "@/components/auth/LoginToViewSets";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useExamPriorityLabels, aggregatePriority } from "@/hooks/useExamPriorityLabels";
 import PriorityBadge from "@/components/practice/PriorityBadge";
@@ -198,6 +199,8 @@ const GrammarVocabulary = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
             </div>
+          ) : !authUser ? (
+            <LoginToViewSets />
           ) : filteredSets.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               Chưa có bộ đề nào. Vui lòng import đề từ trang Admin.
