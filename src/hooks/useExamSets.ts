@@ -111,15 +111,28 @@ export const fetchExamQuestions = async (
   opts?: { allowEmpty?: boolean },
 ): Promise<ExamQuestionRow[]> => {
   let data: any = null, error: any = null;
-  try {
-    const res = await withTimeout(
-      supabase.from("exam_questions").select("*").eq("exam_set_id", examSetId).order("order_index", { ascending: true }) as any
-    );
-    data = (res as any).data; error = (res as any).error;
-  } catch (e) { error = e; }
+  // Mạng chập chờn / token đang refresh → lần đầu có thể lỗi. Thử lại 1 lần
+  // trước khi báo lỗi để học viên không bị kẹt ở màn hình trắng.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    data = null; error = null;
+    try {
+      const res = await withTimeout(
+        supabase.from("exam_questions").select("*").eq("exam_set_id", examSetId).order("order_index", { ascending: true }) as any
+      );
+      data = (res as any).data; error = (res as any).error;
+    } catch (e) { error = e; }
+    if (!error && data) break;
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
+  }
   if (error || !data) {
     console.error("[fetchExamQuestions] failed", { examSetId, error });
-    logClientError("exam_questions_empty", new Error("fetch_failed"), { examSetId, reason: "fetch_failed", online: navigator?.onLine ?? null });
+    logClientError("exam_questions_empty", new Error("fetch_failed"), {
+      examSetId,
+      reason: "fetch_failed",
+      online: navigator?.onLine ?? null,
+      detail: String((error as any)?.message ?? error ?? "").slice(0, 200),
+      retried: true,
+    });
     if (!opts?.allowEmpty) {
       throw Object.assign(new Error("exam_fetch_failed"), { code: "EXAM_FETCH_FAILED", examSetId });
     }
