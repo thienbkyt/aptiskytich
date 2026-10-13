@@ -16,6 +16,7 @@ import { useFullTests, type FullTestItem } from "@/hooks/useFullTests";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
+import LoginToViewSets from "@/components/auth/LoginToViewSets";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
@@ -285,6 +286,8 @@ const FullTest = () => {
                 <TechSkeleton key={i} variant="card" className="h-52" />
               ))}
             </div>
+          ) : !authUser ? (
+            <LoginToViewSets />
           ) : error ? (
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
