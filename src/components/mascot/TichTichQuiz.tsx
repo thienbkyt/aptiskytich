@@ -2,7 +2,8 @@
  * Tích Tích đố từ vựng — thỉnh thoảng tự bật một câu đố nhỏ bên cạnh Tích Tích.
  * - Từ lấy từ phần Vocabulary trong các đề G&V thật (xem tichtichQuizBank.ts).
  * - 4 dạng: chọn nghĩa tiếng Việt, từ đồng nghĩa, từ đúng nghĩa (định nghĩa), điền từ vào câu.
- * - Trả lời xong → báo đúng/sai rồi tự sang câu tiếp. Không bấm thì sau 30s tự ẩn,
+ * - Trả lời xong → hiện nghĩa tiếng Việt (từ đúng + từ đã chọn; dạng điền từ có thêm nghĩa cả câu).
+ *   Đúng → tự sang câu tiếp; sai → dừng lại cho đọc, bấm "Câu tiếp →". Không bấm thì sau 30s tự ẩn,
  *   vài phút sau mới đố lại. Chỉ đố vui, không lưu điểm.
  * - Chỉ chạy khi Tích Tích góc màn hình đang hiện (đã tự ẩn trong màn thi / mobile).
  */
@@ -24,7 +25,8 @@ interface Question {
 const FIRST_DELAY_MS = 30_000;      // lần đầu: sau 30 giây ở trang
 const NEXT_DELAY_MS = 4 * 60_000;   // sau khi ẩn: 4 phút đố lại
 const IDLE_HIDE_MS = 30_000;        // không bấm 30s thì tự ẩn
-const NEXT_QUESTION_MS = 2200;      // trả lời xong → câu tiếp
+const NEXT_QUESTION_MS = 3500;      // trả lời đúng → câu tiếp (đủ thời gian đọc nghĩa)
+const WRONG_IDLE_HIDE_MS = 60_000;  // trả lời sai mà không bấm "Câu tiếp" → 60s tự ẩn
 const OFF_KEY = "tt-quiz-off-date";
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -191,8 +193,25 @@ export default function TichTichQuiz({ onMood, name = "Tích Tích" }: { onMood?
     if (ok) setPraise(pickOne(PRAISE));
     onMood?.(ok ? "happy" : "worry");
     const prev = q.prompt;
-    nextTimer.current = window.setTimeout(() => void open(prev), NEXT_QUESTION_MS + (ok ? 0 : 1500));
+    if (ok) {
+      nextTimer.current = window.setTimeout(() => void open(prev), NEXT_QUESTION_MS);
+    } else {
+      // Sai → đứng yên cho học viên đọc nghĩa, bấm "Câu tiếp →" mới đổi câu.
+      idleTimer.current = window.setTimeout(() => hide(true), WRONG_IDLE_HIDE_MS);
+    }
   };
+
+  const goNext = () => {
+    if (!q) return;
+    clearTimeout(idleTimer.current);
+    clearTimeout(nextTimer.current);
+    void open(q.prompt);
+  };
+
+  /** Nghĩa tiếng Việt của 1 từ trong câu đố (nếu có). */
+  const meanOf = (w: string): string | undefined => bank?.mean?.[w.toLowerCase().trim()];
+  /** Dạng "chọn nghĩa": tìm từ tiếng Anh ứng với nghĩa tiếng Việt đã chọn. */
+  const wordOfVi = (vi: string): string | undefined => bank?.vi.find((x) => x[1] === vi)?.[0];
 
   const turnOffToday = () => {
     try { localStorage.setItem(OFF_KEY, todayKey()); } catch { /* ignore */ }
@@ -282,6 +301,36 @@ export default function TichTichQuiz({ onMood, name = "Tích Tích" }: { onMood?
         })}
       </div>
 
+      {picked && (() => {
+        const ok = picked === q.answer;
+        const rows: { w: string; m?: string; bad?: boolean }[] = [];
+        if (q.kind === "vi") {
+          rows.push({ w: q.prompt, m: q.answer });
+          if (!ok) rows.push({ w: wordOfVi(picked) ?? "", m: picked, bad: true });
+        } else {
+          if (q.kind === "syn") rows.push({ w: q.prompt, m: meanOf(q.prompt) });
+          rows.push({ w: q.answer, m: meanOf(q.answer) });
+          if (!ok) rows.push({ w: picked, m: meanOf(picked), bad: true });
+        }
+        const shown = rows.filter((r) => r.w && r.m);
+        const sentenceVi = q.kind === "gap" ? bank?.gapVi?.[q.prompt] : undefined;
+        if (!shown.length && !sentenceVi) return null;
+        return (
+          <div className="mt-2.5 rounded-lg bg-muted/60 px-2.5 py-2 space-y-0.5 text-[12.5px] leading-snug">
+            {shown.map((r, i) => (
+              <p key={i} className={r.bad ? "text-red-600 dark:text-red-400" : "text-foreground"}>
+                <span className="font-bold">{r.w}</span>
+                <span className="text-muted-foreground"> = </span>
+                {r.m}
+              </p>
+            ))}
+            {sentenceVi && (
+              <p className="pt-0.5 text-muted-foreground italic">→ {sentenceVi}</p>
+            )}
+          </div>
+        );
+      })()}
+
       <div className="mt-2.5 flex items-center justify-between min-h-[18px]">
         <span className="text-[12px] font-semibold">
           {picked
@@ -290,9 +339,19 @@ export default function TichTichQuiz({ onMood, name = "Tích Tích" }: { onMood?
               : <span className="text-red-600 dark:text-red-400">Đáp án: {q.answer}</span>
             : <span className="text-muted-foreground font-normal">Từ trong đề thật</span>}
         </span>
-        <button type="button" onClick={turnOffToday} className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline">
-          Tạm tắt hôm nay
-        </button>
+        {picked && picked !== q.answer ? (
+          <button
+            type="button"
+            onClick={goNext}
+            className="shrink-0 rounded-full bg-primary px-3 py-1 text-[12px] font-bold text-primary-foreground hover:opacity-90"
+          >
+            Câu tiếp →
+          </button>
+        ) : (
+          <button type="button" onClick={turnOffToday} className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline">
+            Tạm tắt hôm nay
+          </button>
+        )}
       </div>
     </div>
   );
