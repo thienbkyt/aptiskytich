@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsPro } from "@/hooks/useIsPro";
 import { useAuth } from "@/hooks/useAuth";
+import LoginToViewSets from "@/components/auth/LoginToViewSets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Layers, CheckCircle2, Lock, Plus, Pencil } from "lucide-react";
@@ -65,7 +66,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
     aggregateGroupPriority(s.examSetIds, priorityLabels);
 
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { sets: allCustomSets, invalidate } = useCustomSets();
   const { playedIds } = useCustomSetPlays();
 
@@ -230,7 +231,9 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
       </div>
 
 
-      {loading ? (
+      {!authLoading && !user ? (
+        <LoginToViewSets className="mb-8" />
+      ) : loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
         </div>
