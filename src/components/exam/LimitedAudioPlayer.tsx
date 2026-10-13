@@ -949,24 +949,11 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         void prewarmActiveSource(audio, isFirstPlay);
         let timedOut = false;
         try {
-          // Câu hỏi đọc bằng TTS. Nếu sau 4s giọng đọc vẫn chưa phát (mạng chậm /
-          // máy không có giọng đọc) thì BỎ QUA phần đọc và phát luôn audio đề —
-          // trước đây học viên ngồi im tới 20s, tưởng audio hỏng.
-          let introStarted = false;
-          let startGuard: ReturnType<typeof setTimeout> | null = null;
+          // Safety net only: guards against speechSynthesis never firing onend.
           await Promise.race([
-            speakAsync(introText!.trim(), "en", {
-              surface: "exam",
-              onStage: (st) => { if (st === "play" || st === "fallback" || st === "ended") introStarted = true; },
-            }),
+            speakAsync(introText!.trim(), "en", { surface: "exam" }),
             new Promise<void>((r) => setTimeout(() => { timedOut = true; r(); }, 20000)),
-            new Promise<void>((r) => {
-              startGuard = setTimeout(() => {
-                if (!introStarted) { timedOut = true; r(); }
-              }, 4000);
-            }),
           ]);
-          if (startGuard) clearTimeout(startGuard);
         } catch (e) {
           console.error("[LimitedAudioPlayer] intro TTS failed:", e);
         }
