@@ -1,5 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import WomenDayPromoBanner from "@/components/promo/WomenDayPromoBanner";
+import WomenDayHero from "@/components/womenday/WomenDayHero";
+import { isWomenDaySeason, isWomenDayThemeSeason } from "@/lib/halloween";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import VoucherInput from "@/components/voucher/VoucherInput";
@@ -510,6 +512,33 @@ const Dashboard = () => {
     ? doneSkills.reduce((min, s) => (s.pct < min.pct ? s : min), doneSkills[0])
     : null;
 
+  const womenHero = isWomenDayThemeSeason();
+  const heroSub = (
+    <>
+      {d.skillsCovered === 4 ? (
+        <>Bạn đang ở band <strong className="text-foreground">{d.currentLevel}</strong></>
+      ) : (
+        <>Đã có dữ liệu <strong className="text-foreground">{d.skillsCovered}/4 kỹ năng</strong> — làm thêm để biết band tổng</>
+      )}
+      {d.streak > 0 && <> · Streak <strong className="text-primary">{d.streak} ngày</strong> 🔥</>}
+      {" - "}hôm nay luyện tiếp nhé!
+    </>
+  );
+  const heroStats = (
+    <>
+      <StatPill icon={Flame} label="Chuỗi ngày" value={`${d.streak} ngày`} accent="red" />
+      <StatPill icon={CheckCircle2} label="Câu đã làm" value={d.totalQuestions} accent="orange" />
+      <StatPill icon={Target} label="Chính xác" value={`${d.accuracy}%`} accent="success" />
+      <StatPill icon={TrendingUp} label="Trình độ" value={d.currentLevel} accent="violet" />
+      <AiQuotaPill />
+      {tierLoading ? (
+        <div className="h-[92px] rounded-2xl border border-border bg-muted/30 animate-pulse" />
+      ) : (
+        <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
+      )}
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -520,6 +549,19 @@ const Dashboard = () => {
           <WomenDayPromoBanner />
 
           {/* HERO */}
+          {womenHero ? (
+            <WomenDayHero
+              name={d.displayName}
+              sub={heroSub}
+              actions={
+                <>
+                  <Link to="/thi-thu" className="wdh-btn"><Zap className="w-4 h-4" /> Thi thử ngay</Link>
+                  {isWomenDaySeason() && <Link to="/pricing" className="wdh-ghost">🎁 Quà 20/10</Link>}
+                </>
+              }
+              stats={<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">{heroStats}</div>}
+            />
+          ) : (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -540,13 +582,7 @@ const Dashboard = () => {
                     <GradientText>{d.displayName}</GradientText> 👋
                   </h1>
                   <p className="text-muted-foreground mt-2 text-sm md:text-base">
-                    {d.skillsCovered === 4 ? (
-                      <>Bạn đang ở band <strong className="text-foreground">{d.currentLevel}</strong></>
-                    ) : (
-                      <>Đã có dữ liệu <strong className="text-foreground">{d.skillsCovered}/4 kỹ năng</strong> — làm thêm để biết band tổng</>
-                    )}
-                    {d.streak > 0 && <> · Streak <strong className="text-primary">{d.streak} ngày</strong> 🔥</>}
-                    {" - "}hôm nay luyện tiếp nhé!
+                    {heroSub}
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-1 shrink-0">
@@ -560,20 +596,12 @@ const Dashboard = () => {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <StatPill icon={Flame} label="Chuỗi ngày" value={`${d.streak} ngày`} accent="red" />
-                <StatPill icon={CheckCircle2} label="Câu đã làm" value={d.totalQuestions} accent="orange" />
-                <StatPill icon={Target} label="Chính xác" value={`${d.accuracy}%`} accent="success" />
-                <StatPill icon={TrendingUp} label="Trình độ" value={d.currentLevel} accent="violet" />
-                <AiQuotaPill />
-                {tierLoading ? (
-                  <div className="h-[92px] rounded-2xl border border-border bg-muted/30 animate-pulse" />
-                ) : (
-                  <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
-                )}
+                {heroStats}
               </div>
 
             </div>
           </motion.div>
+          )}
 
           {/* NEWCOMER GUIDE */}
           <motion.div
