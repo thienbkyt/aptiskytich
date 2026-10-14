@@ -11,6 +11,9 @@ import { useWomenDayPromo } from "@/components/promo/WomenDayPromoBanner";
 import ProfileModal from "@/components/layout/ProfileModal";
 import TichTich from "@/components/mascot/TichTich";
 import KyKy from "@/components/mascot/KyKy";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import "./womenday.css";
 
 const EXAM_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
@@ -24,6 +27,25 @@ export default function WomenDayPopup() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const qc = useQueryClient();
+
+  // Quà +3 ngày Pro: tài khoản đã có Pro (tuần+) trước 15/10, đủ Nữ + SĐT → tự cộng (1 lần).
+  // Server cũng tự cộng ngay khi lưu giới tính/SĐT; ở đây chỉ nhận + báo cho học viên.
+  useEffect(() => {
+    if (!user || !promo?.active || !promo.bonus_in_group || promo.bonus_granted) return;
+    if (promo.reason !== null && promo.reason !== "used") return; // chưa đủ Nữ + SĐT
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any).rpc("claim_women_day_bonus");
+      if (cancelled) return;
+      if (data?.granted || data?.already) {
+        if (data?.granted) toast.success(`🎁 Kỳ Tích tặng bạn thêm ${promo.bonus_days ?? 3} ngày Pro!`, { description: "Món quà 20/10 cho các bông hoa ham học 🌸" });
+        void qc.invalidateQueries({ queryKey: ["women-day-promo"] });
+        void qc.invalidateQueries();
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, promo?.active, promo?.bonus_in_group, promo?.bonus_granted, promo?.reason, promo?.bonus_days, qc]);
 
   useEffect(() => {
     if (!isWomenDaySeason() || authLoading) return;
@@ -114,6 +136,16 @@ export default function WomenDayPopup() {
                   <>Cập nhật thông tin tài khoản (<b className="text-[#CC1C01]">giới tính/SĐT</b>) để nhận ưu đãi — giá tự giảm khi thanh toán, không cần nhập mã.</>
                 )}
               </p>
+              {user && promo?.bonus_in_group && (
+                <p className="mt-2 rounded-lg bg-white/80 px-2.5 py-1.5 text-[13px] font-bold text-[#8A1C08]">
+                  {promo.bonus_granted
+                    ? `🎁 Đã cộng thêm ${promo.bonus_days ?? 3} ngày Pro vào tài khoản của bạn`
+                    : `🎁 Bạn đã có Pro từ trước 15/10 → cập nhật để được tặng thêm ${promo.bonus_days ?? 3} ngày Pro`}
+                </p>
+              )}
+              {!user && (
+                <p className="mt-2 text-[12.5px] text-[#6E2A16]">🎁 Đã có Pro từ trước 15/10? Đăng nhập & cập nhật để được tặng thêm 3 ngày Pro.</p>
+              )}
               <p className="mt-2.5 text-[12.5px] font-bold text-[#8A1C08]">⏰ {countdown}</p>
 
               <div className="mt-4 flex flex-col gap-2">
