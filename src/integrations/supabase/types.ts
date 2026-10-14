@@ -472,6 +472,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_de_thi_1210_q: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_de_thi_2809_q: {
         Row: {
           audio_url: string | null
@@ -2249,6 +2300,60 @@ export type Database = {
         Relationships: []
       }
       backup_key0810_keo_club_20261007: {
+        Row: {
+          created_at: string | null
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          priority: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      backup_key1310_truoc_co_20261012: {
+        Row: {
+          created_at: string | null
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          priority: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      backup_key1410_truoc_fix_so_nho: {
         Row: {
           created_at: string | null
           exam_set_id: string | null
@@ -5617,6 +5722,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bak_user_subscriptions_manual: {
+        Row: {
+          ai_daily_cap: number | null
+          backed_up_at: string | null
+          note: string | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          backed_up_at?: string | null
+          note?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          backed_up_at?: string | null
+          note?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bak_writing_p1_samples_20261013: {
+        Row: {
+          backed_at: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -7461,9 +7620,11 @@ export type Database = {
           bank_name: string | null
           created_at: string
           display_name: string | null
+          gender: string | null
           id: string
           intro_video_seen_at: string | null
           last_active_at: string | null
+          phone: string | null
           updated_at: string
           user_id: string
         }
@@ -7474,9 +7635,11 @@ export type Database = {
           bank_name?: string | null
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           id?: string
           intro_video_seen_at?: string | null
           last_active_at?: string | null
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -7487,9 +7650,11 @@ export type Database = {
           bank_name?: string | null
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           id?: string
           intro_video_seen_at?: string | null
           last_active_at?: string | null
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -8408,6 +8573,21 @@ export type Database = {
         Update: {
           i?: number | null
           ten?: string | null
+        }
+        Relationships: []
+      }
+      tmp_code_transfer: {
+        Row: {
+          body: string | null
+          name: string
+        }
+        Insert: {
+          body?: string | null
+          name: string
+        }
+        Update: {
+          body?: string | null
+          name?: string
         }
         Relationships: []
       }
