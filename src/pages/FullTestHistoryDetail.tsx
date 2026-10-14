@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { dedupeLatestPerSessionSet } from "@/lib/fullTestDedupe";
 import { Link, Navigate, useParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -97,7 +98,8 @@ const FullTestHistoryDetail = () => {
             setTitle: s?.title, setSkill: s?.skill, setPart: s?.part, skill,
           } as SessionRow;
         });
-        if (!cancelled) setRows(mapped);
+        // Làm lại part trong cùng phiên → chỉ giữ lần làm mới nhất của mỗi đề.
+        if (!cancelled) setRows(dedupeLatestPerSessionSet(mapped.map((m) => ({ ...m, full_test_session_id: sessionId })) as any));
       } finally {
         if (!cancelled) setLoading(false);
       }
