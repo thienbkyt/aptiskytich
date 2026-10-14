@@ -117,6 +117,9 @@ const CSS = `
 .tt-robot .tt-hw{display:none}
 html.halloween .tt-robot .tt-hw{display:inline}
 html.halloween .tt-robot .tt-bow,html.halloween .tt-robot .tt-antenna{display:none}
+/* 20/10: ôm bó hoa (html.women2010 do useTheme gắn) */
+.tt-robot .tt-wd{display:none}
+html.women2010 .tt-robot .tt-wd{display:inline}
 @media (hover:none),(pointer:coarse){.tt-robot{display:none!important}}
 `;
 
@@ -481,7 +484,7 @@ export default function TichTich({
         </g>
         {/* tay */}
         <g className="tt-hand tt-hand-l"><rect x="22" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/></g>
-        <g className="tt-hand tt-hand-r"><rect x="84" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/><g className="tt-hw" transform="translate(100 118)"><path d="M-11 -4 Q0 -19 11 -4" stroke="#3a1300" strokeWidth="2" fill="none"/><ellipse cx="0" cy="5" rx="12" ry="10" fill="#FF8A2A"/><path d="M-6 1 l3 3 h-6z M6 1 l3 3 h-6z" fill="#3a1300"/><path d="M-5 9 q5 3.5 10 0" stroke="#3a1300" strokeWidth="2" fill="none"/></g></g>
+        <g className="tt-hand tt-hand-r"><rect x="84" y="98" width="14" height="22" rx="7" fill={`url(#${uid}-body)`}/><g className="tt-wd" transform="translate(97 104) rotate(14)"><ellipse cx="-8" cy="-9" rx="4.5" ry="2" fill="#4FA85A" transform="rotate(-35 -8 -9)"/><ellipse cx="8" cy="-10" rx="4.5" ry="2" fill="#4FA85A" transform="rotate(35 8 -10)"/><circle cx="-4.6" cy="-7.5" r="4.4" fill="#E8344A"/><circle cx="4.6" cy="-8" r="4.4" fill="#FF8A3D"/><circle cx="0" cy="-12.5" r="4.6" fill="#FF6F9A"/><circle cx="0" cy="-5" r="3.8" fill="#D81E2C"/><circle cx="-1.2" cy="-13.6" r="1.4" fill="#fff" opacity=".55"/><path d="M-9.5 -4 L0 16 L9.5 -4 Q0 0 -9.5 -4Z" fill="#FFF1E4" stroke="#F2B48C" strokeWidth="1"/><path d="M-3.5 5 q3.5 2.4 7 0" stroke="#CC1C01" strokeWidth="1.8" fill="none" strokeLinecap="round"/></g><g className="tt-hw" transform="translate(100 118)"><path d="M-11 -4 Q0 -19 11 -4" stroke="#3a1300" strokeWidth="2" fill="none"/><ellipse cx="0" cy="5" rx="12" ry="10" fill="#FF8A2A"/><path d="M-6 1 l3 3 h-6z M6 1 l3 3 h-6z" fill="#3a1300"/><path d="M-5 9 q5 3.5 10 0" stroke="#3a1300" strokeWidth="2" fill="none"/></g></g>
         </g>
         </svg>
       <div className={`tt-bubble ${bubbleSide === "left" ? "tt-left" : ""} ${bubble.show ? "tt-show" : ""}`}>{bubble.text}</div>
