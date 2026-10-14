@@ -169,6 +169,28 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Ưu đãi 20/10: tài khoản Nữ + có SĐT → giảm 20% gói từ 1 tuần trở lên, 1 lần / tài khoản,
+    // đến hết 20/10/2026. Không cộng dồn với mã khác — lấy mức giảm nhiều hơn.
+    let promoKey: string | null = null;
+    const WOMEN_DAY_PLANS = ["week", "month", "quarter", "half_year"];
+    if (!isCreditPack && WOMEN_DAY_PLANS.includes(planKey)) {
+      try {
+        const { data: st, error: stErr } = await admin.rpc("women_day_promo_status", { p_user: userId });
+        if (stErr) console.log("create-payment: women_day_promo_status error", stErr.message);
+        if ((st as any)?.eligible === true) {
+          const pct = Number((st as any)?.percent ?? 20);
+          const womenAmount = Math.max(1000, amount - Math.floor((amount * pct) / 100));
+          if (womenAmount < finalAmount) {
+            finalAmount = womenAmount;
+            validVoucherCode = null;
+            promoKey = "women_2010";
+          }
+        }
+      } catch (e) {
+        console.log("create-payment: women_day promo check failed", (e as Error)?.message);
+      }
+    }
+
     // Insert pending payment first
     const { error: insertErr } = await admin.from("payments").insert({
       user_id: userId,
@@ -178,6 +200,7 @@ Deno.serve(async (req) => {
       order_code: orderCode,
       status: "pending",
       voucher_code: validVoucherCode,
+      promo_key: promoKey,
     });
     if (insertErr) {
       return new Response(JSON.stringify({ error: "Cannot create order" }), {
@@ -240,6 +263,7 @@ Deno.serve(async (req) => {
       accountName: payosJson.data.accountName ?? null,
       bin: payosJson.data.bin ?? null,
       amount: finalAmount,
+      promo_key: promoKey,
       description,
     }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
