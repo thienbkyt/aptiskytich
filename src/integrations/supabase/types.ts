@@ -7381,6 +7381,7 @@ export type Database = {
           paid_at: string | null
           payos_link_id: string | null
           plan_key: string | null
+          promo_key: string | null
           raw_response: Json | null
           status: string
           tier: string | null
@@ -7397,6 +7398,7 @@ export type Database = {
           paid_at?: string | null
           payos_link_id?: string | null
           plan_key?: string | null
+          promo_key?: string | null
           raw_response?: Json | null
           status?: string
           tier?: string | null
@@ -7413,6 +7415,7 @@ export type Database = {
           paid_at?: string | null
           payos_link_id?: string | null
           plan_key?: string | null
+          promo_key?: string | null
           raw_response?: Json | null
           status?: string
           tier?: string | null
@@ -9768,6 +9771,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_women_day_promo: { Args: never; Returns: Json }
       get_showcase_band_counts: {
         Args: { p_exam_set_id: string; p_part_type: string; p_skill: string }
         Returns: {
@@ -10044,6 +10048,7 @@ export type Database = {
       user_can_access_set: { Args: { p_set: string }; Returns: boolean }
       user_tier: { Args: { p_uid: string }; Returns: string }
       voucher_campaign_status: { Args: never; Returns: Json }
+      women_day_promo_status: { Args: { p_user: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
