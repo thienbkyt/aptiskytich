@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { safeLocalStorage } from "@/lib/safeStorage";
-import { HALLOWEEN_END, isHalloweenSeason } from "@/lib/halloween";
+import { HALLOWEEN_END, isHalloweenSeason, isWomenDaySeason, WOMEN_DAY_START, WOMEN_DAY_END } from "@/lib/halloween";
 
 export type Theme = "light" | "dark" | "halloween";
 
@@ -43,12 +43,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (t !== "halloween") safeLocalStorage.setItem("theme", t);
   };
 
+  // 15–20/10: theme hoa 20/10 thay cho Halloween (đổi đúng mốc giờ kể cả khi tab đang mở).
+  const [womenDay, setWomenDay] = useState(isWomenDaySeason);
+  useEffect(() => {
+    const now = Date.now();
+    const next = [WOMEN_DAY_START, WOMEN_DAY_END].find((t) => t > now);
+    if (!next || next - now > 2_000_000_000) return;
+    const t = window.setTimeout(() => setWomenDay(isWomenDaySeason()), next - now + 500);
+    return () => clearTimeout(t);
+  }, [womenDay]);
+
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("light", "dark", "halloween");
-    if (theme === "halloween") root.classList.add("light", "halloween");
+    root.classList.remove("light", "dark", "halloween", "women2010");
+    if (theme === "halloween") root.classList.add("light", womenDay ? "women2010" : "halloween");
     else root.classList.add(theme);
-  }, [theme]);
+    if (womenDay) root.classList.add("women2010");
+  }, [theme, womenDay]);
 
   // Hết mùa khi tab vẫn đang mở → tự về giao diện thường.
   useEffect(() => {
