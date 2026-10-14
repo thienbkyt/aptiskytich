@@ -21,6 +21,10 @@ type PromoStatus = {
   percent: number;
   plans: string[];
   ends_at: string;
+  /** Quà +3 ngày Pro cho tài khoản đã có Pro (tuần+) trước 15/10 */
+  bonus_in_group?: boolean;
+  bonus_granted?: boolean;
+  bonus_days?: number;
 };
 
 const HIDE_KEY = "women2010_banner_hidden";
@@ -190,6 +194,13 @@ export default function WomenDayPromoBanner({ variant = "full", className }: { v
                   Cập nhật thông tin tài khoản (<b className="text-[#CC1C01]">giới tính/SĐT</b>) ngay để nhận ưu đãi — giá tự giảm khi thanh toán, không cần nhập mã.
                 </p>
               </>
+            )}
+            {promo.bonus_in_group && (
+              <p className="mt-2 inline-flex rounded-lg bg-white/70 px-2.5 py-1 text-[13px] font-bold text-[#8A1C08]">
+                {promo.bonus_granted
+                  ? `🎁 Đã cộng thêm ${promo.bonus_days ?? 3} ngày Pro vào tài khoản của bạn`
+                  : `🎁 Bạn đã có Pro từ trước 15/10 → cập nhật để được tặng thêm ${promo.bonus_days ?? 3} ngày Pro`}
+              </p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
               <Step ok={genderOk} n={1} label="Chọn giới tính Nữ" />
