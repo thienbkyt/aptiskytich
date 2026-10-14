@@ -89,7 +89,7 @@ serve(async (req) => {
 
     const profilesRes = await admin
       .from("profiles")
-      .select("user_id,display_name,avatar_url")
+      .select("user_id,display_name,avatar_url,phone,gender")
       .in("user_id", userIds);
 
     const profilesMap = new Map<string, any>();
@@ -100,6 +100,7 @@ serve(async (req) => {
         user_id: u.id,
         email: u.email ?? "",
         display_name: profilesMap.get(u.id)?.display_name ?? null,
+        phone: profilesMap.get(u.id)?.phone ?? null,
       }));
       return new Response(JSON.stringify({ students }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -143,6 +144,8 @@ serve(async (req) => {
         user_id: u.id,
         email: u.email ?? "",
         display_name: p?.display_name ?? null,
+        phone: p?.phone ?? null,
+        gender: p?.gender ?? null,
         avatar_url: p?.avatar_url ?? null,
         created_at: u.created_at,
         last_activity_date: s?.last_activity_date ?? null,
