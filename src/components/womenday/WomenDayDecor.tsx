@@ -6,7 +6,7 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { isWomenDaySeason } from "@/lib/halloween";
+import { isWomenDayThemeSeason } from "@/lib/halloween";
 import "./womenday.css";
 
 const EXAM_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
@@ -42,7 +42,7 @@ export default function WomenDayDecor() {
     return () => obs.disconnect();
   }, []);
 
-  if (!isWomenDaySeason() || inExam || pathname.startsWith("/admin")) return null;
+  if (!isWomenDayThemeSeason() || inExam || pathname.startsWith("/admin")) return null;
   const petals = pathname === "/" || pathname.startsWith("/dashboard");
 
   return (
