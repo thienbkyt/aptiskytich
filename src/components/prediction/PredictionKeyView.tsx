@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpgradeLock from "@/components/pro/UpgradeLock";
+import LoginToViewSets from "@/components/auth/LoginToViewSets";
 import { cn } from "@/lib/utils";
 import ReadingMarathonEngine from "@/components/practice/ReadingMarathonEngine";
 import ListeningMarathonEngine from "@/components/practice/ListeningMarathonEngine";
@@ -158,17 +159,38 @@ export default function PredictionKeyView() {
 
   const stripRef = useRef<HTMLDivElement | null>(null);
 
-  // Load keys
+  // Load keys — tải lại khi trạng thái đăng nhập đổi (trước đây chỉ tải 1 lần lúc mở trang,
+  // lỡ gọi trước khi nhận phiên đăng nhập là trang báo "Đăng nhập..." dù đã đăng nhập).
+  const [keysError, setKeysError] = useState(false);
+  const [keysReload, setKeysReload] = useState(0);
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoadingKeys(true);
-      const { data } = await supabase
+      setKeysError(false);
+      // Ưu tiên lấy kèm số đề mỗi key; nếu phần đếm bị chặn quyền thì lấy riêng danh sách key.
+      let { data, error } = await supabase
         .from("prediction_keys")
         .select("id,date,title,is_published, prediction_items(count)")
         .eq("is_published", true)
         .order("date", { ascending: false });
+      if (error) {
+        const plain = await supabase
+          .from("prediction_keys")
+          .select("id,date,title,is_published")
+          .eq("is_published", true)
+          .order("date", { ascending: false });
+        data = plain.data as any;
+        error = plain.error;
+      }
       if (cancelled) return;
+      if (error) {
+        console.warn("[PredictionKeyView] load keys failed", error);
+        setKeys([]);
+        setKeysError(true);
+        setLoadingKeys(false);
+        return;
+      }
       const rows = (data || []).map((k: any) => ({
         ...k,
         itemCount: k.prediction_items?.[0]?.count ?? 0,
@@ -181,7 +203,8 @@ export default function PredictionKeyView() {
       setLoadingKeys(false);
     })();
     return () => { cancelled = true; };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, keysReload]);
 
   // Load items for selected key
   useEffect(() => {
@@ -414,11 +437,21 @@ export default function PredictionKeyView() {
   }
 
   if (keys.length === 0) {
+    if (!user) return <LoginToViewSets />;
     return (
       <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
         <Sparkles className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-        <p className="text-muted-foreground font-medium mb-1">Đăng nhập để xem toàn bộ đề Key dự đoán</p>
-        <p className="text-sm text-muted-foreground">Đề Key dự đoán được update hằng ngày</p>
+        {keysError ? (
+          <>
+            <p className="text-muted-foreground font-medium mb-3">Không tải được danh sách đề Key dự đoán</p>
+            <Button onClick={() => setKeysReload((x) => x + 1)} className="font-semibold">Thử lại</Button>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground font-medium mb-1">Chưa có đề Key dự đoán</p>
+            <p className="text-sm text-muted-foreground">Đề Key dự đoán được update hằng ngày</p>
+          </>
+        )}
       </div>
     );
   }
