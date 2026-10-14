@@ -9,6 +9,7 @@ import Navbar from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
+import { dedupeLatestPerSessionSet } from "@/lib/fullTestDedupe";
 
 const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking",
@@ -53,6 +54,10 @@ const FullPartHistoryDetail = () => {
           (r) => (r.skill_scores as any)?.fullPartSession === sessionId,
         );
       }
+
+      // Vào lại phiên dở (cùng session) và làm lại part → có 2 lượt cùng đề.
+      // Chỉ giữ lượt mới nhất mỗi đề để không hiện trùng part / cộng trùng điểm.
+      rows = dedupeLatestPerSessionSet(rows.map((r) => ({ ...r, full_test_session_id: sessionId })));
 
       const setIds = Array.from(new Set(rows.map((r) => r.exam_set_id).filter(Boolean)));
       const setsMap: Record<string, any> = {};
