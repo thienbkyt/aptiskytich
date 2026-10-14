@@ -115,6 +115,23 @@ export default function PricingPage() {
   });
   const hasCampaign = !!voucherStatus?.has_campaign;
 
+  // Ưu đãi 20/10: tài khoản Nữ + có SĐT → giảm 20% gói từ 1 tuần (server tự áp khi thanh toán)
+  const { data: womenPromo, refetch: refetchWomenPromo } = useQuery({
+    queryKey: ["women-day-promo", user?.id],
+    enabled: !!user,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_my_women_day_promo");
+      if (error) return null;
+      return data as { active: boolean; eligible: boolean; reason: string | null; percent: number; plans: string[]; ends_at: string } | null;
+    },
+  });
+  useEffect(() => {
+    const h = () => { void refetchWomenPromo(); };
+    window.addEventListener("profile-updated", h);
+    return () => window.removeEventListener("profile-updated", h);
+  }, [refetchWomenPromo]);
+
   // Khôi phục mã đã lưu và xác thực lại
   useEffect(() => {
     if (!user) return;
@@ -407,12 +424,20 @@ export default function PricingPage() {
 
     const vPct = voucherOn && eligible ? Number(voucher?.discount_percent ?? 0) : 0;
     const vCap = voucher?.discount_max_vnd ?? null;
-    const voucherPrice = (() => {
+    const rawVoucherPrice = (() => {
       if (vPct <= 0) return null;
       const off = Math.floor((plan.price_vnd * vPct) / 100);
       const capped = vCap ? Math.min(off, vCap) : off;
       return Math.max(1000, plan.price_vnd - capped);
     })();
+    // Ưu đãi 20/10 (không cộng dồn với mã: lấy mức rẻ hơn — server tính y hệt)
+    const womenPct = Number(womenPromo?.percent ?? 20);
+    const womenPrice =
+      womenPromo?.eligible && (womenPromo.plans ?? []).includes(plan.key)
+        ? Math.max(1000, plan.price_vnd - Math.floor((plan.price_vnd * womenPct) / 100))
+        : null;
+    const useWomen = womenPrice != null && (rawVoucherPrice == null || womenPrice < rawVoucherPrice);
+    const voucherPrice = useWomen ? womenPrice : rawVoucherPrice;
 
     return (
       <div className={cn("h-full flex flex-col", order)}>
@@ -518,7 +543,7 @@ export default function PricingPage() {
             </div>
             {voucherPrice != null && (
               <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                Đã giảm {vPct}%
+                {useWomen ? `🌸 Ưu đãi 20/10 · giảm ${womenPct}%` : `Đã giảm ${vPct}%`}
               </p>
             )}
           </div>
