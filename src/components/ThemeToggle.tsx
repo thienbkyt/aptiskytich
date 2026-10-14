@@ -1,6 +1,6 @@
 import { Sun, Moon, Ghost } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { isHalloweenSeason } from "@/lib/halloween";
+import { isHalloweenSeason, isWomenDaySeason } from "@/lib/halloween";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,7 +24,7 @@ const ThemeToggle = () => {
         {showHalloween && (
           <DropdownMenuItem onClick={() => setTheme("halloween")} className="gap-2">
             <Ghost className="w-4 h-4" />
-            Halloween 🎃
+            {isWomenDaySeason() ? "Hoa 20/10 🌸" : "Halloween 🎃"}
             {theme === "halloween" && <span className="ml-auto text-primary">✓</span>}
           </DropdownMenuItem>
         )}
