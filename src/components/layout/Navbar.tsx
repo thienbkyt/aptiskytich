@@ -15,7 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import { useTheme } from "@/hooks/useTheme";
-import { isHalloweenSeason } from "@/lib/halloween";
+import { isHalloweenSeason, isWomenDaySeason } from "@/lib/halloween";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -71,6 +71,15 @@ const Navbar = () => {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    const sp = new URLSearchParams(location.search);
+    if (sp.get("openProfile") !== "1") return;
+    setProfileOpen(true);
+    sp.delete("openProfile");
+    const qs = sp.toString();
+    window.history.replaceState(null, "", location.pathname + (qs ? `?${qs}` : "") + location.hash);
+  }, [user, location.pathname, location.search, location.hash]);
   const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
   const { theme, setTheme } = useTheme();
   const { unread_notification_count } = useUserBootstrap();
@@ -564,7 +573,7 @@ const Navbar = () => {
                             className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
                           >
                             <Ghost className="w-4 h-4" />
-                            <span>Halloween 🎃</span>
+                            <span>{isWomenDaySeason() ? "Hoa 20/10 🌸" : "Halloween 🎃"}</span>
                             {theme === "halloween" && <span className="ml-auto text-primary">✓</span>}
                           </button>
                         )}
