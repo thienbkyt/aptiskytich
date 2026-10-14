@@ -33,3 +33,10 @@ export const isWomenDaySeason = () => {
   const n = Date.now();
   return (n >= WOMEN_DAY_START && n < WOMEN_DAY_END) || (n < WOMEN_DAY_END && isPreview2010());
 };
+
+/** Giao diện Hoa 20/10 chạy sớm hơn ưu đãi: từ 14/10 đến hết 20/10 (popup/banner/giá vẫn từ 15/10). */
+export const WOMEN_THEME_START = Date.UTC(2026, 9, 13, 17, 0, 0); // 14/10/2026 00:00 GMT+7
+export const isWomenDayThemeSeason = () => {
+  const n = Date.now();
+  return (n >= WOMEN_THEME_START && n < WOMEN_DAY_END) || isWomenDaySeason();
+};
