@@ -2,11 +2,13 @@
  * Trang trí Hoa 20/10 (15–20/10/2026, html.women2010):
  * - Vài bông hoa nhỏ, mờ ở 2 góc menu.
  * - Cánh hoa rơi nhẹ ở Trang chủ & Dashboard (≥768px, tôn trọng "giảm chuyển động").
+ * - Cánh hoa tương tác (rê chuột / click / chạm) ở Trang chủ & Dashboard.
  * - Tự ẩn khi đang làm bài / xem lại bài và ở /admin.
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { isWomenDayThemeSeason } from "@/lib/halloween";
+import WomenDayPetalFx from "./WomenDayPetalFx";
 import "./womenday.css";
 
 const EXAM_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
@@ -56,6 +58,7 @@ export default function WomenDayDecor() {
           <Flower />
         </span>
       ))}
+      {petals && <WomenDayPetalFx />}
       {petals && (
         <div className="wd-petals">
           {Array.from({ length: 12 }).map((_, i) => (
