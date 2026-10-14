@@ -15,7 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import { useTheme } from "@/hooks/useTheme";
-import { isHalloweenSeason, isWomenDaySeason } from "@/lib/halloween";
+import { isHalloweenSeason, isWomenDayThemeSeason } from "@/lib/halloween";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -573,7 +573,7 @@ const Navbar = () => {
                             className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-left hover:bg-muted transition-colors"
                           >
                             <Ghost className="w-4 h-4" />
-                            <span>{isWomenDaySeason() ? "Hoa 20/10 🌸" : "Halloween 🎃"}</span>
+                            <span>{isWomenDayThemeSeason() ? "Hoa 20/10 🌸" : "Halloween 🎃"}</span>
                             {theme === "halloween" && <span className="ml-auto text-primary">✓</span>}
                           </button>
                         )}
