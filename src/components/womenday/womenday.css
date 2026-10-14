@@ -131,3 +131,20 @@ html.women2010 body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen)
 @media (prefers-reduced-motion: reduce) {
   .wdh *, .wdh *::before { animation: none !important; }
 }
+
+/* Trang chủ: chữ 20/10 khối 3D sau Kỳ Kỳ & Tích Tích */
+.wdl-wrap { perspective: 900px; perspective-origin: 50% 40%; }
+.wdl-rig { position: absolute; left: 0; right: 96px; top: -14px; text-align: center; font-weight: 900; font-size: 116px; line-height: 1; letter-spacing: -5px; white-space: nowrap;
+  transform-style: preserve-3d; animation: wdl-sway 7s ease-in-out infinite; }
+.wdl-ex { position: absolute; left: 0; right: 0; top: 0; }
+.wdl-face { position: relative; background: linear-gradient(100deg, #FFD9B8 0%, #FFAE7A 18%, #FF8FB0 36%, #FFF4F7 48%, #FF8FB0 60%, #E8476F 78%, #FFC9A0 100%); background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: wdh-sheen 6s linear infinite; filter: drop-shadow(0 10px 18px rgba(232, 71, 111, .28)); }
+.wdl-ring { position: absolute; left: calc(50% - 48px); top: 10px; width: 300px; height: 300px; margin-left: -150px; border-radius: 50%;
+  background: conic-gradient(from 0deg, #FFB37A00, #FFB37A90, #FF7FA200, #FF8FB0a0, #FFB37A00);
+  -webkit-mask: radial-gradient(circle, transparent 62%, #000 63%, #000 66%, transparent 67%); mask: radial-gradient(circle, transparent 62%, #000 63%, #000 66%, transparent 67%);
+  animation: wdh-spin 16s linear infinite; opacity: .8; }
+@keyframes wdl-sway { 0%, 100% { transform: rotateY(-14deg) rotateX(8deg); } 50% { transform: rotateY(14deg) rotateX(4deg); } }
+@media (prefers-reduced-motion: reduce) { .wdl-rig, .wdl-face, .wdl-ring { animation: none !important; } }
+
+/* Trang chủ: chip chúc mừng 20/10 */
+.wdl-chip { background: linear-gradient(100deg, #FFF0F4, #FFE6DA) !important; border-color: #FF8FB080 !important; color: #C2254E !important; }
