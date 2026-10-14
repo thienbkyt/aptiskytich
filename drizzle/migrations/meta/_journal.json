@@ -155,6 +155,13 @@
       "when": 1790565338264,
       "tag": "0021_enable_rls_backup_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791998158384,
+      "tag": "0022_lock_backup_tables_rename_1410_de_thi_3009",
+      "breakpoints": true
     }
   ]
 }

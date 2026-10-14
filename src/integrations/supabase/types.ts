@@ -3559,6 +3559,123 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rename_1410_q: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_rename_1410_sets: {
+        Row: {
+          access_tier: string | null
+          clone_of: string | null
+          clone_source_label: string | null
+          created_at: string | null
+          description: string | null
+          exam_type: string | null
+          full_test_category: string | null
+          full_test_id: string | null
+          full_test_title: string | null
+          id: string | null
+          is_published: boolean | null
+          key_date: string | null
+          new_until: string | null
+          part: string | null
+          question_count: number | null
+          skill: string | null
+          time_limit: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_tier?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_tier?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          created_at?: string | null
+          description?: string | null
+          exam_type?: string | null
+          full_test_category?: string | null
+          full_test_id?: string | null
+          full_test_title?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          key_date?: string | null
+          new_until?: string | null
+          part?: string | null
+          question_count?: number | null
+          skill?: string | null
+          time_limit?: number | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_review0709_20260907: {
         Row: {
           audio_url: string | null
@@ -8579,21 +8696,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tmp_code_transfer: {
-        Row: {
-          body: string | null
-          name: string
-        }
-        Insert: {
-          body?: string | null
-          name: string
-        }
-        Update: {
-          body?: string | null
-          name?: string
-        }
-        Relationships: []
-      }
       tmp_key13: {
         Row: {
           diem: number | null
@@ -9179,6 +9281,27 @@ export type Database = {
           },
         ]
       }
+      women_day_bonus: {
+        Row: {
+          granted_at: string
+          new_until: string | null
+          old_until: string | null
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          new_until?: string | null
+          old_until?: string | null
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          new_until?: string | null
+          old_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       writing_calibration: {
         Row: {
           bands_v3: Json | null
@@ -9542,6 +9665,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_women_day_bonus: { Args: never; Returns: Json }
       cleanup_logs_ttl: { Args: never; Returns: Json }
       consume_ai_quota: {
         Args: { _action: string; _limit: number; _user_id: string }
@@ -10048,6 +10172,8 @@ export type Database = {
       user_can_access_set: { Args: { p_set: string }; Returns: boolean }
       user_tier: { Args: { p_uid: string }; Returns: string }
       voucher_campaign_status: { Args: never; Returns: Json }
+      women_day_bonus_grant: { Args: { p_user: string }; Returns: Json }
+      women_day_bonus_in_group: { Args: { p_user: string }; Returns: boolean }
       women_day_promo_status: { Args: { p_user: string }; Returns: Json }
     }
     Enums: {
