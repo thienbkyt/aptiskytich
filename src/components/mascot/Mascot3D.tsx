@@ -2,7 +2,7 @@
  * Kỳ Kỳ & Tích Tích bản 3D (three.js r128 tải từ CDN khi cần — không tăng bundle).
  * - Chỉ bật trên máy tính (≥ minWidth, có chuột), có WebGL, không bật "giảm chuyển động".
  *   Ngược lại (hoặc tải lỗi) → hiện `fallback` (bản SVG).
- * - Tự tạm dừng khi cuộn khỏi màn hình; theo giao diện Halloween (html.halloween).
+ * - Tự tạm dừng khi cuộn khỏi màn hình; theo giao diện Halloween (html.halloween) và 20/10 (html.women2010 → cầm hoa).
  */
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
@@ -76,7 +76,11 @@ export default function Mascot3D({ scene, fallback = null, minWidth = 1024, clas
         if (cancelled || !wrapRef.current) return;
         api = initMascot3D(wrapRef.current, { transparent: true, ...(scene || {}) });
         setMode("3d");
-        const hw = () => api?.setHW(document.documentElement.classList.contains("halloween"));
+        const hw = () => {
+          const cl = document.documentElement.classList;
+          api?.setHW(cl.contains("halloween"));
+          api?.setWD?.(cl.contains("women2010"));
+        };
         hw();
         mo = new MutationObserver(hw);
         mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
