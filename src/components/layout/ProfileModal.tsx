@@ -255,7 +255,8 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
       .eq("user_id", user.id);
     setSavingInfo(false);
     if (error) {
-      toast.error("Không thể lưu thông tin. " + error.message);
+      const dup = (error as any)?.code === "23505" || /profiles_phone_unique|duplicate key/i.test(error.message || "");
+      toast.error(dup ? "Số điện thoại này đã được dùng cho tài khoản khác." : "Không thể lưu thông tin. " + error.message);
       return;
     }
     setPhone(p);
