@@ -204,7 +204,13 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       const { data: trRow } = await supabase.from("test_results").select("full_test_session_id,review_snapshot,grade_payload").eq("id", testResultId).maybeSingle();
       if (!cancelled) {
         const tr: any = trRow;
-        setWritingFallbackText(String(tr?.review_snapshot?.raw?.text || tr?.grade_payload?.text || ""));
+        // Ưu tiên bài trong review_snapshot: snapshot được ghi lại MỖI lần nộp lại part
+        // (quay lại sửa bài trong luyện full-part), còn exam_question_results chỉ giữ lần nộp đầu.
+        const snap = tr?.review_snapshot;
+        setWritingFallbackText(String(
+          snap?.raw?.perQuestion?.[0]?.user_answer || snap?.items?.[0]?.userAnswer ||
+          snap?.raw?.text || tr?.grade_payload?.text || "",
+        ));
       }
       const sessionId = (trRow as any)?.full_test_session_id ?? null;
       const snapshotAi = ((trRow as any)?.review_snapshot as any)?.items?.[0]?.ai ?? null;
@@ -374,7 +380,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const m = part.match(/(\d)/);
     const num = m ? parseInt(m[1], 10) : 1;
     const taskKey = (`task${num}`) as WritingPartType;
-    const raw = qResults[0]?.user_answer || writingFallbackText || "";
+    const raw = writingFallbackText || qResults[0]?.user_answer || "";
     const init: any = {};
     if (taskKey === "task1") {
       const matches = [...raw.matchAll(/A:[ \t]*([\s\S]*?)(?=\n\nQ\d+:|$)/g)];
@@ -417,8 +423,8 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
             />
           </div>
         )}
-        {/* key đổi khi bài viết dự phòng tải xong → engine nhận lại initialAnswers */}
-        <WritingExamEngine key={!qResults[0]?.user_answer && writingFallbackText ? "w-fallback" : "w-main"} {...props} />
+        {/* key đổi khi bài viết bản mới nhất (snapshot) tải xong → engine nhận lại initialAnswers */}
+        <WritingExamEngine key={writingFallbackText ? "w-snap" : "w-main"} {...props} />
       </>
     );
 
