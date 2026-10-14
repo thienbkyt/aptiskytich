@@ -1,4 +1,5 @@
 import { Link, Navigate } from "react-router-dom";
+import WomenDayPromoBanner from "@/components/promo/WomenDayPromoBanner";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import VoucherInput from "@/components/voucher/VoucherInput";
@@ -514,6 +515,9 @@ const Dashboard = () => {
       <Navbar />
       <div className="pt-[144px] md:pt-24 pb-20">
         <div className="section-container space-y-6">
+
+          {/* Ưu đãi 20/10 (tự ẩn khi hết hạn / đã dùng) */}
+          <WomenDayPromoBanner />
 
           {/* HERO */}
           <motion.div
