@@ -1252,8 +1252,11 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
     // computed in the graded response.
     const WRITING_STYLE_RE = /(không\s*(hoàn toàn\s*)?sai|không phải là\s*(hoàn toàn\s*)?sai|vẫn\s*(là\s*)?đúng|đúng ngữ pháp nhưng|chỉ là\s|nghe\s*(sẽ\s*)?tự nhiên hơn|phù hợp hơn|hay hơn|trang trọng hơn|có thể dùng|nên dùng.*sẽ.*hơn|not wrong|still correct)/i;
     const WRITING_SPELL_RE = /^\s*(\*\*)?\s*(lỗi\s*)?(chính\s*tả|sai\s*chính\s*tả|spelling)/i;
+    // Bỏ góp ý phong cách: AI tự đánh dấu severity="suggestion", hoặc explanation tự nhận câu không sai.
     const filterStyleNotes = (arr: any) =>
-      (Array.isArray(arr) ? arr : []).filter((e: any) => !WRITING_STYLE_RE.test(String(e?.explanation ?? "")));
+      (Array.isArray(arr) ? arr : []).filter((e: any) =>
+        String(e?.severity ?? "").toLowerCase() !== "suggestion" &&
+        !WRITING_STYLE_RE.test(String(e?.explanation ?? "")));
     // Part 1 guard: AI marked grammar/spelling wrong but listed no errors → flip to correct.
     const countP1GuardFlips = (parsed: any): number => {
       const gr = filterStyleNotes(parsed?.grammarErrors);
@@ -1441,6 +1444,13 @@ KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
 - Nếu câu học viên ĐÚNG ngữ pháp, đúng nghĩa và chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
 - Không được viết explanation kiểu "không sai", "không hoàn toàn sai", "vẫn đúng nhưng…", "chỉ là … hơn". Nếu muốn góp ý, đưa vào mục **Gợi ý nâng cao** của feedback (hoặc upgradeTips), không gạch đỏ như lỗi.
 
+MỨC ĐỘ CỦA MỖI MỤC (trường "severity", BẮT BUỘC):
+- severity = "error" CHỈ KHI cụm gốc SAI thật: sai ngữ pháp (thì, mạo từ bắt buộc, giới từ, số ít/nhiều, hoà hợp chủ–vị, dạng từ, thiếu/thừa từ làm sai cấu trúc), sai chính tả, dùng từ SAI NGHĨA hoặc sai collocation mà người bản xứ không bao giờ nói, hoặc câu tối nghĩa khiến người đọc hiểu sai.
+- severity = "suggestion" khi cụm gốc ĐÚNG ngữ pháp và người đọc hiểu đúng ý — chỉ là có cách nói gọn hơn / tự nhiên hơn / hay hơn / cụ thể hơn / trang trọng hơn. Ví dụ đều là "suggestion": "volunteer green programs → green volunteer programs", "much cleaner → cleaner", "allows me to reduce → helps reduce", "if a house has a garden, it becomes… → a house with a garden becomes…", "It is also a wonderful way → It also offers a wonderful way", "instead of a motorbike → instead of my motorbike", "environmental staff → park staff", "living environment → environment".
+- Phân vân giữa hai mức thì chọn "suggestion". Hệ thống sẽ loại bỏ mọi mục "suggestion" khỏi danh sách lỗi, nên KHÔNG đếm chúng vào tổng số lỗi trong feedback và KHÔNG nêu chúng ở mục **Ngữ pháp & chính tả**; nếu muốn góp ý thì viết ở mục **Gợi ý nâng cao**.
+- TUYỆT ĐỐI KHÔNG đổi một cụm ĐÚNG thành một cụm đồng nghĩa khác rồi gọi là lỗi. Nhất quán: cùng một cụm thì lần chấm nào cũng phải cho cùng kết luận.
+- Điểm GRA/VRA chỉ bị trừ bởi các mục "error"; "suggestion" không làm giảm band.
+
 RÀNG BUỘC CHẶT CHO grammarErrors VÀ spellingErrors:
 - CHỈ đưa một mục vào mảng khi trường "corrected" KHÁC trường "original" sau khi loại bỏ khoảng trắng thừa ở đầu/cuối. Nếu không sửa được gì thì KHÔNG đưa mục đó vào mảng.
 - Trường "corrected" phải là câu ĐÃ ÁP DỤNG sửa đổi rõ ràng; TUYỆT ĐỐI KHÔNG được chép lại nguyên câu gốc.
@@ -1467,7 +1477,7 @@ GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
 
 PHÂN LOẠI LỖI (bắt buộc):
-- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa/không tự nhiên, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
+- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa hoặc sai collocation, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
 - Trường "original" phải là đoạn COPY NGUYÊN VĂN từ bài học viên (để giao diện tìm và gạch chân), không sửa chính tả trong "original".
 
 RETURN VIA TOOL CALL.`;
@@ -1485,6 +1495,7 @@ PHÂN LOẠI LỖI BẮT BUỘC:
 KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
 - Nếu câu trả lời đúng ngữ pháp và đúng nghĩa, chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
 - Không viết explanation kiểu "không sai", "vẫn đúng nhưng…", "chỉ là … hơn".
+- Mỗi mục có trường "severity": "error" khi cụm gốc SAI thật; "suggestion" khi cụm gốc đúng, chỉ là cách nói khác hay hơn. Phân vân thì chọn "suggestion". Mục "suggestion" không tính là lỗi và không làm câu bị trượt.
 
 PHẠM VI CHẤM (BẮT BUỘC):
 - CHỈ chấm phần văn bản do học viên viết. TUYỆT ĐỐI KHÔNG chấm, không sửa, không đưa vào grammarErrors hay spellingErrors bất kỳ lỗi nào nằm trong đề bài, câu hỏi, hay lời dẫn.
@@ -1509,7 +1520,7 @@ GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
 - Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
 
 PHÂN LOẠI LỖI (bắt buộc):
-- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa/không tự nhiên, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
+- Mỗi lỗi trong grammarErrors/spellingErrors phải có category: tense=thì động từ, article=mạo từ, preposition=giới từ, plural=số ít/số nhiều, agreement=hoà hợp chủ–vị, word_form=dạng từ, word_choice=dùng từ sai nghĩa hoặc sai collocation, spelling=chính tả, sentence=cấu trúc câu/trật tự từ, other=khác.
 - Trường "original" phải là đoạn COPY NGUYÊN VĂN từ bài học viên (để giao diện tìm và gạch chân), không sửa chính tả trong "original".
 
 RETURN VIA TOOL CALL.`;
@@ -1676,10 +1687,11 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           corrected: { type: "string" },
           explanation: { type: "string" },
           category: { type: "string", enum: ["tense", "article", "preposition", "plural", "agreement", "word_form", "word_choice", "spelling", "sentence", "other"] },
+          severity: { type: "string", enum: ["error", "suggestion"] },
           questionIndex: { type: "integer" },
           emailIndex: { type: "integer" },
         },
-        required: ["original", "corrected"],
+        required: ["original", "corrected", "severity"],
       };
       const bandsObj = {
         type: "object",
