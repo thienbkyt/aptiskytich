@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,6 +75,20 @@ const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const { unread_notification_count } = useUserBootstrap();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  // Nhắc nhẹ bổ sung SĐT + giới tính (chấm vàng trên avatar / mục Thông tin tài khoản)
+  const [needProfileInfo, setNeedProfileInfo] = useState(false);
+  useEffect(() => {
+    if (!user?.id) { setNeedProfileInfo(false); return; }
+    let cancelled = false;
+    const check = async () => {
+      const { data, error } = await (supabase as any).from("profiles").select("phone, gender").eq("user_id", user.id).maybeSingle();
+      if (cancelled || error) return;
+      setNeedProfileInfo(!(data as any)?.phone || !(data as any)?.gender);
+    };
+    void check();
+    window.addEventListener("profile-updated", check);
+    return () => { cancelled = true; window.removeEventListener("profile-updated", check); };
+  }, [user?.id]);
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
@@ -508,6 +523,9 @@ const Navbar = () => {
                   {unread_notification_count > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-background" />
                   )}
+                  {needProfileInfo && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-background" title="Bổ sung thông tin tài khoản" />
+                  )}
                 </button>
 
                 <AnimatePresence>
@@ -580,6 +598,9 @@ const Navbar = () => {
                         >
                           <UserRound className="w-4 h-4" />
                           Thông tin tài khoản
+                          {needProfileInfo && (
+                            <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">Bổ sung</span>
+                          )}
                         </button>
                         <Link
                           to="/gioi-thieu"
