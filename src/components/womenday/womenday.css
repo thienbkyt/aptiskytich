@@ -1,0 +1,33 @@
+/* ==========================================================================
+   Theme Hoa 20/10 — chỉ áp khi <html class="women2010"> (15–20/10/2026, useTheme).
+   Nhẹ nhàng: vài bông hoa nhỏ ở 2 góc menu, cánh hoa rơi ở Trang chủ/Dashboard,
+   🌸 cạnh logo. Bỏ qua màn thi / xem lại bài.
+   ========================================================================== */
+html.women2010 body:not(.exam-mode):not(.full-test-active):not(.exam-fullscreen):not(.history-review-mode) nav.fixed a[href="/"] > span::after {
+  content: "🌸";
+  margin-left: 4px;
+}
+.wd-decor { pointer-events: none; }
+.wd-corner { position: fixed; top: 2px; z-index: 60; pointer-events: none; display: block; }
+.wd-corner svg { width: 100%; height: auto; display: block; }
+.wd-petals { position: fixed; inset: 0; z-index: 34; overflow: hidden; pointer-events: none; }
+.wd-pt {
+  position: absolute; top: -24px; width: 13px; height: 13px;
+  border-radius: 70% 0 70% 0;
+  background: linear-gradient(135deg, #FFC2D2, #FF8FAB);
+  opacity: 0; animation: wd-fall linear infinite;
+}
+@keyframes wd-fall {
+  0% { transform: translate(0, -20px) rotate(0); opacity: 0; }
+  10% { opacity: .7; }
+  50% { transform: translate(34px, 50vh) rotate(170deg); }
+  90% { opacity: .55; }
+  100% { transform: translate(-12px, 100vh) rotate(330deg); opacity: 0; }
+}
+@media (max-width: 767px) { .wd-petals { display: none; } .wd-corner.wd-sm { display: none; } }
+@media (prefers-reduced-motion: reduce) { .wd-petals { display: none; } }
+
+/* Popup ưu đãi: hiện linh vật cả trên điện thoại (mặc định linh vật ẩn trên màn cảm ứng) */
+.wd-pop .tt-robot, .wd-pop .kk-robot { display: block !important; }
+@keyframes wd-pop-in { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+.wd-pop-card { animation: wd-pop-in .32s cubic-bezier(.2,.9,.3,1.1); }
