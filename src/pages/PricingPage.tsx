@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import WomenDayPromoBanner from "@/components/promo/WomenDayPromoBanner";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpenCheck, Check, ChevronDown, Crown, Gift, Loader2, Sparkles, Ticket, Users, Wand2, X } from "lucide-react";
@@ -616,6 +617,9 @@ export default function PricingPage() {
       <Navbar />
       <main className="pt-[144px] md:pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
+          {/* Ưu đãi 20/10 (tự ẩn khi hết hạn / đã dùng) */}
+          <WomenDayPromoBanner variant="slim" className="mb-6" />
+
           {/* Hero */}
           <div className="text-center">
             <Badge className="bg-accent/20 text-primary border-0 mb-3">
