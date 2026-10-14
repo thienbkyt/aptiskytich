@@ -138,16 +138,27 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
   })();
 
 
+  // SĐT + giới tính (không bắt buộc, chỉ nhắc nhẹ)
+  const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState<"" | "male" | "female" | "other">("");
+  const [savedInfo, setSavedInfo] = useState<{ phone: string; gender: string }>({ phone: "", gender: "" });
+  const [savingInfo, setSavingInfo] = useState(false);
+
   useEffect(() => {
     if (!open || !user) return;
     setLoadingProfile(true);
-    supabase
+    (supabase as any)
       .from("profiles")
-      .select("display_name")
+      .select("display_name, phone, gender")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         setDisplayName(data?.display_name ?? "");
+        const p = ((data as any)?.phone as string | null) ?? "";
+        const g = ((data as any)?.gender as string | null) ?? "";
+        setPhone(p);
+        setGender((g as any) || "");
+        setSavedInfo({ phone: p, gender: g });
         setLoadingProfile(false);
       });
   }, [open, user]);
@@ -222,6 +233,40 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
     }
   };
 
+  /** Chuẩn hoá SĐT VN: bỏ khoảng trắng/dấu chấm, +84/84 → 0. */
+  const normalizePhone = (raw: string) => {
+    let v = raw.replace(/[\s.\-()]/g, "");
+    if (v.startsWith("+84")) v = "0" + v.slice(3);
+    else if (/^84\d{9}$/.test(v)) v = "0" + v.slice(2);
+    return v;
+  };
+
+  const saveInfo = async () => {
+    if (!user) return;
+    const p = normalizePhone(phone);
+    if (p && !/^0\d{9}$/.test(p)) {
+      toast.error("Số điện thoại chưa đúng. Nhập 10 số, bắt đầu bằng 0 (vd: 0912345678).");
+      return;
+    }
+    setSavingInfo(true);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ phone: p || null, gender: gender || null })
+      .eq("user_id", user.id);
+    setSavingInfo(false);
+    if (error) {
+      toast.error("Không thể lưu thông tin. " + error.message);
+      return;
+    }
+    setPhone(p);
+    setSavedInfo({ phone: p, gender });
+    try { window.dispatchEvent(new Event("profile-updated")); } catch { /* noop */ }
+    toast.success("Đã lưu thông tin.");
+  };
+
+  const infoMissing = !loadingProfile && (!savedInfo.phone || !savedInfo.gender);
+  const infoDirty = normalizePhone(phone) !== savedInfo.phone || gender !== savedInfo.gender;
+
   const changePassword = async () => {
     if (password.length < 6) {
       toast.error("Mật khẩu phải có ít nhất 6 ký tự.");
@@ -274,6 +319,54 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
             <Label htmlFor="profile-email">Email</Label>
             <Input id="profile-email" className="w-full min-w-0" value={user?.email ?? ""} readOnly disabled />
             <p className="text-xs text-muted-foreground">Email không thể thay đổi.</p>
+          </div>
+
+          {/* SĐT + giới tính */}
+          <div className="space-y-3 w-full min-w-0">
+            {infoMissing && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                <span>Bổ sung số điện thoại và giới tính để admin hỗ trợ bạn nhanh hơn nha.</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="profile-phone">Số điện thoại</Label>
+              <Input
+                id="profile-phone"
+                className="w-full min-w-0"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={16}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={loadingProfile ? "Đang tải..." : "Vd: 0912345678"}
+                disabled={loadingProfile}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Giới tính</Label>
+              <div className="flex gap-2">
+                {([["male", "Nam"], ["female", "Nữ"], ["other", "Khác"]] as const).map(([v, label]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    disabled={loadingProfile}
+                    onClick={() => setGender(gender === v ? "" : v)}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                      gender === v
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button className="w-full" onClick={saveInfo} disabled={savingInfo || loadingProfile || !infoDirty}>
+              {savingInfo ? "Đang lưu..." : "Lưu thông tin"}
+            </Button>
           </div>
 
           {/* Change password */}
