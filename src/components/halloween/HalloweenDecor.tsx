@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
-import { isWomenDaySeason } from "@/lib/halloween";
+import { isWomenDayThemeSeason } from "@/lib/halloween";
 import "./halloween.css";
 
 const EXAM_CLASSES = ["exam-mode", "history-review-mode", "exam-fullscreen", "full-test-active"];
@@ -33,7 +33,7 @@ export default function HalloweenDecor() {
   }, []);
 
   // 15–20/10: theme Hoa 20/10 thay Halloween (WomenDayDecor)
-  const on = theme === "halloween" && !isWomenDaySeason() && !inExam && !pathname.startsWith("/admin");
+  const on = theme === "halloween" && !isWomenDayThemeSeason() && !inExam && !pathname.startsWith("/admin");
 
   // Ma bay lên từ góc dưới: vị trí, cỡ, đường bay ngẫu nhiên; tối đa 2 con cùng lúc.
   useEffect(() => {
