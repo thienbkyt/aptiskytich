@@ -100,6 +100,25 @@ function pumpkin(s){const g=new T.Group();const mP=M({color:'#FF8A1E',roughness:
   const mo=mesh(new T.TorusGeometry(.2,.04,8,20,Math.PI),mF,0,-.08,.55,g);mo.rotation.z=Math.PI;
   g.scale.setScalar(s);g.userData.hw=true;g.visible=false;return g;}
 
+// bó hoa 20/10 (html.women2010) — cùng chất liệu bóng như linh vật
+function bouquet(s){const g=new T.Group();
+  const wrapM=M({color:'#FFD3DE',roughness:.35,clearcoat:.6,side:T.DoubleSide});const wrapIn=M({color:'#FFF6F0',roughness:.35,clearcoat:.6,side:T.DoubleSide});
+  const c1=mesh(new T.ConeGeometry(.5,1.05,28,1,true),wrapM,0,0,0,g);c1.rotation.x=Math.PI;
+  const c2=mesh(new T.ConeGeometry(.43,.95,28,1,true),wrapIn,0,.06,.02,g);c2.rotation.x=Math.PI;
+  const leafM=M({color:'#4FA85A',roughness:.4});
+  for(const [x,z,r] of [[-.36,.05,.6],[.38,0,-.6],[0,-.3,0],[-.15,.3,.3],[.2,.28,-.35]]){const l=mesh(sph(1,16),leafM,x,.58,z,g);l.scale.set(.09,.26,.04);l.rotation.z=r;}
+  const rose=(x,y,z,col,dark,r)=>{const rg=new T.Group();rg.position.set(x,y,z);g.add(rg);
+    const b=mesh(sph(r,28),M({color:col,roughness:.28}),0,0,0,rg);b.scale.set(1,.82,1);
+    for(let i=0;i<6;i++){const a=i/6*Math.PI*2;const pe=mesh(sph(r*.55,18),M({color:col,roughness:.3}),Math.cos(a)*r*.62,-r*.12,Math.sin(a)*r*.62,rg);pe.scale.set(1,.7,1);}
+    const tr=mesh(new T.TorusGeometry(r*.42,r*.13,10,24),M({color:dark,roughness:.3}),0,r*.66,0,rg);tr.rotation.x=Math.PI/2;
+    mesh(sph(r*.22,14),M({color:dark,roughness:.3}),0,r*.72,0,rg);};
+  rose(-.2,.62,.12,'#F0445A','#9E1028',.2);rose(.22,.64,.1,'#FF8FB0','#C2254E',.19);rose(0,.66,-.18,'#FFAE6B','#D9501A',.18);
+  rose(.02,.72,.24,'#E8344A','#8E0F1C',.17);rose(-.3,.6,-.14,'#FFC2D2','#E8476F',.15);rose(.32,.58,-.12,'#FF6F9A','#B81E4A',.15);
+  const wM=M({color:'#ffffff',roughness:.3});for(const [x,z] of [[-.42,.18],[.44,.2],[.1,-.38],[-.1,.4]]){mesh(sph(.06,12),wM,x,.62,z,g);mesh(sph(.05,12),wM,x+.06,.68,z+.03,g);}
+  const rib=M({color:'#CC1C01',roughness:.3});const knot=mesh(sph(.07,16),rib,0,-.3,.24,g);
+  for(const sx of [-1,1]){const lp=mesh(sph(1,16),rib,sx*.13,-.27,.22,g);lp.scale.set(.12,.07,.05);lp.rotation.z=sx*.4;const tl=mesh(sph(1,12),rib,sx*.06,-.42,.22,g);tl.scale.set(.035,.12,.03);tl.rotation.z=-sx*.35;}
+  g.scale.setScalar(s);g.userData.wd=true;g.visible=false;return g;}
+
 // ====================== KỲ KỲ ======================
 const KK=new T.Group();scene.add(KK);KK.position.x=-1.55;
 const P=(xs,ys)=>[(xs-60)/40,(146-ys)/40];
@@ -181,6 +200,7 @@ const kHandL=mesh(sph(.17),mOrange,-.38,.36,.62,kkFloat);gradient(kHandL.geometr
 // halloween KK
 const kHat=witchHat(.85);kHat.position.set(.05,P(0,22)[1]-kHead.position.y,.0);kHat.rotation.set(-.1,0,-.12);kHead.add(kHat);
 const kPump=pumpkin(.32);kPump.position.set(.86,.38,.42);kkFloat.add(kPump);
+const kBq=bouquet(.78);kBq.position.set(.92,.5,.5);kBq.rotation.set(.15,0,-.35);kkFloat.add(kBq);
 
 // ====================== TÍCH TÍCH ======================
 const TT=new T.Group();scene.add(TT);TT.position.x=1.55;
@@ -226,6 +246,7 @@ const tBow=new T.Group();tHead.add(tBow);tBow.position.set(.72,thy+.86,.42);tBow
 for(const sx of [-1,1]){const l=mesh(sph(1,24),mPink,sx*.13,0,0,tBow);l.scale.set(.15,.1,.07);}mesh(sph(.06,16),M({color:'#E23D6E'}),0,0,.03,tBow);
 const tHat=witchHat(.95);tHat.position.set(.08,Q(24)-tHead.position.y-.02,0);tHat.rotation.set(-.08,0,.1);tHead.add(tHat);
 const tPump=pumpkin(.36);tPump.position.set(1.05,Q(124),.35);ttFloat.add(tPump);
+const tBq=bouquet(1.12);tBq.position.set(1.14,Q(110),.55);tBq.rotation.set(.18,0,-.42);ttFloat.add(tBq);
 
 // chuyển màu sRGB -> linear cho mọi vật liệu (three r128 chưa tự quản lý màu)
 {const done=new Set();scene.traverse(o=>{const m=o.material;if(!m||done.has(m))return;done.add(m);
@@ -257,6 +278,7 @@ function setMood(m){mood=m;
   kO.visible=tO.visible=(m==='surprise');
   const s=m==='surprise'?1.18:1;kPupils.concat(tPupils).forEach(p=>p.scale.setScalar(s));
 }
+function setWD(on){scene.traverse(o=>{if(o.userData.wd)o.visible=!!on;});}
 let hw=false;
 function setHW(on){hw=on;scene.traverse(o=>{if(o.userData.hw)o.visible=on;});
   kBow.visible=kWires.visible=!on;tBow.visible=tAnt.visible=!on;
@@ -347,5 +369,5 @@ function highFive(){if(nowS()-hfT<1.8)return;hfT=nowS();burstDone=false;clearTim
 function cheer(){hopK=nowS();hopT=nowS()+0.18;setMood('happy');clearTimeout(cheer._t);cheer._t=setTimeout(()=>setMood('normal'),1500);}
 function celebrate(){highFive();}
 setMood('normal');resize();loop();
-return {setPaused:(v)=>{paused=!!v;},destroy:()=>{destroyed=true;cancelAnimationFrame(rafId);window.removeEventListener('resize',resize);window.removeEventListener('mousemove',onWinMove);try{ro&&ro.disconnect();}catch(e){}try{renderer.dispose();renderer.forceContextLoss&&renderer.forceContextLoss();}catch(e){}try{el.remove();}catch(e){}},freeze:(p)=>{frozenAt=null;const n=nowS();hfT=n-p*1.7;burstDone=p>0.36;if(p>0.36&&p<0.8){burstT=n-(p-0.36)*1.7;const w=new T.Vector3();burst(new T.Vector3(0,MEET_Y,0.8));burstT=n-(p-0.36)*1.7;}frozenAt=n;},highFive,cheer,debug:()=>({k:kkFloat.rotation.y,t:ttFloat.rotation.y,kh:kHead.rotation.y,th:tHead.rotation.y}),setMood,setHW,celebrate,setAutoRotate:(v)=>{autoRot=!!v;}};
+return {setPaused:(v)=>{paused=!!v;},destroy:()=>{destroyed=true;cancelAnimationFrame(rafId);window.removeEventListener('resize',resize);window.removeEventListener('mousemove',onWinMove);try{ro&&ro.disconnect();}catch(e){}try{renderer.dispose();renderer.forceContextLoss&&renderer.forceContextLoss();}catch(e){}try{el.remove();}catch(e){}},freeze:(p)=>{frozenAt=null;const n=nowS();hfT=n-p*1.7;burstDone=p>0.36;if(p>0.36&&p<0.8){burstT=n-(p-0.36)*1.7;const w=new T.Vector3();burst(new T.Vector3(0,MEET_Y,0.8));burstT=n-(p-0.36)*1.7;}frozenAt=n;},highFive,cheer,debug:()=>({k:kkFloat.rotation.y,t:ttFloat.rotation.y,kh:kHead.rotation.y,th:tHead.rotation.y}),setMood,setHW,setWD,celebrate,setAutoRotate:(v)=>{autoRot=!!v;}};
 }
