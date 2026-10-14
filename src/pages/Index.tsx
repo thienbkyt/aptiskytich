@@ -15,6 +15,7 @@ import {
 
 import Navbar from "@/components/layout/Navbar";
 import HeroMascots3D from "@/components/mascot/HeroMascots3D";
+import { isWomenDayThemeSeason } from "@/lib/halloween";
 import Footer from "@/components/layout/Footer";
 import LatestBlogSection from "@/components/blog/LatestBlogSection";
 
@@ -93,6 +94,7 @@ const showcasePanels = [
 
 
 const Index = () => {
+  const womenTheme = isWomenDayThemeSeason();
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const forceHome = searchParams.get("home") === "1";
@@ -160,10 +162,14 @@ const Index = () => {
             >
               <motion.div
                 variants={fadeUp} custom={0}
-                className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-primary/25 text-primary text-xs font-semibold mb-8 shadow-sm overflow-hidden"
+                className={`relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-primary/25 text-primary text-xs font-semibold mb-8 shadow-sm overflow-hidden${womenTheme ? " wdl-chip" : ""}`}
               >
-                <Sparkles className="w-3.5 h-3.5" /> Nền tảng luyện thi Aptis có AI chấm điểm
-                <BorderBeam size={120} duration={6} colorFrom="#CC1C01" colorTo="#FEAD5F" />
+                {womenTheme ? (
+                  <>🌸 Chúc mừng ngày Phụ nữ Việt Nam 20/10</>
+                ) : (
+                  <><Sparkles className="w-3.5 h-3.5" /> Nền tảng luyện thi Aptis có AI chấm điểm</>
+                )}
+                <BorderBeam size={120} duration={6} colorFrom={womenTheme ? "#E8476F" : "#CC1C01"} colorTo={womenTheme ? "#FFB37A" : "#FEAD5F"} />
               </motion.div>
 
               <motion.h1
