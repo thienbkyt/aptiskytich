@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { dedupeLatestPerSessionSet } from "@/lib/fullTestDedupe";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toScaledScore, getSkillBand } from "@/data/questions";
@@ -28,7 +29,7 @@ export const useUserFullTestBands = () => {
     (async () => {
       const { data: rows } = await supabase
         .from("test_results")
-        .select("id, full_test_id, full_test_session_id, skill_scores")
+        .select("id, full_test_id, full_test_session_id, skill_scores, exam_set_id, created_at")
         .eq("user_id", user.id)
         .not("full_test_session_id", "is", null);
       // Nguồn điểm Writing/Speaking = bảng kết quả kỹ năng đã lưu (không tính lại).
@@ -57,7 +58,8 @@ export const useUserFullTestBands = () => {
         agg: Map<string, SkillAgg>;
         official: Map<string, OfficialScore>;
       }>();
-      (rows || []).forEach((r: any) => {
+      // Làm lại part trong cùng phiên → chỉ tính lần làm mới nhất của mỗi đề.
+      dedupeLatestPerSessionSet((rows || []) as any[]).forEach((r: any) => {
         const sid = r.full_test_session_id, ftid = r.full_test_id, sk = r.skill_scores?.skill;
         if (!sid || !ftid || !sk) return;
         // Phiên Full Part cũng ghi full_test_session_id — loại ra.
