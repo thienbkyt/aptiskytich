@@ -19,6 +19,8 @@ import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
 import TichTichCorner from "@/components/mascot/TichTichCorner";
 import HalloweenDecor from "@/components/halloween/HalloweenDecor";
+import WomenDayDecor from "@/components/womenday/WomenDayDecor";
+import WomenDayPopup from "@/components/womenday/WomenDayPopup";
 import SupportChatFab from "@/components/support/SupportChatFab";
 import VisitLogger from "@/components/VisitLogger";
 import ReferralCapture from "@/components/referral/ReferralCapture";
@@ -247,6 +249,8 @@ const App = () => (
                 <AICoachFab />
                 <ReportFab />
                 <HalloweenDecor />
+                <WomenDayDecor />
+                <WomenDayPopup />
                 <TichTichCorner />
                 <SupportChatFab />
                 <VisitLogger />
