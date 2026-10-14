@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { latestRowIdsPerSessionSet } from "@/lib/fullTestDedupe";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -378,7 +379,10 @@ const History = () => {
 
         // Full Test grouping
         const sessionMap = new Map<string, FullTestGroup>();
+        // Làm lại part trong cùng phiên → chỉ tính lần làm mới nhất của mỗi đề.
+        const keepFt = latestRowIdsPerSessionSet(merged as any[]);
         for (const r of merged) {
+          if (r.full_test_session_id && !keepFt.has(r.id)) continue;
           // Full Part sessions cũng ghi full_test_session_id + cờ fullPartSession —
           // loại chúng để tab Full Test chỉ còn phiên thi thử thật.
           if (!r.full_test_session_id || r.fullPartSession) continue;
