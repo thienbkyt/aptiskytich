@@ -55,6 +55,8 @@ interface Student {
   user_id: string;
   email: string;
   display_name: string | null;
+  phone?: string | null;
+  gender?: string | null;
   avatar_url: string | null;
   created_at: string;
   last_activity_date: string | null;
@@ -174,10 +176,12 @@ const StudentManager = () => {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return students;
+    const qDigits = q.replace(/\D/g, "");
     return students.filter(
       (s) =>
         s.email.toLowerCase().includes(q) ||
-        (s.display_name ?? "").toLowerCase().includes(q)
+        (s.display_name ?? "").toLowerCase().includes(q) ||
+        (qDigits.length >= 3 && (s.phone ?? "").includes(qDigits))
     );
   }, [students, search]);
 
@@ -187,7 +191,7 @@ const StudentManager = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Tìm theo tên hoặc email..."
+            placeholder="Tìm theo tên, email hoặc SĐT..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -262,6 +266,13 @@ const StudentManager = () => {
                           <div className="text-xs text-muted-foreground truncate">
                             {s.email}
                           </div>
+                          {(s.phone || s.gender) && (
+                            <div className="text-xs text-muted-foreground truncate">
+                              {s.phone ? `📞 ${s.phone}` : ""}
+                              {s.phone && s.gender ? " · " : ""}
+                              {s.gender === "male" ? "Nam" : s.gender === "female" ? "Nữ" : s.gender === "other" ? "Khác" : ""}
+                            </div>
+                          )}
                         </div>
 
                       </div>
