@@ -1810,14 +1810,12 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
       // Telemetry: latency of the LAST gateway call + how many calls were made.
       let writeDurationMs = 0;
       let writeGatewayAttempts = 0;
-      const callGatewayV2 = async (maxTokens: number, repairNote?: string): Promise<Response> => {
-        writeGatewayAttempts += 1;
-        const startedAt = Date.now();
+      // Model thực sự trả kết quả ở lần gọi gần nhất (Claude hoặc Gemini dự phòng) — dùng cho log chi phí.
+      let lastModelV2: string = model;
+
+      const callGeminiV2 = async (maxTokens: number, repairNote: string | undefined, timeoutMs: number): Promise<Response> => {
         const controller = new AbortController();
-        // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
-        // leave room for response serialisation instead of dying mid-write.
-        const timeoutMsV2 = pt === "task4" ? 140_000 : 120_000;
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMsV2);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         try {
           return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
@@ -1841,8 +1839,98 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
             }),
           });
         } finally {
-          writeDurationMs = Date.now() - startedAt;
           clearTimeout(timeoutId);
+        }
+      };
+
+      // ---- Claude (Anthropic) cho Writing, Gemini làm dự phòng ----
+      // Bật khi có secret ANTHROPIC_API_KEY. CLAUDE_WRITING_PARTS="off" để tắt hẳn, hoặc liệt kê part (vd "task1,task2").
+      // Mọi lỗi của Claude (hết tiền, sai key, quá tải, timeout, cắt cụt, không trả tool) → tự gọi Gemini, học viên không bị kẹt.
+      const callClaudeV2 = async (maxTokens: number, repairNote: string | undefined): Promise<Response | null> => {
+        const key = Deno.env.get("ANTHROPIC_API_KEY") || "";
+        const partsCfg = (Deno.env.get("CLAUDE_WRITING_PARTS") || "task1,task2,task3,task4").toLowerCase();
+        if (!key || partsCfg === "off" || !partsCfg.split(",").map((s) => s.trim()).includes(pt)) return null;
+        const g: any = globalThis as any;
+        if (g.__claudeWritingPausedUntil && Date.now() < g.__claudeWritingPausedUntil) return null;
+        const claudeModel = Deno.env.get("CLAUDE_WRITING_MODEL") || "claude-haiku-5-5";
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), pt === "task4" ? 75_000 : 60_000);
+        const pause = (ms: number, why: string) => {
+          g.__claudeWritingPausedUntil = Date.now() + ms;
+          console.warn(`[grade-exam writing_v2] Claude lỗi (${why}) → dùng Gemini, tạm nghỉ Claude ${Math.round(ms / 1000)}s`);
+        };
+        try {
+          const r = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            signal: controller.signal,
+            headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
+            body: JSON.stringify({
+              model: claudeModel,
+              max_tokens: Math.min(maxTokens, 32000),
+              system: [{
+                type: "text",
+                text: `${systemPromptV2}\n\nBẮT BUỘC: trả kết quả bằng cách gọi tool \`submit_writing_grading_v2\` đúng 1 lần, không viết thêm văn bản ngoài tool.`,
+                cache_control: { type: "ephemeral" },
+              }],
+              messages: [{
+                role: "user",
+                content: [
+                  { type: "text", text: userText },
+                  ...(repairNote ? [{ type: "text", text: repairNote }] : []),
+                ],
+              }],
+              tools: [{ name: toolV2.function.name, description: toolV2.function.description || "", input_schema: toolV2.function.parameters }],
+              tool_choice: { type: "auto" },
+            }),
+          });
+          if (!r.ok) {
+            const errText = await r.text().catch(() => "");
+            // Hết tiền / sai key → nghỉ 10 phút; quá tải / rate limit → nghỉ 1 phút.
+            const longPause = r.status === 401 || r.status === 403 || /credit|billing|balance/i.test(errText);
+            pause(longPause ? 10 * 60_000 : 60_000, `${r.status} ${errText.slice(0, 200)}`);
+            return null;
+          }
+          const j: any = await r.json();
+          const tu = (j.content || []).find((c: any) => c.type === "tool_use");
+          if (!tu || j.stop_reason === "max_tokens") {
+            console.warn(`[grade-exam writing_v2] Claude không trả đủ kết quả (stop=${j.stop_reason}) → dùng Gemini`);
+            return null;
+          }
+          const u = j.usage || {};
+          lastModelV2 = `anthropic/${claudeModel}`;
+          // Trả về đúng định dạng gateway cũ để phần xử lý phía sau giữ nguyên.
+          return new Response(JSON.stringify({
+            choices: [{
+              finish_reason: "tool_calls",
+              message: { role: "assistant", content: null, tool_calls: [{ type: "function", function: { name: tu.name, arguments: JSON.stringify(tu.input) } }] },
+            }],
+            usage: {
+              prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0),
+              completion_tokens: u.output_tokens || 0,
+            },
+          }), { status: 200, headers: { "content-type": "application/json" } });
+        } catch (e) {
+          pause(60_000, (e as any)?.name === "AbortError" ? "timeout" : String((e as any)?.message || e));
+          return null;
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
+
+      const callGatewayV2 = async (maxTokens: number, repairNote?: string): Promise<Response> => {
+        writeGatewayAttempts += 1;
+        const startedAt = Date.now();
+        try {
+          const viaClaude = await callClaudeV2(maxTokens, repairNote);
+          if (viaClaude) return viaClaude;
+          lastModelV2 = model;
+          // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
+          // leave room for response serialisation instead of dying mid-write.
+          // Nếu đã tốn thời gian thử Claude thì rút ngắn phần Gemini cho vừa ngân sách.
+          const budget = (pt === "task4" ? 140_000 : 120_000) - (Date.now() - startedAt);
+          return await callGeminiV2(maxTokens, repairNote, Math.max(60_000, budget));
+        } finally {
+          writeDurationMs = Date.now() - startedAt;
         }
       };
 
@@ -1889,7 +1977,7 @@ MỐC THAM CHIẾU: email formal gồm phần lớn câu khuôn, có lỗi "the 
           try { p1GuardFlipsLog = countP1GuardFlips(JSON.parse(choice?.message?.tool_calls?.[0]?.function?.arguments ?? "")); } catch { /* ignore */ }
         }
         logAIUsage({
-          model,
+          model: lastModelV2,
           usage: rawData.usage,
           source_function: "grade-exam",
           finishReason: choice?.finish_reason ?? null,
