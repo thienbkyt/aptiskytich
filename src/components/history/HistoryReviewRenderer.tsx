@@ -196,11 +196,11 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       const mm = (part || "").match(/(\d)/); const num = mm ? parseInt(mm[1], 10) : 1;
       const taskKey = `task${num}`;
       const { data: wqg } = await supabase.from("writing_question_gradings")
-        .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback")
+        .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback,created_at")
         .eq("user_id", userId).eq("test_result_id", testResultId);
       const gr = (wqg || []) as any[];
       const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
-      const match = gr.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) || gr[0];
+      const matchRaw = gr.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) || gr[0];
       const { data: trRow } = await supabase.from("test_results").select("full_test_session_id,review_snapshot,grade_payload").eq("id", testResultId).maybeSingle();
       if (!cancelled) {
         const tr: any = trRow;
@@ -214,10 +214,19 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       }
       const sessionId = (trRow as any)?.full_test_session_id ?? null;
       const snapshotAi = ((trRow as any)?.review_snapshot as any)?.items?.[0]?.ai ?? null;
-      let q = supabase.from("writing_skill_results").select("parts,created_at").eq("user_id", userId);
+      let q = supabase.from("writing_skill_results").select("parts,created_at,updated_at").eq("user_id", userId);
       q = sessionId ? q.eq("full_test_session_id", sessionId) : q.eq("test_result_id", testResultId);
       const { data: wsr } = await q.order("created_at", { ascending: false }).limit(1);
-      const wsrPart = (wsr as any[])?.[0]?.parts?.[taskKey] ?? null;
+      const wsrRow: any = (wsr as any[])?.[0] ?? null;
+      const wsrPart = wsrRow?.parts?.[taskKey] ?? null;
+      // Luyện full-part: nộp part lần đầu (vd bỏ trống câu 1) được chấm ngay vào writing_question_gradings,
+      // sau đó quay lại sửa bài → lúc chốt phiên AI chấm lại bản mới vào writing_skill_results.
+      // Bản chấm phiên mới hơn (≥ 2 phút) và khác nội dung → dùng bản đó thay vì bản chấm lần đầu.
+      const tOf = (s: any) => { const n = Date.parse(String(s || "")); return Number.isFinite(n) ? n : 0; };
+      const wsrTime = Math.max(tOf(wsrRow?.updated_at), tOf(wsrRow?.created_at));
+      const regraded = !!(matchRaw && wsrPart?.feedback && wsrPart.feedback !== matchRaw.feedback &&
+        wsrTime - tOf(matchRaw.created_at) > 2 * 60 * 1000);
+      const match = regraded ? null : matchRaw;
       if (cancelled) return;
       if (!match && !wsrPart && !snapshotAi) { setWritingGrading(null); return; }
       const improvedVersion = wsrPart?.improvedVersion || snapshotAi?.improvedVersion || undefined;
