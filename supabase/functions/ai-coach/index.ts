@@ -296,8 +296,9 @@ Deno.serve(async (req: Request) => {
       for (let i = body.messages.length - 1; i >= 0; i--) if (body.messages[i].role === "user") return i;
       return -1;
     })();
-    const recent = body.messages.slice(-20).map((m, idx) => {
-      const absoluteIdx = body.messages.length - Math.min(body.messages.length, 20) + idx;
+    const msgs = body.messages;
+    const recent = msgs.slice(-20).map((m, idx) => {
+      const absoluteIdx = msgs.length - Math.min(msgs.length, 20) + idx;
       const role = m.role === "assistant" ? "assistant" : "user";
       const text = String(m.content ?? "").slice(0, 4000);
       const isLastUser = absoluteIdx === lastUserIdx;
