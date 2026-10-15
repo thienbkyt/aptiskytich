@@ -343,7 +343,7 @@ function tOverview(C){
   ${card("Quỹ sau khi trả hết nợ",vnd(C.fundAfter),C.expUnpaid?`còn ${vnd(C.expUnpaid)} chưa TT`:"không còn công nợ")}
   ${card("Người dùng mới trong kỳ",num(C.nuR),"đăng ký tài khoản")}
  </div>
- <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${vnd(C.revR)}</b> · ${num(C.ordR)} đơn</span></div>
+ <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${vnd(C.revR)}</b> · ${num(C.ordR)} đơn · màu cột theo gói</span></div>
  <div class="chart"><canvas id="c1"></canvas></div>
  <div class="sec-h"><h2>Lượt truy cập web theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${num(C.visF.reduce((a,x)=>a+ +x.n,0))}</b> · dữ liệu có từ 01/08</span></div>
  <div class="chart"><canvas id="c_vis"></canvas></div>
@@ -354,13 +354,7 @@ function tOverview(C){
  barSm("c_vis",C.visF,C.today,"#2f6ea5","lượt truy cập");
  barSm("c_nu",C.nuF,C.today,"#0e7490","user mới");
  barSm("c_buy",C.buyF,C.today,"#047857","người trả phí");
- mkChart("c1",{type:"bar",
-  data:{labels:show.map(x=>dm(x.d).slice(0,5)),datasets:[{data:show.map(x=>+x.dt),
-   backgroundColor:show.map(x=>x.d===C.today?"#94a3b8":"#1f4e79"),borderRadius:4,maxBarThickness:40}]},
-  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
-   tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+" · "+show[c.dataIndex].n+" đơn"}}},
-   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
-    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});}
+ revDay("c1",show);}
 
 function tKPI(C){
  const KPI=+(C.S["kpi_"+C.curM.replace("-","")]||0);
@@ -414,7 +408,7 @@ function tRevenue(C){
  const planRev=Object.values(C.planAgg).reduce((a,x)=>a+x.dt,0)||1;
  const show=C.dF.slice(-62);
  document.getElementById("body").innerHTML=`
- <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()} · màu cột theo gói, di chuột để xem chi tiết từng gói</span></div>
  <div class="chart"><canvas id="c1"></canvas></div>
  <div class="sec-h"><h2>Số bill theo ngày</h2><span class="tag">${rangeLabel()} · Tổng <b>${num(C.ordR)}</b> bill · màu cột theo gói, di chuột để xem chi tiết từng gói</span></div>
  <div class="chart"><canvas id="c_billday"></canvas></div>
@@ -436,13 +430,7 @@ function tRevenue(C){
    ${C.byHour.map(h=>`<tr><td>${String(h.h).padStart(2,"0")}:00 – ${String(h.h).padStart(2,"0")}:59</td><td class="n">${h.n}</td><td class="n">${vnd(+h.dt)}</td></tr>`).join("")||'<tr><td colspan="3" class="muted">Chưa có dữ liệu</td></tr>'}
    </tbody></table></div>
  </div>`;
- mkChart("c1",{type:"bar",
-  data:{labels:show.map(x=>dm(x.d).slice(0,5)),datasets:[{data:show.map(x=>+x.dt),
-   backgroundColor:show.map(x=>x.d===C.today?"#94a3b8":"#1f4e79"),borderRadius:4,maxBarThickness:40}]},
-  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
-   tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+" · "+show[c.dataIndex].n+" đơn"}}},
-   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
-    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});
+ revDay("c1",show);
  billDay("c_billday",show);}
 
 function tCustomers(C){
@@ -1307,36 +1295,43 @@ function tEvent(C){
  if(rl)rl.onclick=e=>{e.preventDefault();EV=null;render();};
 }
 
-/* ===== BILL THEO NGÀY, MÀU THEO GÓI ===== */
+/* ===== BILL / DOANH THU THEO NGÀY, MÀU THEO GÓI ===== */
 let PD=null;
 const BD_PLANS=[["day","1 ngày","#93c5fd"],["week","1 tuần","#3b82f6"],["month","1 tháng","#1f4e79"],
  ["quarter","3 tháng","#0e7490"],["half_year","6 tháng","#be185d"],["khac","Khác","#f59e0b"]];
-function billDay(id,show){
+function planStack(id,show,metric){
  const known=["day","week","month","quarter","half_year"];
  const days=show.map(x=>x.d);
+ const today=(typeof D!=="undefined"&&D&&D.today)||"";
+ const isRev=metric==="dt";
+ const fade=col=>days.map(d=>d===today?col+"80":col);
  let ds;
  if(PD){
   const map={};
   PD.forEach(x=>{const k=known.indexOf(x.k)>=0?x.k:"khac";const key=x.d+"|"+k;
    const o=map[key]||(map[key]={n:0,dt:0});o.n+=+x.n;o.dt+=+x.dt;});
-  ds=BD_PLANS.map(p=>({label:p[1],backgroundColor:p[2],stack:"s",borderRadius:2,maxBarThickness:40,
-    data:days.map(d=>(map[d+"|"+p[0]]||{}).n||0),dt:days.map(d=>(map[d+"|"+p[0]]||{}).dt||0)}))
-   .filter(s=>s.data.some(v=>v>0));
+  ds=BD_PLANS.map(p=>{const n=days.map(d=>(map[d+"|"+p[0]]||{}).n||0),dt=days.map(d=>(map[d+"|"+p[0]]||{}).dt||0);
+    return{label:p[1],backgroundColor:fade(p[2]),stack:"s",borderRadius:2,maxBarThickness:40,
+     data:isRev?dt:n,nn:n,dd:dt};}).filter(s=>s.nn.some(v=>v>0));
  }else{
-  ds=[{label:"Tất cả gói",backgroundColor:"#1f4e79",stack:"s",borderRadius:2,maxBarThickness:40,
-   data:show.map(x=>+x.n),dt:show.map(x=>+x.dt)}];
+  ds=[{label:"Tất cả gói",backgroundColor:fade("#1f4e79"),stack:"s",borderRadius:2,maxBarThickness:40,
+   data:show.map(x=>isRev?+x.dt:+x.n),nn:show.map(x=>+x.n),dd:show.map(x=>+x.dt)}];
  }
+ const one=(n,dt)=>isRev?vnd(dt)+" · "+num(n)+" bill":num(n)+" bill · "+vnd(dt);
  mkChart(id,{type:"bar",data:{labels:days.map(d=>dm(d).slice(0,5)),datasets:ds},
   options:{responsive:true,maintainAspectRatio:false,
    plugins:{legend:{display:true,labels:{boxWidth:10,font:{size:10.5}}},
     tooltip:{mode:"index",intersect:false,filter:i=>i.parsed.y>0,callbacks:{
-     label:c=>c.dataset.label+": "+num(c.parsed.y)+" bill · "+vnd(c.dataset.dt[c.dataIndex]),
+     title:items=>items.length?items[0].label+(days[items[0].dataIndex]===today?" (hôm nay, chưa hết ngày)":""):"",
+     label:c=>c.dataset.label+": "+one(c.dataset.nn[c.dataIndex],c.dataset.dd[c.dataIndex]),
      footer:items=>{if(!items.length)return"";const i=items[0].dataIndex;let n=0,dt=0;
-      ds.forEach(s=>{n+=s.data[i];dt+=s.dt[i];});return"Tổng: "+num(n)+" bill · "+vnd(dt);}}}},
+      ds.forEach(s=>{n+=s.nn[i];dt+=s.dd[i];});return"Tổng: "+one(n,dt);}}}},
    scales:{x:{stacked:true,grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}},
-    y:{stacked:true,beginAtZero:true,grid:{color:"#f1f5f9"},ticks:{precision:0,font:{size:11}}}}}});
+    y:{stacked:true,beginAtZero:true,grid:{color:"#f1f5f9"},
+     ticks:isRev?{font:{size:11},callback:v=>(v/1e6).toFixed(1)+"tr"}:{precision:0,font:{size:11}}}}}});
 }
-
+function billDay(id,show){planStack(id,show,"n");}
+function revDay(id,show){planStack(id,show,"dt");}
 function render(){
  charts.forEach(c=>c.destroy());charts=[];
  document.getElementById("root").innerHTML=shell();
