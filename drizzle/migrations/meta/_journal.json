@@ -169,6 +169,13 @@
       "when": 1792076659052,
       "tag": "0023_lock_unused_backup_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792077429599,
+      "tag": "0024_lock_remaining_backup_tables",
+      "breakpoints": true
     }
   ]
 }
