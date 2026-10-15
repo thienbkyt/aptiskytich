@@ -33,7 +33,47 @@ async function loadPart(skill: string, like: string) {
   if (e2) throw e2;
   const by = new Map<string, any[]>();
   (qs || []).forEach((q: any) => { if (!by.has(q.exam_set_id)) by.set(q.exam_set_id, []); by.get(q.exam_set_id)!.push(q); });
-  return (sets || []).map((s: any) => ({ ...s, qs: by.get(s.id) || [] }));
+  const all = (sets || []).map((s: any) => ({ ...s, qs: by.get(s.id) || [] }));
+  return hideDuplicateSets(all);
+}
+
+/** Số "Đề NN" trong tiêu đề (không có → xếp cuối). */
+const deNumber = (title: string) => {
+  const m = String(title || "").match(/Đề\s*0*(\d+)/i);
+  return m ? parseInt(m[1], 10) : Number.POSITIVE_INFINITY;
+};
+
+/** Chữ ký nội dung của 1 đề: câu hỏi theo order_index → [question_text, correct_answer, audio_url, (+ sentences/paragraphs/headings nếu có)]. */
+const setSignature = (qs: any[]) =>
+  JSON.stringify(
+    [...qs]
+      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+      .map((q) => {
+        const ed = q.extra_data || {};
+        const extra: any = {};
+        if (ed.sentences !== undefined) extra.sentences = ed.sentences;
+        if (ed.paragraphs !== undefined) extra.paragraphs = ed.paragraphs;
+        if (ed.headings !== undefined) extra.headings = ed.headings;
+        return [q.question_text ?? null, q.correct_answer ?? null, q.audio_url ?? null, extra];
+      }),
+  );
+
+/**
+ * Ẩn đề trùng y hệt nội dung trong cùng 1 part: giữ đề có số "Đề NN" nhỏ nhất.
+ * Đề trùng tên nhưng khác nội dung (khác audio / đáp án) vẫn giữ hết. Chỉ lọc danh sách hiển thị.
+ */
+function hideDuplicateSets(list: any[]) {
+  const keep = new Map<string, any>();
+  for (const s of list) {
+    if (!s.qs.length) continue;
+    const sig = setSignature(s.qs);
+    const cur = keep.get(sig);
+    if (!cur) { keep.set(sig, s); continue; }
+    const a = deNumber(s.title), b = deNumber(cur.title);
+    if (a < b || (a === b && String(s.title).localeCompare(String(cur.title)) < 0)) keep.set(sig, s);
+  }
+  const keptIds = new Set([...keep.values()].map((s) => s.id));
+  return list.filter((s) => !s.qs.length || keptIds.has(s.id));
 }
 
 const HocKey = () => {
