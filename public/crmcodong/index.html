@@ -242,7 +242,7 @@ function barHour(id,rows){
 function shell(){
  const today=D.today,m0=today.slice(0,8)+"01";
  if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=eom(today);}
- const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Thu & Chi"],["review","Đánh giá"],["year","Báo cáo năm"],["hr","Nhân sự"],["nhap","Nhập chi phí"]];
+ const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Thu & Chi"],["review","Đánh giá"],["year","Báo cáo năm"],["hr","Nhân sự"],["nhap","Nhập chi phí"],["event2010","Event 20/10"]];
  return `<div class="sheet">
   <h1>Báo cáo tài chính — Aptis Kỳ Tích</h1>
   <div class="sub">Số liệu trực tiếp từ hệ thống, cập nhật lúc mở trang · Đơn vị VND · Mọi mốc ngày theo giờ Việt Nam
@@ -1187,12 +1187,131 @@ const NX=(()=>{
 })();
 function tNhap(C){NX.mount();}
 
+/* ===== EVENT 20/10 ===== */
+let EV=null,EVERR=null,EVLOADING=false;
+async function evLoad(){
+ EVLOADING=true;
+ try{const t=new URLSearchParams(location.search).get("t");
+  const r=await fetch(SUPABASE_URL+"/rest/v1/rpc/finance_event_2010",{method:"POST",
+   headers:{apikey:ANON_KEY,Authorization:"Bearer "+ANON_KEY,"Content-Type":"application/json"},
+   body:JSON.stringify({p_token:t})});
+  const j=await r.json();
+  if(!r.ok)throw new Error((j&&j.message)||("Lỗi "+r.status));
+  EV=j;EVERR=null;
+ }catch(e){EVERR=e.message||"Lỗi tải dữ liệu";}
+ EVLOADING=false;
+}
+function evChg(a,b){if(!b)return'<span class="muted">—</span>';const v=(a-b)/b;
+ return'<span class="'+(v>=0?'pos':'neg')+'">'+(v>=0?'+':'')+pct(v)+'</span>';}
+function tEvent(C){
+ const b=document.getElementById("body");
+ if(!EV&&!EVERR){
+  b.innerHTML='<div class="insight">Đang tải số liệu chương trình 20/10…</div>';
+  if(!EVLOADING)evLoad().then(()=>{if(TAB==="event2010")render();});
+  return;}
+ if(EVERR){const m=EVERR;EVERR=null;b.innerHTML='<div class="note-box">Không tải được số liệu event: '+m+'</div>';return;}
+ const E=EV,ev=E.ev,bf=E.base_full,ended=E.status==="ended",upcoming=E.status==="upcoming";
+ const cmp=ended?bf:E.base_same;
+ const h=+E.elapsed_hours||0;
+ const cmpLabel=ended?"6 ngày đối chứng 09–14/10":("cùng "+num(h)+" giờ đầu kỳ đối chứng (từ 09/10 00:00)");
+ const W=E.women,F=E.funnel,NR=E.newret,BO=E.bonus,PR=E.profiles;
+ const wShare=ev.rev?W.rev/ev.rev:0;
+ const fRate=F.users?F.users_paid/F.users:0;
+ const st=upcoming?'<b>Chưa bắt đầu</b>':(ended?'<b class="neg">Đã kết thúc</b>':'<b class="pos">Đang chạy</b> · đã qua '+num(h)+'/144 giờ');
+ const planRows=(E.by_plan||[]);
+ const tw={n:0,r:0},to={n:0,r:0};
+ planRows.forEach(p=>{tw.n+=p.w_n;tw.r+=p.w_rev;to.n+=p.o_n;to.r+=p.o_rev;});
+ const oth=E.by_plan_other||{n:0,rev:0};
+ const ratio=(a,bb)=>bb?pct(a/bb):"–";
+ b.innerHTML=
+ '<div class="insight">Chương trình 20/10: <b>'+E.window.start+'</b> → <b>'+E.window.end+'</b> (giờ VN) · '+st
+  +' · cập nhật '+E.as_of+'. Đã loại đơn của tài khoản admin, chỉ tính đơn đã thanh toán.'
+  +' <a href="#" id="evReload" style="color:var(--brand);font-weight:700;margin-left:6px">Tải lại</a></div>'
+
+ +'<div class="sec-h"><h2>Hiệu quả chương trình</h2><span class="tag">% so với '+cmpLabel+'</span></div>'
+ +'<div class="row c4 hero">'
+  +card("Doanh thu event",vnd(ev.rev),evChg(ev.rev,cmp.rev)+' · đối chứng '+vnd(cmp.rev))
+  +card("Số đơn",num(ev.n),evChg(ev.n,cmp.n)+' · đối chứng '+num(cmp.n))
+  +card("ARPU",vnd(ev.arpu),evChg(ev.arpu,cmp.arpu)+' · đối chứng '+vnd(cmp.arpu))
+  +card("Người mua",num(ev.buyers),evChg(ev.buyers,cmp.buyers)+' · đối chứng '+num(cmp.buyers))
+ +'</div>'
+ +'<div class="row c4" style="margin-top:10px">'
+  +card("Đơn ưu đãi nữ",num(W.n)+' đơn',vnd(W.rev)+' · '+num(W.buyers)+' người mua')
+  +card("Tỷ trọng ưu đãi nữ",pct(wShare),'trên tổng doanh thu event')
+  +card("Tiền đã giảm",vnd(W.disc),'giá niêm yết '+vnd(W.list)+(W.list?' · giảm '+pct(W.disc/W.list):''))
+  +card("Tặng 3 ngày Pro",num(BO.n)+' lượt',num(BO.days)+' ngày Pro · '+num(BO.users)+' tài khoản'+(BO.last?' · gần nhất '+BO.last:''))
+ +'</div>'
+
+ +'<div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">cột chồng: ưu đãi nữ / đơn thường · đường: trung bình/ngày kỳ đối chứng ('+vnd(bf.rev/6)+')</span></div>'
+ +'<div class="chart"><canvas id="ev1"></canvas></div>'
+
+ +'<div class="sec-h"><h2>So với kỳ đối chứng</h2><span class="tag">09/10 00:00 → 14/10 23:59:59</span></div>'
+ +'<table><thead><tr><th>Chỉ số</th><th class="n">Event</th><th class="n">Đối chứng cùng thời lượng</th><th class="n">Chênh lệch</th><th class="n">Đối chứng đủ 6 ngày</th></tr></thead><tbody>'
+  +[["Doanh thu","rev",vnd],["Số đơn","n",num],["ARPU","arpu",vnd],["Người mua","buyers",num]].map(r=>
+   '<tr><td>'+r[0]+'</td><td class="n"><b>'+r[2](ev[r[1]])+'</b></td><td class="n">'+r[2](E.base_same[r[1]])+'</td><td class="n">'
+   +evChg(ev[r[1]],E.base_same[r[1]])+'</td><td class="n">'+r[2](bf[r[1]])+'</td></tr>').join("")
+ +'</tbody></table>'
+
+ +'<div class="sec-h"><h2>Theo gói</h2><span class="tag">ưu đãi nữ áp cho gói từ 1 tuần trở lên</span></div>'
+ +'<table><thead><tr><th>Gói</th><th class="n">Giá niêm yết</th><th class="n">Ưu đãi nữ · đơn</th><th class="n">Ưu đãi nữ · doanh thu</th>'
+  +'<th class="n">Thường · đơn</th><th class="n">Thường · doanh thu</th><th class="n">Tổng doanh thu</th></tr></thead><tbody>'
+  +planRows.map(p=>'<tr><td>'+p.label+'</td><td class="n">'+vnd(p.price)+'</td>'
+   +'<td class="n">'+(p.key==="day"?'<span class="muted">không áp</span>':num(p.w_n))+'</td><td class="n">'+(p.key==="day"?'–':vnd(p.w_rev))+'</td>'
+   +'<td class="n">'+num(p.o_n)+'</td><td class="n">'+vnd(p.o_rev)+'</td><td class="n"><b>'+vnd(p.w_rev+p.o_rev)+'</b></td></tr>').join("")
+  +(oth.n?'<tr><td>Gói khác</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">'+num(oth.n)+'</td><td class="n">'+vnd(oth.rev)+'</td><td class="n"><b>'+vnd(oth.rev)+'</b></td></tr>':'')
+  +'<tr class="tot"><td>Tổng</td><td class="n"></td><td class="n">'+num(tw.n)+'</td><td class="n">'+vnd(tw.r)+'</td><td class="n">'+num(to.n+oth.n)+'</td><td class="n">'+vnd(to.r+oth.rev)+'</td><td class="n">'+vnd(tw.r+to.r+oth.rev)+'</td></tr>'
+ +'</tbody></table>'
+
+ +'<div class="split s11" style="margin-top:6px">'
+  +'<div><div class="sec-h"><h2>Phễu ưu đãi nữ</h2><span class="tag">tính theo người, link trong kỳ</span></div>'
+   +'<div class="fn">'
+    +'<div class="fn-row"><div class="fn-lab">Tạo link</div><div class="fn-track"><div class="fn-fill" style="width:100%">'+num(F.users)+' người</div></div><div class="fn-side"><b>'+num(F.links)+'</b> link</div></div>'
+    +'<div class="fn-row"><div class="fn-lab">Đã thanh toán</div><div class="fn-track"><div class="fn-fill" style="width:'+Math.max(fRate*100,F.users_paid?8:0)+'%">'+num(F.users_paid)+' người</div></div><div class="fn-side">hoàn tất <b>'+pct(fRate)+'</b></div></div>'
+   +'</div>'
+   +'<div class="note-box" style="background:var(--soft);border-color:var(--line);color:var(--muted)">Link: '+num(F.links_paid)+' đã trả · '+num(F.links_pending)+' chưa trả (pending) · '
+    +num(F.links_expired)+' hết hạn/lỗi. Link bỏ dở vẫn ở trạng thái pending nên "chưa trả" gồm cả người đã bỏ.</div>'
+  +'</div>'
+  +'<div><div class="sec-h"><h2>Khách mới / quay lại</h2><span class="tag">mới = chưa từng có đơn đã trả trước 15/10</span></div>'
+   +'<table><thead><tr><th>Nhóm</th><th class="n">Người</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">Tỷ trọng</th></tr></thead><tbody>'
+    +'<tr><td>Khách mới</td><td class="n">'+num(NR.new_u)+'</td><td class="n">'+num(NR.new_n)+'</td><td class="n">'+vnd(NR.new_rev)+'</td><td class="n">'+ratio(NR.new_rev,ev.rev)+'</td></tr>'
+    +'<tr><td>Khách quay lại</td><td class="n">'+num(NR.ret_u)+'</td><td class="n">'+num(NR.ret_n)+'</td><td class="n">'+vnd(NR.ret_rev)+'</td><td class="n">'+ratio(NR.ret_rev,ev.rev)+'</td></tr>'
+   +'</tbody></table>'
+   +'<div class="sec-h"><h2>Hồ sơ nữ</h2></div>'
+   +'<table><tbody>'
+    +'<tr><td>Tài khoản giới tính nữ</td><td class="n"><b>'+num(PR.female)+'</b></td></tr>'
+    +'<tr><td>… trong đó có SĐT (đủ điều kiện ưu đãi)</td><td class="n"><b>'+num(PR.female_phone)+'</b></td></tr>'
+    +'<tr><td>… đã mua trong kỳ</td><td class="n"><b>'+num(PR.female_phone_bought)+'</b> ('+ratio(PR.female_phone_bought,PR.female_phone)+')</td></tr>'
+    +'<tr><td>… mua bằng ưu đãi nữ</td><td class="n"><b>'+num(PR.female_phone_bought_women)+'</b></td></tr>'
+   +'</tbody></table>'
+  +'</div>'
+ +'</div>';
+
+ const days=E.by_day||[];
+ const L=days.map(x=>x.d.slice(8,10)+"/"+x.d.slice(5,7));
+ const avg=bf.rev/6;
+ mkChart("ev1",{type:"bar",data:{labels:L,datasets:[
+   {type:"bar",label:"Ưu đãi nữ",data:days.map(x=>x.w_rev),backgroundColor:"#be185d",borderRadius:3,maxBarThickness:46,stack:"s"},
+   {type:"bar",label:"Đơn thường",data:days.map(x=>x.o_rev),backgroundColor:"#1f4e79",borderRadius:3,maxBarThickness:46,stack:"s"},
+   {type:"line",label:"TB/ngày kỳ đối chứng",data:days.map(()=>avg),borderColor:"#94a3b8",borderDash:[5,4],borderWidth:2,pointRadius:0,fill:false}]},
+  options:{responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{display:true,labels:{boxWidth:10,font:{size:10.5}}},
+    tooltip:{callbacks:{label:c=>{const d=days[c.dataIndex];
+      if(c.dataset.type==="line")return"TB/ngày đối chứng: "+vnd(c.parsed.y);
+      return c.dataset.label+": "+vnd(c.parsed.y)+" · "+num(c.datasetIndex===0?d.w_n:d.o_n)+" đơn";},
+     footer:items=>{const d=days[items[0].dataIndex];return"Tổng ngày: "+vnd(d.w_rev+d.o_rev)+" · "+num(d.w_n+d.o_n)+" đơn";}}}},
+   scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},
+    y:{stacked:true,beginAtZero:true,grid:{color:"#f1f5f9"},ticks:{font:{size:10},callback:v=>(v/1e6).toLocaleString("vi-VN")+"tr"}}}}});
+
+ const rl=document.getElementById("evReload");
+ if(rl)rl.onclick=e=>{e.preventDefault();EV=null;render();};
+}
+
 function render(){
  charts.forEach(c=>c.destroy());charts=[];
  document.getElementById("root").innerHTML=shell();
  wire();
  const C=calc();
- ({overview:tOverview,kpi:tKPI,revenue:tRevenue,customers:tCustomers,costs:tCosts,review:tReview,year:tYear,hr:tHR,nhap:tNhap}[TAB]||tOverview)(C);}
+ ({overview:tOverview,kpi:tKPI,revenue:tRevenue,customers:tCustomers,costs:tCosts,review:tReview,year:tYear,hr:tHR,nhap:tNhap,event2010:tEvent}[TAB]||tOverview)(C);}
 
 async function load(){
  const t=new URLSearchParams(location.search).get("t");
