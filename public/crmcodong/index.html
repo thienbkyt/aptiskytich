@@ -737,7 +737,7 @@ function hrCalc(m){
   let luong=0,done=0,plan=0,oc=0;
   rows.forEach(a=>{luong+=unit(a.d);if(a.st==="da_lam")done++;else plan++;if(a.k==="tang_ca")oc++;});
   if(rows.length)luong+=(+s.allow||0);
-  const on=khoan?!!(s.start&&s.start.slice(0,7)<=m):rows.length>0;
+  const on=khoan?!!(s.start&&s.start.slice(0,7)<=m&&(!s.end||s.end.slice(0,7)>=m)):rows.length>0;
   if(khoan)luong=on?+s.base:0;
   const dg=cc?Math.round(((+s.base)*rateAt(m+"-28"))/cc):0;
   const byDay={};rows.forEach(a=>{(byDay[a.d]=byDay[a.d]||[]).push(a);});
@@ -855,6 +855,7 @@ function tHR(C){
       badge = left<0 ? '<span class="pos">Chính thức từ '+dm(addDays(pr,1))+'</span>'
         : (left<=14?'<span style="color:#b45309;font-weight:650">Hết thử việc sau '+left+' ngày</span>'
                    :'<span class="muted">Thử việc</span>');}
+    if(p.s.end&&p.s.end<D.today)badge='<span class="muted">Đã nghỉ từ '+dm(addDays(p.s.end,1))+'</span>';
     return'<tr><td>'+p.s.name+'</td><td>'+(p.s.pos||"–")+'</td><td>'+(p.s.ct||"–")+'</td>'
      +'<td>'+(p.s.sched||"–")+'</td><td>'+(p.s.start?dm(p.s.start):"–")+'</td>'
      +'<td>'+(pr?dm(pr):"–")+'</td><td>'+badge+'</td></tr>';}).join("")
