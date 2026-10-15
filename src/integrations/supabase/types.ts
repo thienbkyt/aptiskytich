@@ -2458,6 +2458,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_l15_order_1510: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_lisp3_bang_20260919: {
         Row: {
           audio_url: string | null
@@ -7164,6 +7215,7 @@ export type Database = {
           allowance_vnd: number
           base_salary_vnd: number
           contract_type: string | null
+          end_date: string | null
           full_name: string
           id: string
           note: string | null
@@ -7181,6 +7233,7 @@ export type Database = {
           allowance_vnd?: number
           base_salary_vnd?: number
           contract_type?: string | null
+          end_date?: string | null
           full_name: string
           id: string
           note?: string | null
@@ -7198,6 +7251,7 @@ export type Database = {
           allowance_vnd?: number
           base_salary_vnd?: number
           contract_type?: string | null
+          end_date?: string | null
           full_name?: string
           id?: string
           note?: string | null
@@ -9770,7 +9824,9 @@ export type Database = {
         }
         Returns: string
       }
+      finance_event_2010: { Args: { p_token: string }; Returns: Json }
       finance_hr: { Args: { p_token: string }; Returns: Json }
+      finance_plan_daily: { Args: { p_token: string }; Returns: Json }
       finance_report: { Args: { p_token: string }; Returns: Json }
       finish_dictation_session: {
         Args: {
