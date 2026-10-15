@@ -450,8 +450,13 @@ const History = () => {
 
         // Full Part grouping
         const fpMap = new Map<string, FullPartGroup>();
+        // Vào lại phiên Full Part dở và làm lại part → 2 lượt cùng đề; chỉ tính lượt mới nhất.
+        const keepFp = latestRowIdsPerSessionSet(
+          (merged as any[]).map((r) => ({ ...r, full_test_session_id: r.fullPartSession ?? null })),
+        );
         for (const r of merged) {
           if (!r.fullPartSession) continue;
+          if (!keepFp.has(r.id)) continue;
           let g = fpMap.get(r.fullPartSession);
           if (!g) {
             g = {
