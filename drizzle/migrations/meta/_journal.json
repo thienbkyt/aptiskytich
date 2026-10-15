@@ -162,6 +162,13 @@
       "when": 1791998158384,
       "tag": "0022_lock_backup_tables_rename_1410_de_thi_3009",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792076659052,
+      "tag": "0023_lock_unused_backup_tables",
+      "breakpoints": true
     }
   ]
 }
