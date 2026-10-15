@@ -2,7 +2,7 @@
  * Cleans AI writing error lists before display:
  * 1) Drops "style suggestion" items (explanation says the student wasn't actually wrong).
  * 2) Moves pure spelling items out of the grammar list into the spelling list.
- * 3) Drops no-op corrections where `corrected` is identical to `original` after normalization.
+ * 3) Drops no-op corrections where `corrected` is identical to `original` (whitespace-normalized; case differences are real errors).
  * Mirrors the server-side sanitizer in the grade-exam function so older stored
  * gradings are displayed correctly too.
  */
@@ -24,12 +24,10 @@ function normalizeText(s: any): string {
 }
 
 function isSameAfterNormalization(a: any, b: any): boolean {
-  const na = normalizeText(a);
-  const nb = normalizeText(b);
-  if (na.toLowerCase() !== nb.toLowerCase()) return false;
-  // Ignore case difference on the very first character only.
-  if (na.length === 0 || nb.length === 0) return na === nb;
-  return na.slice(1) === nb.slice(1);
+  // Chỉ coi là "không sửa gì" khi giống hệt (sau khi gộp khoảng trắng).
+  // Lỗi chỉ khác viết hoa (vd "i" → "I") VẪN là lỗi bị trừ điểm → phải hiện trong danh sách
+  // để học viên biết vì sao bị trừ.
+  return normalizeText(a) === normalizeText(b);
 }
 
 export function isNoOpCorrection(e: any) {
