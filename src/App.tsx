@@ -216,7 +216,7 @@ const App = () => (
                       <Route path="/my-sets" element={<WithDict><MySets /></WithDict>} />
                       <Route path="/key-du-doan" element={<WithDict><KeyPrediction /></WithDict>} />
                       <Route path="/history" element={<History />} />
-                      <Route path="/hoc-key" element={<HocKey />} />
+                      <Route path="/hoc-key" element={<WithDict><HocKey /></WithDict>} />
                       <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
                       <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
                       <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
