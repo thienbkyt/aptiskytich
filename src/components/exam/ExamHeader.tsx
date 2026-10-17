@@ -39,7 +39,7 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
 
   return (
     <>
-      <div className="w-full bg-exam-header text-white px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between sticky top-0 z-30 shrink-0">
+      <div className="exam-header-bar w-full bg-exam-header text-white px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between sticky top-0 z-30 shrink-0">
         <div>
           <p className="text-xs text-white/70">{skillLabel}</p>
           <p className="text-sm font-bold">{partLabel}</p>
