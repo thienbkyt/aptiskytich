@@ -232,6 +232,12 @@ async function buildGradePayload(job: any, payload: any): Promise<any> {
   if (durList.some((n: number) => n > 0)) {
     payload = { ...payload, durations: durList };
   }
+  // Không có chữ nào sau bước tách lời (im lặng / AI trả rỗng) → giữ audio để chấm,
+  // không ép textOnly (trước đây textOnly + transcript rỗng = lỗi vĩnh viễn, học viên mất điểm).
+  const hasText =
+    (Array.isArray(payload?.precomputedTranscripts) && payload.precomputedTranscripts.some((t: any) => String(t ?? "").trim().length > 0))
+    || String(payload?.precomputedFullTranscript ?? "").trim().length > 0;
+  if (!hasText) return payload;
   if (!isLongRecording(payload)) return payload;        // ≤ 60s → keep the audio
 
   const proBandOverride = await peerProBand(job);
