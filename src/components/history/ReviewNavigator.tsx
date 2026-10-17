@@ -35,6 +35,8 @@ interface Props {
   onToggleOnlyWrong: () => void;
   onJump: (pageIdx: number, qIdx: number) => void;
   onClose?: () => void;
+  /** "sheet" = bottom sheet trên điện thoại (ô to, màu nhạt). Mặc định "dock" (máy tính, giữ nguyên). */
+  variant?: "dock" | "sheet";
 }
 
 
@@ -56,7 +58,9 @@ const ReviewNavigator = ({
   onToggleOnlyWrong,
   onJump,
   onClose,
+  variant = "dock",
 }: Props) => {
+  const sheet = variant === "sheet";
 
   // Group pages by skill, preserving pager order.
   const groups: Record<string, number[]> = {};
@@ -92,6 +96,118 @@ const ReviewNavigator = ({
       const parts = [band, meta?.score50 != null ? `${meta.score50}/50` : null].filter(Boolean);
       if (parts.length) aiSummary.push(`${SKILL_LABELS[sk] || sk}: ${parts.join(" · ")}`);
     }
+  }
+
+  if (sheet) {
+    return (
+      <div className="px-4 pb-5 pt-1">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[16px] font-bold text-foreground">Mục lục xem lại</p>
+          {onClose && (
+            <button type="button" onClick={onClose} aria-label="Đóng" className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground">
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+
+        {hasObjective ? (
+          <>
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-emerald-500/10 px-3 py-2 text-[12px] text-muted-foreground">
+                <b className="block text-[18px] text-emerald-700 dark:text-emerald-400">{totalCorrect}</b>câu đúng
+              </div>
+              <div className="rounded-xl bg-rose-500/10 px-3 py-2 text-[12px] text-muted-foreground">
+                <b className="block text-[18px] text-rose-600 dark:text-rose-400">{totalWrong}</b>câu sai
+              </div>
+            </div>
+            <label className="mb-3 flex cursor-pointer select-none items-center justify-between border-y border-border py-2.5 text-[13.5px] font-semibold text-foreground">
+              Chỉ hiện câu sai
+              <span className={cn("relative h-6 w-10 rounded-full transition-colors", onlyWrong ? "bg-exam-accent" : "bg-border")}>
+                <span className={cn("absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow transition-all", onlyWrong ? "left-[19px]" : "left-[3px]")} />
+              </span>
+              <input type="checkbox" checked={onlyWrong} onChange={onToggleOnlyWrong} className="sr-only" />
+            </label>
+          </>
+        ) : aiSummary.length > 0 ? (
+          <div className="mb-3 space-y-1 rounded-xl bg-exam-accent/5 px-3 py-2.5 text-[13px]">
+            {aiSummary.map((t) => (
+              <div key={t} className="font-semibold text-foreground">{t}</div>
+            ))}
+            <div className="text-[12px] text-muted-foreground">Bài chấm AI — không tính đúng/sai từng câu.</div>
+          </div>
+        ) : null}
+
+        <div className="space-y-4">
+          {order.map((sk) => (
+            <div key={sk} className="space-y-3">
+              {groups[sk].map((pi) => {
+                const p = pages[pi];
+                const st = statuses[pi];
+                const scoreItems = st?.items || [];
+                const items = st?.navItems || scoreItems;
+                const partLabel = sk === "reading" ? readingPartLabel(p.part) : p.part || "—";
+                let suffix: string | null = null;
+                if (st?.isAI) {
+                  if (typeof st.aiRaw === "number") suffix = `${st.aiRaw}/30`;
+                } else if (scoreItems.length > 0) {
+                  suffix = `${scoreItems.filter((it) => it.isCorrect === true).length}/${scoreItems.length}`;
+                }
+                return (
+                  <div key={pi}>
+                    <div className="mb-1.5 flex items-baseline justify-between gap-2 text-[12.5px]">
+                      <span className="truncate font-bold text-foreground">
+                        {SKILL_LABELS[sk] || sk} · <span className="font-semibold text-muted-foreground">{partLabel}</span>
+                      </span>
+                      {suffix && <span className="shrink-0 font-semibold text-muted-foreground">{suffix}</span>}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {items.length === 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => onJump(pi, 0)}
+                          className={cn(
+                            "col-span-2 h-10 rounded-[10px] border border-exam-accent/20 bg-exam-accent/10 text-[12px] font-bold text-exam-accent",
+                            currentPage === pi && "outline outline-2 outline-offset-1 outline-exam-accent",
+                          )}
+                        >
+                          Mở
+                        </button>
+                      ) : (
+                        items.map((it, qi) => {
+                          const isCurrent = currentPage === pi && currentQ === qi;
+                          const dim = onlyWrong && !st?.isAI && it.isCorrect !== false;
+                          return (
+                            <button
+                              key={qi}
+                              type="button"
+                              onClick={() => onJump(pi, qi)}
+                              className={cn(
+                                "h-10 rounded-[10px] border text-[13px] font-bold tabular-nums",
+                                st?.isAI
+                                  ? "border-exam-accent/20 bg-exam-accent/10 text-exam-accent"
+                                  : it.isCorrect === true
+                                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                    : it.isCorrect === false
+                                      ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                      : "border-border bg-background text-muted-foreground",
+                                isCurrent && "outline outline-2 outline-offset-1 outline-exam-accent",
+                                dim && "opacity-30",
+                              )}
+                            >
+                              {qi + 1}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (

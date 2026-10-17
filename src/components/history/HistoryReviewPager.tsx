@@ -14,6 +14,10 @@ import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import ReviewNavigator, { type PageStatus, type SkillMeta } from "@/components/history/ReviewNavigator";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
 import { logClientError } from "@/lib/clientErrorLog";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import {
+  MobileReviewBottomBar, MobileReviewSheet, MobileReviewTopBar, splitPartLabel, type SegState,
+} from "@/components/review-mobile/MobileReviewChrome";
 
 
 export interface ReviewPage {
@@ -64,6 +68,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const [skillMeta, setSkillMeta] = useState<Record<string, SkillMeta>>({});
   const [onlyWrong, setOnlyWrong] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const phone = usePhoneExamUI();
 
 
   const current = pages[pageIdx];
@@ -71,10 +76,13 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   // Toggle body class so engine-internal exam controls hide via CSS.
   useEffect(() => {
     document.body.classList.add("history-review-mode");
+    // Điện thoại: thanh trên của màn xem lại thay cho thanh tím ExamHeader (ẩn qua CSS).
+    if (phone) document.body.classList.add("kt-review-phone");
     return () => {
       document.body.classList.remove("history-review-mode");
+      document.body.classList.remove("kt-review-phone");
     };
-  }, []);
+  }, [phone]);
 
   // Bulk-fetch page statuses (correctness per question) — snapshot-first, then
   // fall back to exam_question_results.is_correct. Only status data, no heavy content.
@@ -522,6 +530,83 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       </>
     );
 
+
+  if (phone) {
+    const { short: partShort, sub: partSub } = splitPartLabel(displayPart);
+    const st = statuses[pageIdx];
+    const segItems = st?.navItems || st?.items || [];
+    let segments: SegState[] | undefined;
+    if (!st?.isAI && segItems.length > 1 && segItems.length === partPageCount) {
+      segments = segItems.map((it) => (it.isCorrect === true ? "ok" : it.isCorrect === false ? "no" : "neutral"));
+    } else if (partPageCount > 1) {
+      segments = Array.from({ length: partPageCount }, () => "neutral" as SegState);
+    }
+    const sameSkill = pages
+      .map((p, i) => ({ p, i }))
+      .filter(({ p }) => p.skill === current.skill);
+    const chips = sameSkill.map(({ p, i }) => {
+      const lbl = splitPartLabel(p.skill === "reading" ? readingPartLabel(p.part) : p.part).short || `Phần ${i + 1}`;
+      const raw = statuses[i]?.isAI && typeof statuses[i]?.aiRaw === "number" ? ` · ${statuses[i]?.aiRaw}` : "";
+      return { key: i, label: `${lbl}${raw}`, active: i === pageIdx, onClick: () => handleJump(i, 0) };
+    });
+    const objectiveWrong = Object.values(statuses).reduce(
+      (n, s2) => n + (s2 && !s2.isAI ? (s2.items || []).filter((it) => it.isCorrect === false).length : 0),
+      0,
+    );
+    const hasObjective = Object.values(statuses).some((s2) => s2 && !s2.isAI && (s2.items || []).length > 0);
+    const nextLabel = atLast
+      ? "Hoàn tất"
+      : qIdx < partPageCount - 1
+        ? "Câu sau"
+        : "Phần sau";
+    const count = partPageCount > 1
+      ? `${qIdx + 1}/${partPageCount}`
+      : pages.length > 1 ? `${pageIdx + 1}/${pages.length}` : null;
+
+    return (
+      <div className="min-h-screen bg-muted/40">
+        <MobileReviewTopBar
+          title={partShort ? `${skillLabel} · ${partShort}` : skillLabel}
+          subtitle={[partSub, current.testTitle].filter(Boolean).join(" · ")}
+          count={count}
+          onClose={onExit}
+          chips={chips}
+          segments={segments}
+          currentSeg={qIdx}
+        />
+        <div key={fadeKey} className="pb-28 animate-in fade-in duration-200">
+          <ReviewErrorBoundary label="Phần này của bài xem lại gặp lỗi hiển thị">
+            {body}
+          </ReviewErrorBoundary>
+        </div>
+        <MobileReviewBottomBar
+          onPrev={handlePrev}
+          onNext={handleNext}
+          onMenu={() => setDrawerOpen(true)}
+          prevDisabled={atFirst || noWrongAvailable}
+          nextDisabled={noWrongAvailable}
+          nextLabel={nextLabel}
+          menuHint={hasObjective ? `${objectiveWrong} sai` : pages.length > 1 ? `${pages.length} phần` : null}
+        />
+        {drawerOpen && (
+          <MobileReviewSheet onClose={() => setDrawerOpen(false)}>
+            <ReviewNavigator
+              variant="sheet"
+              pages={pages}
+              statuses={statuses}
+              skillMeta={skillMeta}
+              currentPage={pageIdx}
+              currentQ={qIdx}
+              onlyWrong={onlyWrong}
+              onToggleOnlyWrong={() => setOnlyWrong((v) => !v)}
+              onJump={handleJump}
+              onClose={() => setDrawerOpen(false)}
+            />
+          </MobileReviewSheet>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

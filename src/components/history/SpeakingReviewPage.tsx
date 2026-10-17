@@ -26,6 +26,7 @@ import GradingFailedRetryBox from "@/components/history/GradingFailedRetryBox";
 import ReviewKyTichPanel from "@/components/showcase/ReviewKyTichPanel";
 import SignedImage from "@/components/exam/SignedImage";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
 
 interface Props {
   userId: string;
@@ -124,6 +125,7 @@ const SpeakingReviewPage = ({
   const [reviewImages, setReviewImages] = useState<ReviewImages>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const phone = usePhoneExamUI();
 
   useEffect(() => {
     if (!loading) onQuestionCount?.(v2Part ? 1 : promptCount);
@@ -483,7 +485,7 @@ const SpeakingReviewPage = ({
     return (
       <div className="min-h-screen bg-muted flex flex-col">
         {skillHeader}
-        <div className="flex-1 px-4 py-6 max-w-3xl mx-auto w-full">
+        <div className={phone ? "flex-1 px-3 py-3 w-full" : "flex-1 px-4 py-6 max-w-3xl mx-auto w-full"}>
           <SpeakingReviewImages images={reviewImages} />
           <SpeakingProfileView
             bands={v2Part.bands || { tf: "", gra: "", vra: "", pro: "", fc: "" }}
@@ -506,13 +508,14 @@ const SpeakingReviewPage = ({
   return (
     <div className="min-h-screen bg-muted flex flex-col">
       {skillHeader}
-      <div className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
+      <div className={phone ? "flex-1 px-3 py-3 w-full" : "flex-1 px-4 py-6 max-w-6xl mx-auto w-full"}>
         <GradingFailedRetryBox
           testResultId={testResultId}
           skill="speaking"
           hasResult={!!v2Part || gradings.some(Boolean)}
         />
-        <SpeakingReviewImages images={reviewImages} />
+        {/* Điện thoại: ảnh đề đã nằm trong thẻ câu hỏi của bản mobile */}
+        {!phone && <SpeakingReviewImages images={reviewImages} />}
         <SpeakingReviewView
           partType={partType}
           part1Data={part1Data}
