@@ -25,7 +25,7 @@ import GradientText from "@/components/ui/gradient-text";
 import GlowCard from "@/components/ui/glow-card";
 import StatPill from "@/components/dashboard/StatPill";
 import AiQuotaPill from "@/components/dashboard/AiQuotaPill";
-import GoalCountdownCard from "@/components/dashboard/GoalCountdownCard";
+import LearningPathCard from "@/components/learning-path/LearningPathCard";
 import TodayPlanCard from "@/components/dashboard/TodayPlanCard";
 
 import TierPill from "@/components/dashboard/TierPill";
@@ -629,8 +629,8 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* GOAL & EXAM COUNTDOWN */}
-          <GoalCountdownCard />
+          {/* LỘ TRÌNH KỲ TÍCH (gộp mục tiêu + đếm ngược ngày thi) */}
+          <LearningPathCard />
           <TodayPlanCard />
 
 
