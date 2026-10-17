@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { BookOpen, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { PATH_SKILLS, SKILL_VI, STEP_ORDER, type LearningPathData, type PathSkill, type StepKey } from "@/hooks/useLearningPath";
 import { STEP_LABEL, ddmm, examKeyOpenDate, stepState } from "./pathText";
 import { NextItem, TierBars } from "./PathBits";
+import PathGuideDialog from "./PathGuideDialog";
 
 const GLYPH: Record<StepKey, string> = {
   goal: "1", placement: "2", reading: "R", listening: "L", writing: "W", speaking: "S", examKey: "🔑", finish: "🏁",
@@ -18,7 +20,10 @@ interface Props {
 }
 
 /** Màn "Lộ trình của bạn": dòng thời gian 8 bước, từng kỹ năng chia Cao/Vừa/Thấp. */
-const LearningPathDialog = ({ open, onOpenChange, data: d, onEditGoal }: Props) => (
+const LearningPathDialog = ({ open, onOpenChange, data: d, onEditGoal }: Props) => {
+  const [guideOpen, setGuideOpen] = useState(false);
+  return (
+  <>
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[92dvh] w-[calc(100vw-16px)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl p-4 sm:p-6">
       <DialogHeader className="text-left">
@@ -29,6 +34,16 @@ const LearningPathDialog = ({ open, onOpenChange, data: d, onEditGoal }: Props) 
           </span>
         </DialogTitle>
       </DialogHeader>
+
+      <button
+        type="button"
+        onClick={() => setGuideOpen(true)}
+        className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-primary/15 bg-primary/[0.04] px-3 py-2 text-left transition-colors hover:bg-primary/[0.08]"
+      >
+        <BookOpen className="h-4 w-4 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-[12.5px] text-foreground/80">8 bước ôn từ nay tới ngày thi</span>
+        <span className="shrink-0 text-xs font-bold text-primary">Đọc hướng dẫn ›</span>
+      </button>
 
       <ol className="mt-1">
         {STEP_ORDER.map((k, i) => {
@@ -118,6 +133,9 @@ const LearningPathDialog = ({ open, onOpenChange, data: d, onEditGoal }: Props) 
       </ol>
     </DialogContent>
   </Dialog>
-);
+  <PathGuideDialog open={guideOpen} onOpenChange={setGuideOpen} />
+  </>
+  );
+};
 
 export default LearningPathDialog;
