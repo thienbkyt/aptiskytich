@@ -233,8 +233,9 @@ export function useLearningPath(): LearningPathData {
         .filter((v, i, a) => a.indexOf(v) === i)
         .filter((l) => bySkill.has(l))
         .map((l) => ({ label: l, value: bySkill.get(l)! }));
-      const d = new Date(same[same.length - 1].created_at);
-      const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", timeZone: "Asia/Ho_Chi_Minh" });
+      // Ngày theo giờ VN, dạng dd/mm
+      const vn = new Date(new Date(same[same.length - 1].created_at).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+      const date = `${vn.slice(8, 10)}/${vn.slice(5, 7)}`;
       return { date, chips } as PlacementInfo;
     },
   });
