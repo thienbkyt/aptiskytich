@@ -1343,6 +1343,63 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
         });
       }
 
+      // ── Bài để trống / chỉ chép lại đề → 0 điểm ngay, không gọi AI ─────────
+      // Trước đây AI trả improvedVersion rỗng → bị coi là "chưa hoàn chỉnh" → job thử 6 lần rồi failed,
+      // cả bài thi không ra điểm tổng. Part 1 chỉ xét trống (câu trả lời 1–5 từ dễ trùng từ của đề).
+      {
+        const wcB = (x: string) => (String(x || "").trim().match(/\S+/g) || []).length;
+        const answersOf = (): string[] =>
+          pt === "task1" ? (partsIn.shortAnswers || []).map((a: any) => String(a ?? ""))
+          : pt === "task3" ? (partsIn.threeAnswers || []).map((a: any) => String(a ?? ""))
+          : pt === "task4" ? [String(partsIn.informalText ?? ""), String(partsIn.formalText ?? "")]
+          : [studentText];
+        let answers = answersOf();
+        // Payload cũ chỉ có `text` gộp (parts rỗng) → dùng text, bỏ nhãn "Q1:", "Informal Email:", "Formal Email:".
+        if (!answers.some((a) => a.trim()) && studentText.trim()) answers = [studentText];
+        const stripLabels = (s: string) => s
+          .replace(/\b(Q|Câu|Question)\s*\d+\s*[:.)]/gi, " ")
+          .replace(/\b(Informal|Formal)\s+Email\s*:/gi, " ");
+        const tokens = (s: string) => (s.toLowerCase().normalize("NFC").match(/[\p{L}\p{N}']+/gu) || []);
+        const ansTokens = answers.flatMap((a) => tokens(stripLabels(a)));
+        let blankReason: "" | "empty" | "copied" = ansTokens.length === 0 ? "empty" : "";
+        if (!blankReason && pt !== "task1") {
+          const qVocab = new Set(tokens(qs.join(" ")));
+          const novel = ansTokens.filter((t) => !qVocab.has(t));
+          if (new Set(novel).size < 3) blankReason = "copied";
+        }
+        if (blankReason) {
+          const why = blankReason === "empty"
+            ? "Bạn chưa viết câu trả lời cho phần này"
+            : "Bài làm chỉ chép lại đề bài, chưa có câu trả lời của bạn";
+          const zeroBands = { tf: 0, gra: 0, vra: 0, cc: 0, reg: 0 };
+          const perItem = pt === "task1"
+            ? qs.slice(0, 5).map((q, i) => ({ questionText: q, userAnswer: answers[i] ?? "", tfContent: 0, tfTask: 0 }))
+            : pt === "task4"
+            ? [
+                { questionText: "Informal email", userAnswer: answers[0] ?? "", wordCount: wcB(answers[0] ?? ""), minReq: 40, maxReq: 50, tfCap: 0, tfContent: 0, tfTask: 0, flagOver: false, bands: zeroBands },
+                { questionText: "Formal email", userAnswer: answers[1] ?? "", wordCount: wcB(answers[1] ?? ""), minReq: 120, maxReq: 150, tfCap: 0, tfContent: 0, tfTask: 0, flagOver: false, bands: zeroBands },
+              ]
+            : pt === "task3"
+            ? [0, 1, 2].map((i) => ({ questionText: qs[i] ?? "", userAnswer: answers[i] ?? "", wordCount: wcB(answers[i] ?? ""), minReq: 30, maxReq: 40, tfCap: 0, tfContent: 0, tfTask: 0, flagOver: false }))
+            : [{ questionText: qs.join("\n"), userAnswer: studentText, wordCount: wcB(studentText), minReq: 20, maxReq: 30, tfCap: 0, tfContent: 0, tfTask: 0, flagOver: false }];
+          return new Response(JSON.stringify({
+            bands: zeroBands,
+            rawPart: 0,
+            raw_part: 0,
+            perItem,
+            analysis: `${why} — không có nội dung để chấm.`,
+            criteriaAnalysis: { tf: "", gra: "", vra: "", cc: "", reg: "" },
+            grammarErrors: [],
+            spellingErrors: [],
+            feedback: `**Hoàn thành nhiệm vụ**\n${why}, nên phần này được 0 điểm. Hãy tự viết câu trả lời của mình theo đúng yêu cầu và số từ của đề.`,
+            improvedVersion: "",
+            forcedComplexity: false,
+            scoringVersion: WRITING_SCORING_VERSION,
+            blankSubmission: blankReason,
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
       // Tier gate — skip on internal worker retries.
       let wouldUseCredit = false;
       if (userId && !isInternal) {
