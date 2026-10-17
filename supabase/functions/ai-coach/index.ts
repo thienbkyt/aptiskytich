@@ -8,6 +8,7 @@
 
 import { requireUser } from "../_shared/auth.ts";
 import { enforceDailyQuota } from "../_shared/quota.ts";
+import { aiChatFetch } from "../_shared/aiChat.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -241,11 +242,32 @@ async function logUsage(userId: string, model: string, eventType: string, metada
 }
 
 // ---------- Streaming with tool loop ----------
-async function callGateway(payload: any, apiKey: string) {
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(payload),
+// Câu hỏi chữ: Claude trước, lỗi/hết tiền → Gemini. Câu hỏi có ảnh: giữ Gemini Pro (đọc ảnh đề đã kiểm chứng).
+async function callGateway(payload: any, _apiKey: string, skipClaude = false) {
+  return aiChatFetch(payload, { source: "ai-coach", claudeTimeoutMs: 45_000, skipClaude: skipClaude || !!payload.stream });
+}
+
+function sseFromText(finalText: string) {
+  return new ReadableStream({
+    start(controller) {
+      const enc = new TextEncoder();
+      // Emit in chunks of ~40 chars to feel streamed
+      const chunkSize = 40;
+      let i = 0;
+      const tick = () => {
+        if (i >= finalText.length) {
+          controller.enqueue(enc.encode("data: [DONE]\n\n"));
+          controller.close();
+          return;
+        }
+        const chunk = finalText.slice(i, i + chunkSize);
+        i += chunkSize;
+        const payload = { choices: [{ delta: { content: chunk } }] };
+        controller.enqueue(enc.encode(`data: ${JSON.stringify(payload)}\n\n`));
+        setTimeout(tick, 12);
+      };
+      tick();
+    },
   });
 }
 
@@ -344,7 +366,8 @@ Deno.serve(async (req: Request) => {
     while (toolRounds < maxRounds) {
       const payload: any = { model, stream: false, messages };
       if (useTools) { payload.tools = TOOL_DEFS; payload.tool_choice = "auto"; }
-      const probe = await callGateway(payload, LOVABLE_API_KEY);
+      const probe = await callGateway(payload, LOVABLE_API_KEY, hasImage);
+      const usedModel = probe.headers.get("x-ai-model") || model;
       if (!probe.ok) {
         const text = await probe.text().catch(() => "");
         const status = probe.status === 429 || probe.status === 402 ? probe.status : 400;
@@ -362,28 +385,8 @@ Deno.serve(async (req: Request) => {
         // No tool needed: stream final answer (re-request streaming so tokens flow to client)
         // To avoid double-billing, we just stream the already-generated text via SSE.
         const finalText: string = choice?.content || "";
-        const sse = new ReadableStream({
-          start(controller) {
-            const enc = new TextEncoder();
-            // Emit in chunks of ~40 chars to feel streamed
-            const chunkSize = 40;
-            let i = 0;
-            const tick = () => {
-              if (i >= finalText.length) {
-                controller.enqueue(enc.encode("data: [DONE]\n\n"));
-                controller.close();
-                return;
-              }
-              const chunk = finalText.slice(i, i + chunkSize);
-              i += chunkSize;
-              const payload = { choices: [{ delta: { content: chunk } }] };
-              controller.enqueue(enc.encode(`data: ${JSON.stringify(payload)}\n\n`));
-              setTimeout(tick, 12);
-            };
-            tick();
-          },
-        });
-        logUsage(userId, model, "chat", { toolsUsed, hasImage, longContext, messageCount: body.messages.length });
+        const sse = sseFromText(finalText);
+        logUsage(userId, usedModel, "chat", { toolsUsed, hasImage, longContext, messageCount: body.messages.length });
         return new Response(sse, {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
@@ -407,8 +410,22 @@ Deno.serve(async (req: Request) => {
       toolRounds++;
     }
 
-    // Fallback: stream after tool exhaustion
-    const final = await callGateway({ model, stream: true, messages }, LOVABLE_API_KEY);
+    // Hết vòng tool: thử Claude (không stream) rồi tự chia nhỏ gửi về; Claude lỗi → Gemini stream như cũ.
+    if (!hasImage) {
+      const done = await callGateway({ model, stream: false, messages }, LOVABLE_API_KEY);
+      if (done.ok && done.headers.get("x-ai-provider") === "claude") {
+        const dj = await done.json().catch(() => null);
+        const txt: string = dj?.choices?.[0]?.message?.content || "";
+        if (txt) {
+          logUsage(userId, done.headers.get("x-ai-model") || model, "chat", { toolsUsed, hasImage, longContext, fallback: true });
+          return new Response(sseFromText(txt), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
+          });
+        }
+      }
+    }
+    const final = await callGateway({ model, stream: true, messages }, LOVABLE_API_KEY, true);
     if (!final.ok || !final.body) {
       const text = await final.text().catch(() => "");
       return new Response(JSON.stringify({ error: `AI Gateway lỗi: ${text.slice(0, 200)}` }), {
