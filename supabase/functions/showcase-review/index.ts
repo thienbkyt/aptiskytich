@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
+import { aiChatFetch } from "../_shared/aiChat.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -138,24 +139,20 @@ serve(async (req) => {
       `reason: 1 câu ngắn tiếng Việt nêu lý do trượt (rỗng nếu đạt).`,
     ].join("\n\n");
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "Bạn trả về JSON thuần, không markdown, không giải thích thêm.",
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+    // Claude trước, lỗi/hết tiền → model cũ qua Gateway (xem _shared/aiChat.ts)
+    const res = await aiChatFetch({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: "Bạn trả về JSON thuần, không markdown, không giải thích thêm.",
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 4000,
+      response_format: { type: "json_object" },
+    }, { source: "showcase-review", claudeTimeoutMs: 45_000 });
+    const usedModel = res.headers.get("x-ai-model") || MODEL;
 
     if (!res.ok) {
       const text = await res.text();
@@ -166,7 +163,7 @@ serve(async (req) => {
 
     const data = await res.json();
     void logAIUsage({
-      model: MODEL,
+      model: usedModel,
       usage: data?.usage,
       source_function: "showcase-review",
       finishReason: data?.choices?.[0]?.finish_reason ?? null,
@@ -207,7 +204,7 @@ serve(async (req) => {
       approved_similarity: approvedSim,
       inappropriate: parsed.inappropriate ?? null,
       words,
-      model: MODEL,
+      model: usedModel,
       checked_at: new Date().toISOString(),
     };
 
