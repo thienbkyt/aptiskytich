@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { aiChatFetch } from "../_shared/aiChat.ts";
+import { logAIUsage } from "../_shared/usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,21 +135,16 @@ Return ONLY valid JSON with this exact shape:
   "part4Evidence": { "p4-e<paragraph index>": "<exact verbatim sentence from that paragraph, or empty string>", ... }
 }`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You output strict JSON only. No prose, no markdown fences." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+    // Claude trước, lỗi/hết tiền → Gemini (xem _shared/aiChat.ts)
+    const aiRes = await aiChatFetch({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: "You output strict JSON only. No prose, no markdown fences." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 12000,
+      response_format: { type: "json_object" },
+    }, { source: "translate-review", claudeTimeoutMs: 60_000 });
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
@@ -158,6 +155,13 @@ Return ONLY valid JSON with this exact shape:
     }
 
     const aiJson = await aiRes.json();
+    logAIUsage({
+      model: aiRes.headers.get("x-ai-model") || "google/gemini-2.5-flash",
+      usage: aiJson?.usage,
+      source_function: "translate-review",
+      finishReason: aiJson?.choices?.[0]?.finish_reason ?? null,
+      metadata: { exam_set_id: body.exam_set_id },
+    }).catch(() => {});
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
     let parsed: { translations?: Record<string, string>; part3Evidence?: Record<string, { person: string; sentence: string }>; part4Evidence?: Record<string, string> } = {};
     try {
