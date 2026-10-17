@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createHash } from "node:crypto";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
+import { aiChatFetch } from "../_shared/aiChat.ts";
 import { requireUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -114,23 +115,21 @@ serve(async (req) => {
 
     const model = "google/gemini-2.5-flash-lite";
 
+    // Claude trước, lỗi/hết tiền → Gemini (xem _shared/aiChat.ts)
     const callModel = async (system: string) => {
-      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: trimmed },
-          ],
-          temperature: 0,
-          max_tokens: 1024,
-        }),
-      });
-      if (!r.ok) return { status: r.status, text: "", raw: await r.text() };
+      const r = await aiChatFetch({
+        model,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: trimmed },
+        ],
+        temperature: 0,
+        max_tokens: 1024,
+      }, { source: "translate-text", claudeTimeoutMs: 20_000 });
+      const usedModel = r.headers.get("x-ai-model") || model;
+      if (!r.ok) return { status: r.status, text: "", raw: await r.text(), usedModel, usage: undefined };
       const j = await r.json();
-      return { status: 200, text: String(j.choices?.[0]?.message?.content || "").trim(), raw: "" };
+      return { status: 200, text: String(j.choices?.[0]?.message?.content || "").trim(), raw: "", usedModel, usage: j.usage };
     };
 
     let res = await callModel(TRANSLATOR_SYSTEM);
@@ -156,7 +155,7 @@ serve(async (req) => {
     }
 
     supabase.from("sentence_translation_cache").upsert({ text_hash: textHash, source_text: trimmed, translation_vi: full }, { onConflict: "text_hash" }).then(({ error }) => { if (error) console.error("Cache write error:", error); });
-    logAIUsage({ model, usage: undefined, source_function: "translate-text", metadata: { len: trimmed.length, streamed: false } }).catch(() => {});
+    logAIUsage({ model: res.usedModel, usage: res.usage, source_function: "translate-text", metadata: { len: trimmed.length, streamed: false } }).catch(() => {});
 
     const outStream = new ReadableStream({
       start(c) {
