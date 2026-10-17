@@ -176,6 +176,13 @@
       "when": 1792077429599,
       "tag": "0024_lock_remaining_backup_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792229709591,
+      "tag": "0025_lock_backup_gv01_q1_1610",
+      "breakpoints": true
     }
   ]
 }
