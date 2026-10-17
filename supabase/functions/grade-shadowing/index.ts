@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { requireUser } from "../_shared/auth.ts";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
+import { aiChatFetch } from "../_shared/aiChat.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -293,11 +294,10 @@ async function fetchIpa(words: string[]): Promise<Record<string, string>> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 20_000);
   try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // IPA là việc chữ thuần → Claude trước, lỗi → Gemini. (Phần chép lời từ âm thanh vẫn dùng Gemini.)
+    const resp = await aiChatFetch({
         model: MODEL,
+        max_tokens: 2000,
         temperature: 0,
         messages: [
           {
@@ -313,13 +313,11 @@ async function fetchIpa(words: string[]): Promise<Record<string, string>> {
         ],
         tools: [IPA_TOOL],
         tool_choice: { type: "function", function: { name: "submit_ipa" } },
-      }),
-      signal: controller.signal,
-    });
+    }, { source: "grade-shadowing-ipa", claudeTimeoutMs: 15_000, signal: controller.signal });
     if (!resp.ok) return {};
     const data = await resp.json();
     logAIUsage({
-      model: MODEL,
+      model: resp.headers.get("x-ai-model") || MODEL,
       usage: data?.usage,
       source_function: "grade-shadowing-ipa",
       finishReason: data?.choices?.[0]?.finish_reason ?? null,
