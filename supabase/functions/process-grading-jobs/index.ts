@@ -691,10 +691,19 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking", body:
   const partsPayload: Record<string, any> = {};
   for (const k of partKeys) partsPayload[k] = { rawPart: rawParts[k] };
 
+  // Gắn kết quả cả kỹ năng vào dòng của PART CUỐI (part 4) chứ không phải dòng của job vừa chạy xong.
+  // Trước đây nếu part 1–3 được chấm lại sau part 4, dòng part đó bị ghi đè thành điểm /50 và mất điểm part.
+  const lastKey = partKeys[partKeys.length - 1];
+  const lastRow: any =
+    partRows.find((r: any) => {
+      const snap = r?.review_snapshot || {};
+      return String(snap?.part ?? snap?.raw?.partType ?? "").trim() === lastKey;
+    }) ?? partRows[partRows.length - 1];
+  const targetId = lastRow?.id ?? job.test_result_id;
   const { error: srErr } = await admin.from(skillTable).upsert({
     user_id: job.user_id,
-    test_result_id: job.test_result_id,
-    exam_set_id: meta.examSetId ?? null,
+    test_result_id: targetId,
+    exam_set_id: lastRow?.exam_set_id ?? meta.examSetId ?? null,
     full_test_session_id: sessionId,
     parts: partsPayload,
     raw_total: rawTotal,
@@ -711,7 +720,7 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking", body:
     total: 50,
     correct_answers: scale50,
     level: cefr,
-  } as any).eq("id", job.test_result_id);
+  } as any).eq("id", targetId);
 }
 
 async function persistJobResult(job: any, body: any) {
