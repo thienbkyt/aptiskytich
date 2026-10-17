@@ -17,6 +17,8 @@ import PronunciationPractice from "@/components/insights/PronunciationPractice";
 import ErrorTrendsCard from "@/components/insights/ErrorTrendsCard";
 import { asArray, type InsightError } from "@/components/insights/errorCategories";
 import { normPron } from "@/components/insights/SpeakingInsights";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import SpeakingProfileMobile from "@/components/review-mobile/SpeakingProfileMobile";
 
 const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; vi: string }> = [
   { key: "tf", vi: "Nội dung" },
@@ -99,6 +101,25 @@ const SpeakingProfileView = ({
   const hasCriteriaAnalysis =
     !!criteriaAnalysis &&
     CRITERIA.some((c) => (criteriaAnalysis as any)[c.key]?.toString().trim());
+
+  const phone = usePhoneExamUI();
+  // Điện thoại: bố cục gọn riêng. Máy tính giữ nguyên bên dưới.
+  if (phone) {
+    return (
+      <SpeakingProfileMobile
+        rows={rows as any}
+        criteriaAnalysis={criteriaAnalysis as any}
+        analysis={analysis}
+        items={items}
+        scale50={scale50}
+        cefr={cefr}
+        partLabel={partLabel}
+        fullTranscript={fullTranscript}
+        sampleAnswers={sampleAnswers}
+        sharedSample={sharedSample}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

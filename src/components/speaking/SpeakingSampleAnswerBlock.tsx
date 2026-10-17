@@ -8,6 +8,8 @@ interface Props {
   note?: string;
   /** Mở sẵn (dùng trong khung Bảng Kỳ Tích & bài mẫu). */
   defaultOpen?: boolean;
+  /** Giao diện gọn cho màn xem lại trên điện thoại (tab dạng segmented). */
+  compact?: boolean;
 }
 
 /**
@@ -15,7 +17,7 @@ interface Props {
  * screens (never while the student is still speaking). Renders nothing when
  * the question has no sample answer in exam_questions.extra_data.
  */
-const SpeakingSampleAnswerBlock = ({ pair, note, defaultOpen = false }: Props) => {
+const SpeakingSampleAnswerBlock = ({ pair, note, defaultOpen = false, compact = false }: Props) => {
   const basic = (pair?.basic || "").trim();
   const advanced = (pair?.advanced || "").trim();
   const [open, setOpen] = useState(defaultOpen);
@@ -36,6 +38,50 @@ const SpeakingSampleAnswerBlock = ({ pair, note, defaultOpen = false }: Props) =
         ? "bg-exam-accent text-exam-accent-foreground border-exam-accent"
         : "bg-card text-muted-foreground border-border hover:border-foreground/20"
     }`;
+
+  if (compact) {
+    const seg = (active: boolean) =>
+      `flex-1 rounded-lg px-2 py-2 text-center text-[12.5px] font-bold transition-colors ${
+        active ? "bg-card text-exam-accent shadow-sm" : "text-exam-accent/70"
+      }`;
+    return (
+      <div className="rounded-2xl border border-border bg-card">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+        >
+          <span className="flex items-center gap-1.5 text-[13.5px] font-bold text-foreground">
+            <BookOpen className="h-4 w-4 text-exam-accent" />
+            Bài mẫu tham khảo{note ? ` ${note}` : ""}
+          </span>
+          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
+            {open ? "Ẩn" : "Mở"}
+            <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+          </span>
+        </button>
+        {open && (
+          <div className="px-4 pb-4">
+            <div className="mb-3 flex gap-1 rounded-xl bg-exam-accent/10 p-1">
+              {basic && (
+                <button type="button" onClick={() => setLevel("basic")} className={seg(effective === "basic")}>
+                  Bản B1 · dễ học
+                </button>
+              )}
+              {advanced && (
+                <button type="button" onClick={() => setLevel("advanced")} className={seg(effective === "advanced")}>
+                  Bản B2+ · phong phú
+                </button>
+              )}
+            </div>
+            <p className="whitespace-pre-line text-[14px] leading-relaxed text-foreground">{text}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{words} từ</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-3">

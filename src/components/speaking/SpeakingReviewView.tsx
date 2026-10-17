@@ -14,6 +14,8 @@ import SpeakingInsights, { OnTopicBadge } from "@/components/insights/SpeakingIn
 import InlineErrorText from "@/components/insights/InlineErrorText";
 import SpeakingSampleAnswerBlock from "./SpeakingSampleAnswerBlock";
 import type { SampleAnswerPair } from "@/data/speakingQuestions";
+import { usePhoneExamUI } from "@/components/exam/mobile/phoneExam";
+import SpeakingReviewMobile from "@/components/review-mobile/SpeakingReviewMobile";
 
 const PART_NUMBERS: Record<SpeakingPartType, number> = {
   part1: 1, part2: 2, part3: 3, part4: 4,
@@ -53,7 +55,33 @@ const SpeakingReviewView = ({
   totalParts = 4, hidePager = false, onRegrade, sampleAnswers,
 }: SpeakingReviewViewProps) => {
   const [regradingIdx, setRegradingIdx] = useState<number | null>(null);
+  const phone = usePhoneExamUI();
   const partNumber = PART_NUMBERS[partType];
+
+  // Điện thoại: bố cục 1 cột riêng. Máy tính giữ nguyên 2 cột bên dưới.
+  if (phone) {
+    return (
+      <SpeakingReviewMobile
+        partType={partType}
+        part1Data={part1Data}
+        part2Data={part2Data}
+        part3Data={part3Data}
+        part4Data={part4Data}
+        recordings={recordings}
+        gradings={gradings}
+        reviewIndex={reviewIndex}
+        onChangeIndex={onChangeIndex}
+        hidePager={hidePager}
+        sampleAnswers={sampleAnswers}
+        regradingIdx={regradingIdx}
+        onRegradeClick={onRegrade ? async (gi) => {
+          if (regradingIdx !== null) return;
+          setRegradingIdx(gi);
+          try { await onRegrade(gi); } finally { setRegradingIdx(null); }
+        } : undefined}
+      />
+    );
+  }
 
   const promptsList: string[] = (() => {
     if (partType === "part1" && part1Data) return part1Data.questions;
