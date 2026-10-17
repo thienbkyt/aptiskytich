@@ -6100,6 +6100,75 @@ export type Database = {
         }
         Relationships: []
       }
+      bak_writing_finalize_fix_20261017: {
+        Row: {
+          correct_answers: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          fix_pt: string | null
+          full_test_id: string | null
+          full_test_session_id: string | null
+          grade_payload: Json | null
+          id: string | null
+          level: string | null
+          raw_round: number | null
+          review_snapshot: Json | null
+          score: number | null
+          skill_scores: Json | null
+          test_id: string | null
+          time_spent: number | null
+          total: number | null
+          user_id: string | null
+          wsr_id: string | null
+          wsr_old_test_result_id: string | null
+          wsr_scale50: number | null
+        }
+        Insert: {
+          correct_answers?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          fix_pt?: string | null
+          full_test_id?: string | null
+          full_test_session_id?: string | null
+          grade_payload?: Json | null
+          id?: string | null
+          level?: string | null
+          raw_round?: number | null
+          review_snapshot?: Json | null
+          score?: number | null
+          skill_scores?: Json | null
+          test_id?: string | null
+          time_spent?: number | null
+          total?: number | null
+          user_id?: string | null
+          wsr_id?: string | null
+          wsr_old_test_result_id?: string | null
+          wsr_scale50?: number | null
+        }
+        Update: {
+          correct_answers?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          fix_pt?: string | null
+          full_test_id?: string | null
+          full_test_session_id?: string | null
+          grade_payload?: Json | null
+          id?: string | null
+          level?: string | null
+          raw_round?: number | null
+          review_snapshot?: Json | null
+          score?: number | null
+          skill_scores?: Json | null
+          test_id?: string | null
+          time_spent?: number | null
+          total?: number | null
+          user_id?: string | null
+          wsr_id?: string | null
+          wsr_old_test_result_id?: string | null
+          wsr_scale50?: number | null
+        }
+        Relationships: []
+      }
       bak_writing_p1_samples_20261013: {
         Row: {
           backed_at: string | null
