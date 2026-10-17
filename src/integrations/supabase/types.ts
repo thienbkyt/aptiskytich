@@ -2224,6 +2224,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_gv01_q1_1610: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_han_writing_20260819: {
         Row: {
           backed_up_at: string | null
@@ -5886,6 +5937,132 @@ export type Database = {
           ref_id?: string | null
           scope?: string | null
           used_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bak_grading_jobs_requeue_20261017: {
+        Row: {
+          attempts: number | null
+          claimed_at: string | null
+          created_at: string | null
+          failure_notified_at: string | null
+          finished_at: string | null
+          id: string | null
+          last_error: string | null
+          max_attempts: number | null
+          next_run_at: string | null
+          part: string | null
+          payload: Json | null
+          raw_response: Json | null
+          requeue_count: number | null
+          skill: string | null
+          status: string | null
+          test_result_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          claimed_at?: string | null
+          created_at?: string | null
+          failure_notified_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          next_run_at?: string | null
+          part?: string | null
+          payload?: Json | null
+          raw_response?: Json | null
+          requeue_count?: number | null
+          skill?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          claimed_at?: string | null
+          created_at?: string | null
+          failure_notified_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          next_run_at?: string | null
+          part?: string | null
+          payload?: Json | null
+          raw_response?: Json | null
+          requeue_count?: number | null
+          skill?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bak_grading_jobs_requeue_spk_20261017: {
+        Row: {
+          attempts: number | null
+          claimed_at: string | null
+          created_at: string | null
+          failure_notified_at: string | null
+          finished_at: string | null
+          id: string | null
+          last_error: string | null
+          max_attempts: number | null
+          next_run_at: string | null
+          part: string | null
+          payload: Json | null
+          raw_response: Json | null
+          requeue_count: number | null
+          skill: string | null
+          status: string | null
+          test_result_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          claimed_at?: string | null
+          created_at?: string | null
+          failure_notified_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          next_run_at?: string | null
+          part?: string | null
+          payload?: Json | null
+          raw_response?: Json | null
+          requeue_count?: number | null
+          skill?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          claimed_at?: string | null
+          created_at?: string | null
+          failure_notified_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          next_run_at?: string | null
+          part?: string | null
+          payload?: Json | null
+          raw_response?: Json | null
+          requeue_count?: number | null
+          skill?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
