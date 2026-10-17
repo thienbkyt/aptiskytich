@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { aiChatFetch } from "../_shared/aiChat.ts";
+import { logAIUsage } from "../_shared/usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -107,21 +109,16 @@ Return ONLY valid JSON with this exact shape:
 }
 Omit ids you cannot confidently locate. Do not invent or paraphrase.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You output strict JSON only. No prose, no markdown fences." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+    // Claude trước, lỗi/hết tiền → Gemini (xem _shared/aiChat.ts)
+    const aiRes = await aiChatFetch({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: "You output strict JSON only. No prose, no markdown fences." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 4000,
+      response_format: { type: "json_object" },
+    }, { source: "listening-highlight", claudeTimeoutMs: 40_000 });
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
@@ -132,6 +129,13 @@ Omit ids you cannot confidently locate. Do not invent or paraphrase.`;
     }
 
     const aiJson = await aiRes.json();
+    logAIUsage({
+      model: aiRes.headers.get("x-ai-model") || "google/gemini-2.5-flash",
+      usage: aiJson?.usage,
+      source_function: "listening-highlight",
+      finishReason: aiJson?.choices?.[0]?.finish_reason ?? null,
+      metadata: { exam_set_id: body.exam_set_id, items: items.length },
+    }).catch(() => {});
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
     let parsed: { highlights?: Record<string, string> } = {};
     try {
