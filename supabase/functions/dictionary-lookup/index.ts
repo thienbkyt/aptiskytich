@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
+import { aiChatFetch } from "../_shared/aiChat.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { enforceDailyQuota } from "../_shared/quota.ts";
 
@@ -104,25 +105,16 @@ serve(async (req) => {
 }
 Provide exactly 1-2 meanings (most common first), exactly 1 example, up to 3 synonyms, up to 3 word family members. Keep every Vietnamese definition to one short phrase. Be fast and concise.`;
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: clean },
-          ],
-          max_tokens: 800,
-          response_format: { type: "json_object" },
-        }),
-      }
-    );
+    // Claude trước, lỗi/hết tiền → Gemini (xem _shared/aiChat.ts)
+    const response = await aiChatFetch({
+      model: "google/gemini-2.5-flash-lite",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: clean },
+      ],
+      max_tokens: 800,
+      response_format: { type: "json_object" },
+    }, { source: "dictionary-lookup", claudeTimeoutMs: 15_000 });
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -148,7 +140,7 @@ Provide exactly 1-2 meanings (most common first), exactly 1 example, up to 3 syn
     const data = await response.json();
 
     logAIUsage({
-      model: "google/gemini-2.5-flash-lite",
+      model: response.headers.get("x-ai-model") || "google/gemini-2.5-flash-lite",
       usage: data.usage,
       source_function: "dictionary-lookup",
       metadata: { word: clean },
