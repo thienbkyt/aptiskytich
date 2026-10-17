@@ -285,6 +285,18 @@ body.history-review-mode .exam-light-bottom-bar {
   display: none !important;
 }
 
+/* Xem lại trên ĐIỆN THOẠI: thanh trên của màn xem lại đã có tên kỹ năng/part → ẩn thanh tím
+   để không còn 2 thanh dính chồng nhau khi cuộn. Class chỉ được gắn khi là điện thoại. */
+body.kt-review-phone .exam-header-bar {
+  display: none !important;
+}
+/* Nút "Báo lỗi" nổi: đặt ngay trên thanh dưới (Câu trước · Mục lục · Câu sau) để không đè lên nhau */
+html body.kt-review-phone .exam-fab-report,
+html body.kt-review-phone .exam-fab-reveal {
+  top: auto !important;
+  bottom: calc(env(safe-area-inset-bottom) + 74px) !important;
+}
+
 /* Exam bottom bar — token-driven so it follows light/dark exam palette. */
 .exam-light-bottom-bar {
   background-color: hsl(var(--exam-surface) / 0.95);
